@@ -213,7 +213,7 @@
                     
                     <!-- Controles -->
                     <HorizontalStackLayout Spacing="10">
-                        <Label Text="Días:" 
+                        <Label Text="Dosis a programar:" 
                                VerticalOptions="Center"
                                TextColor="Black"
                                FontSize="14"/>

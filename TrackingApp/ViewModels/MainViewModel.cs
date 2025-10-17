@@ -760,31 +760,35 @@ namespace TrackingApp.ViewModels
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine("=== ConfirmEvent START ===");
+                
                 if (ev == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("ConfirmEvent: ev is null");
+                    System.Diagnostics.Debug.WriteLine("❌ ConfirmEvent: ev is null");
                     return;
                 }
 
-                System.Diagnostics.Debug.WriteLine($"ConfirmEvent: MedicationId={ev.MedicationId}, SourceId={ev.SourceId}, IsHistory={ev.IsHistory}");
+                System.Diagnostics.Debug.WriteLine($"📋 Event: Id={ev.Id}, MedId={ev.MedicationId}, SourceId={ev.SourceId}, IsHistory={ev.IsHistory}, Name={ev.MedicationName}");
 
                 if (ev.IsHistory)
                 {
-                    System.Diagnostics.Debug.WriteLine("ConfirmEvent: Event is already history, skipping");
+                    System.Diagnostics.Debug.WriteLine("⚠️ Event is already history");
                     await Application.Current?.MainPage?.DisplayAlert("Información", "Este medicamento ya fue administrado", "OK")!;
                     return;
                 }
 
+                System.Diagnostics.Debug.WriteLine($"🔍 Searching dose with Id={ev.SourceId} in {_dataService.MedicationDoses.Count} doses");
+                System.Diagnostics.Debug.WriteLine($"📊 Available doses: {string.Join(", ", _dataService.MedicationDoses.Select(d => $"[{d.Id}]"))}");
+                
                 var dose = _dataService.MedicationDoses.FirstOrDefault(d => d.Id == ev.SourceId);
                 if (dose == null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"ConfirmEvent: Dose not found for SourceId={ev.SourceId}");
-                    System.Diagnostics.Debug.WriteLine($"Available doses: {string.Join(", ", _dataService.MedicationDoses.Select(d => $"Id={d.Id}"))}");
+                    System.Diagnostics.Debug.WriteLine($"❌ Dose NOT found for SourceId={ev.SourceId}");
                     await Application.Current?.MainPage?.DisplayAlert("Error", "No se encontró la dosis programada", "OK")!;
                     return;
                 }
 
-                System.Diagnostics.Debug.WriteLine($"ConfirmEvent: Found dose, confirming...");
+                System.Diagnostics.Debug.WriteLine($"✅ Found dose {dose.Id}, confirming...");
                 await _dataService.ConfirmDoseAsync(dose);
 
                 var history = new MedicationHistory
@@ -796,22 +800,23 @@ namespace TrackingApp.ViewModels
                     UserType = _dataService.CurrentUserType
                 };
 
-                System.Diagnostics.Debug.WriteLine($"ConfirmEvent: Creating history - MedicationName={history.MedicationName}, Time={history.AdministeredTime}");
+                System.Diagnostics.Debug.WriteLine($"📝 Creating history: {history.MedicationName} at {history.AdministeredTime:HH:mm}");
                 await _dataService.SaveMedicationHistoryAsync(history);
                 _dataService.MedicationHistory.Insert(0, history);
-                System.Diagnostics.Debug.WriteLine($"ConfirmEvent: History saved. Total in MedicationHistory={_dataService.MedicationHistory.Count}");
+                System.Diagnostics.Debug.WriteLine($"💾 History saved. Total={_dataService.MedicationHistory.Count}");
                 
                 _dataService.RebuildCombinedEvents();
                 OnPropertyChanged(nameof(FilteredCombinedEvents));
                 OnPropertyChanged(nameof(FilteredMedicationHistory));
                 OnPropertyChanged(nameof(GroupedDoses));
                 
-                System.Diagnostics.Debug.WriteLine("ConfirmEvent: Success - UI updated");
+                System.Diagnostics.Debug.WriteLine("=== ConfirmEvent SUCCESS ===");
                 await Application.Current?.MainPage?.DisplayAlert("✅", $"Dosis de {ev.MedicationName} confirmada", "OK")!;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"ConfirmEvent: Exception - {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"❌ Exception: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack: {ex.StackTrace}");
                 await Application.Current?.MainPage?.DisplayAlert("Error", $"Error al confirmar: {ex.Message}", "OK")!;
             }
         }

@@ -88,8 +88,10 @@ namespace TrackingApp.Services
             await GenerateDosesForMedicationAsync(medication, days);
         }
 
-        public async Task GenerateDosesForMedicationAsync(Medication medication, int days)
+        public async Task GenerateDosesForMedicationAsync(Medication medication, int numberOfDoses)
         {
+            System.Diagnostics.Debug.WriteLine($"🔵 GenerateDosesForMedicationAsync: Medication={medication.Name}, NumberOfDoses={numberOfDoses}");
+            
             // Limpiar dosis anteriores de este medicamento
             await _databaseService.DeleteDosesByMedicationAsync(medication.Id);
             
@@ -98,37 +100,42 @@ namespace TrackingApp.Services
             {
                 MedicationDoses.Remove(dose);
             }
+            System.Diagnostics.Debug.WriteLine($"🔵 Cleared old doses. Creating {numberOfDoses} new doses...");
 
             var now = DateTime.Now;
             var firstDose = medication.FirstDoseTime;
 
-            // Si la primera dosis ya pasó, calcular la siguiente
+            // Si la primera dosis ya pasó, usar la hora de hoy
             if (firstDose < now)
             {
-                var minutesElapsed = (now - firstDose).TotalMinutes;
-                var dosesElapsed = Math.Ceiling(minutesElapsed / medication.TotalFrequencyInMinutes);
-                firstDose = firstDose.AddMinutes(dosesElapsed * medication.TotalFrequencyInMinutes);
+                firstDose = DateTime.Today.Add(medication.FirstDoseTime.TimeOfDay);
+                if (firstDose < now)
+                {
+                    // Si ya pasó la hora hoy, empezar mañana
+                    firstDose = firstDose.AddDays(1);
+                }
             }
 
-            var endDate = now.AddDays(days);
-            var currentDose = firstDose;
-
-            while (currentDose < endDate)
+            // Generar EXACTAMENTE numberOfDoses dosis (una por día)
+            for (int i = 0; i < numberOfDoses; i++)
             {
+                var doseTime = firstDose.AddDays(i);
+                
                 var newDose = new MedicationDose
                 {
                     MedicationId = medication.Id,
                     Medication = medication,
-                    ScheduledTime = currentDose,
+                    ScheduledTime = doseTime,
                     IsConfirmed = false,
                     IsEdited = false
                 };
 
                 await _databaseService.SaveDoseAsync(newDose);
                 MedicationDoses.Add(newDose);
-
-                currentDose = currentDose.AddMinutes(medication.TotalFrequencyInMinutes);
+                System.Diagnostics.Debug.WriteLine($"  ✅ Dose {i+1}: {doseTime:yyyy-MM-dd HH:mm}");
             }
+            
+            System.Diagnostics.Debug.WriteLine($"🔵 Total doses created: {numberOfDoses}");
         }
 
         public async Task RegenerateDosesAsync(int days)
