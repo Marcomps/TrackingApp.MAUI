@@ -256,7 +256,7 @@
                            TextColor="#2a3d66"
                            Margin="0,15,0,5"/>
                     
-                    <ScrollView MaximumHeightRequest="500">
+                    <ScrollView MaximumHeightRequest="800">
                         <CollectionView ItemsSource="{Binding FilteredCombinedEvents}"
                                         x:Name="CombinedEventsCollectionView">
                             <CollectionView.ItemTemplate>
@@ -291,7 +291,6 @@
                                                 </VerticalStackLayout>
                                                 <Button Grid.Column="2" 
                                                         Text="Confirmar"
-                                                        Command="{Binding Source={x:Reference CombinedEventsCollectionView}, Path=BindingContext.ConfirmEventCommand}"
                                                         CommandParameter="{Binding .}"
                                                         BackgroundColor="#4CAF50"
                                                         TextColor="White"

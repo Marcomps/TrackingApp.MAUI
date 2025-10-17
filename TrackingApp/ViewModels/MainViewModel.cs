@@ -14,7 +14,7 @@ namespace TrackingApp.ViewModels
         private int _selectedDays = 3;
         private int? _selectedMedicationId;
         private Medication? _selectedMedication;
-        private string _selectedHistoryRange = "Hoy";
+        private string _selectedHistoryRange = "Esta semana";
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -730,6 +730,9 @@ namespace TrackingApp.ViewModels
             get
             {
                 var (startDate, endDate) = GetDateRange();
+                System.Diagnostics.Debug.WriteLine($"📅 FilteredCombinedEvents: Rango de fechas {startDate:yyyy-MM-dd HH:mm} a {endDate:yyyy-MM-dd HH:mm}");
+                System.Diagnostics.Debug.WriteLine($"📊 Total eventos en CombinedMedicationEvents: {CombinedMedicationEvents.Count}");
+                
                 var filtered = CombinedMedicationEvents
                     .Where(e => e.EventTime >= startDate && e.EventTime <= endDate);
 
@@ -737,9 +740,11 @@ namespace TrackingApp.ViewModels
                 if (SelectedMedicationId.HasValue)
                 {
                     filtered = filtered.Where(e => e.MedicationId == SelectedMedicationId.Value);
+                    System.Diagnostics.Debug.WriteLine($"🔍 Filtrando por medicamento ID: {SelectedMedicationId.Value}");
                 }
 
                 var ordered = filtered.OrderByDescending(e => e.EventTime).ToList();
+                System.Diagnostics.Debug.WriteLine($"✅ Eventos filtrados y ordenados: {ordered.Count}");
 
                 return new ObservableCollection<MedicationEvent>(ordered);
             }
@@ -844,10 +849,19 @@ namespace TrackingApp.ViewModels
             get
             {
                 var (startDate, endDate) = GetDateRange();
+                System.Diagnostics.Debug.WriteLine($"🏥 FilteredAppointments: Rango de fechas {startDate:yyyy-MM-dd HH:mm} a {endDate:yyyy-MM-dd HH:mm}");
+                System.Diagnostics.Debug.WriteLine($"📊 Total citas en Appointments: {Appointments.Count}");
+                
                 var filtered = Appointments
                     .Where(a => a.AppointmentDate >= startDate && a.AppointmentDate <= endDate)
                     .OrderBy(a => a.AppointmentDate)
                     .ToList();
+                
+                System.Diagnostics.Debug.WriteLine($"✅ Citas filtradas: {filtered.Count}");
+                foreach (var app in filtered)
+                {
+                    System.Diagnostics.Debug.WriteLine($"  - {app.Title} - {app.AppointmentDate:yyyy-MM-dd HH:mm}");
+                }
                 
                 return new ObservableCollection<MedicalAppointment>(filtered);
             }
