@@ -32,7 +32,7 @@ namespace TrackingApp.Models
         public bool IsConfirmed { get; set; }
 
         [Ignore]
-        public string DisplayTime => EventTime.ToString("HH:mm");
+        public string DisplayTime => EventTime.ToString("hh:mm tt"); // Formato 12 horas con AM/PM
 
         [Ignore]
         public string DisplayDate => EventTime.ToString("dd/MM/yyyy");

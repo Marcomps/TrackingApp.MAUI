@@ -739,7 +739,10 @@ namespace TrackingApp.ViewModels
                 System.Diagnostics.Debug.WriteLine($"📅 FilteredCombinedEvents: Rango de fechas {startDate:yyyy-MM-dd HH:mm} a {endDate:yyyy-MM-dd HH:mm}");
                 System.Diagnostics.Debug.WriteLine($"📊 Total eventos en CombinedMedicationEvents: {CombinedMedicationEvents.Count}");
                 
+                // FILTRO CRÍTICO: Solo mostrar dosis NO confirmadas (pendientes)
+                // Las confirmadas se muestran en FilteredMedicationHistory
                 var filtered = CombinedMedicationEvents
+                    .Where(e => !e.IsHistory && !e.IsConfirmed) // Solo pendientes
                     .Where(e => e.EventTime >= startDate && e.EventTime <= endDate);
 
                 // Aplicar filtro de medicamento si hay uno seleccionado
@@ -750,7 +753,7 @@ namespace TrackingApp.ViewModels
                 }
 
                 var ordered = filtered.OrderByDescending(e => e.EventTime).ToList();
-                System.Diagnostics.Debug.WriteLine($"✅ Eventos filtrados y ordenados: {ordered.Count}");
+                System.Diagnostics.Debug.WriteLine($"✅ Eventos filtrados (solo pendientes): {ordered.Count}");
 
                 return new ObservableCollection<MedicationEvent>(ordered);
             }

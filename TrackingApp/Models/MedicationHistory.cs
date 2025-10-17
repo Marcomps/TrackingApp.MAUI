@@ -22,10 +22,10 @@ namespace TrackingApp.Models
         public string Notes { get; set; } = string.Empty; // Notas opcionales
 
         [Ignore]
-        public string DisplayText => $"{MedicationName} - {Dose} - {AdministeredTime:dd/MM/yyyy HH:mm}";
+        public string DisplayText => $"{MedicationName} - {Dose} - {AdministeredTime:dd/MM/yyyy hh:mm tt}";
         
         [Ignore]
-        public string FormattedTime => AdministeredTime.ToString("HH:mm");
+        public string FormattedTime => AdministeredTime.ToString("hh:mm tt"); // Formato 12 horas con AM/PM
         
         [Ignore]
         public string FormattedDate => AdministeredTime.ToString("dd/MM/yyyy");
