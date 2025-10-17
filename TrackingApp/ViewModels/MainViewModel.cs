@@ -747,30 +747,57 @@ namespace TrackingApp.ViewModels
 
         private async void ConfirmEvent(MedicationEvent ev)
         {
-            if (ev == null) return;
-
-            if (!ev.IsHistory)
+            try
             {
-                var dose = _dataService.MedicationDoses.FirstOrDefault(d => d.Id == ev.SourceId);
-                if (dose != null)
+                if (ev == null)
                 {
-                    await _dataService.ConfirmDoseAsync(dose);
-
-                    var history = new MedicationHistory
-                    {
-                        MedicationId = dose.MedicationId,
-                        MedicationName = dose.Medication?.Name ?? string.Empty,
-                        Dose = dose.Medication?.Dose ?? string.Empty,
-                        AdministeredTime = dose.ActualTime ?? DateTime.Now,
-                        UserType = _dataService.CurrentUserType
-                    };
-
-                    await _dataService.SaveMedicationHistoryAsync(history);
-                    _dataService.MedicationHistory.Insert(0, history);
-                    _dataService.RebuildCombinedEvents();
-                    OnPropertyChanged(nameof(FilteredCombinedEvents));
-                    OnPropertyChanged(nameof(GroupedDoses));
+                    System.Diagnostics.Debug.WriteLine("ConfirmEvent: ev is null");
+                    return;
                 }
+
+                System.Diagnostics.Debug.WriteLine($"ConfirmEvent: MedicationId={ev.MedicationId}, SourceId={ev.SourceId}, IsHistory={ev.IsHistory}");
+
+                if (ev.IsHistory)
+                {
+                    System.Diagnostics.Debug.WriteLine("ConfirmEvent: Event is already history, skipping");
+                    await Application.Current?.MainPage?.DisplayAlert("Información", "Este medicamento ya fue administrado", "OK")!;
+                    return;
+                }
+
+                var dose = _dataService.MedicationDoses.FirstOrDefault(d => d.Id == ev.SourceId);
+                if (dose == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"ConfirmEvent: Dose not found for SourceId={ev.SourceId}");
+                    System.Diagnostics.Debug.WriteLine($"Available doses: {string.Join(", ", _dataService.MedicationDoses.Select(d => $"Id={d.Id}"))}");
+                    await Application.Current?.MainPage?.DisplayAlert("Error", "No se encontró la dosis programada", "OK")!;
+                    return;
+                }
+
+                System.Diagnostics.Debug.WriteLine($"ConfirmEvent: Found dose, confirming...");
+                await _dataService.ConfirmDoseAsync(dose);
+
+                var history = new MedicationHistory
+                {
+                    MedicationId = dose.MedicationId,
+                    MedicationName = dose.Medication?.Name ?? string.Empty,
+                    Dose = dose.Medication?.Dose ?? string.Empty,
+                    AdministeredTime = dose.ActualTime ?? DateTime.Now,
+                    UserType = _dataService.CurrentUserType
+                };
+
+                await _dataService.SaveMedicationHistoryAsync(history);
+                _dataService.MedicationHistory.Insert(0, history);
+                _dataService.RebuildCombinedEvents();
+                OnPropertyChanged(nameof(FilteredCombinedEvents));
+                OnPropertyChanged(nameof(GroupedDoses));
+                
+                System.Diagnostics.Debug.WriteLine("ConfirmEvent: Success");
+                await Application.Current?.MainPage?.DisplayAlert("✅", $"Dosis de {ev.MedicationName} confirmada", "OK")!;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ConfirmEvent: Exception - {ex.Message}");
+                await Application.Current?.MainPage?.DisplayAlert("Error", $"Error al confirmar: {ex.Message}", "OK")!;
             }
         }
 
