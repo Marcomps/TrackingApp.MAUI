@@ -34,7 +34,6 @@ namespace TrackingApp.ViewModels
             EditDoseCommand = new Command<MedicationDose>(EditDose);
             DeleteDoseCommand = new Command<MedicationDose>(DeleteDose);
             RefreshCalendarCommand = new Command(RefreshCalendar);
-            AddMedicationHistoryCommand = new Command(AddMedicationHistoryEntry);
             DeleteMedicationHistoryCommand = new Command<MedicationHistory>(DeleteMedicationHistory);
             ConfirmEventCommand = new Command<MedicationEvent>(ConfirmEvent);
             DeleteEventCommand = new Command<MedicationEvent>(DeleteEvent);
@@ -309,7 +308,6 @@ namespace TrackingApp.ViewModels
         public ICommand EditDoseCommand { get; }
         public ICommand DeleteDoseCommand { get; }
         public ICommand RefreshCalendarCommand { get; }
-        public ICommand AddMedicationHistoryCommand { get; }
         public ICommand DeleteMedicationHistoryCommand { get; }
         public ICommand ConfirmEventCommand { get; }
         public ICommand DeleteEventCommand { get; }
@@ -707,44 +705,6 @@ namespace TrackingApp.ViewModels
                 
                 return new ObservableCollection<MedicationHistory>(filtered);
             }
-        }
-
-        private async void AddMedicationHistoryEntry()
-        {
-            if (SelectedMedication == null)
-            {
-                await Application.Current?.MainPage?.DisplayAlert("Error", "Por favor seleccione un medicamento primero", "OK")!;
-                return;
-            }
-
-            // Permitir al usuario elegir la hora
-            var timeStr = await Application.Current?.MainPage?.DisplayPromptAsync(
-                "Registrar Dosis",
-                "¿A qué hora se administró? (HH:mm)\nDejar vacío para usar hora actual",
-                placeholder: DateTime.Now.ToString("HH:mm"))!;
-
-            DateTime administeredTime = DateTime.Now;
-            
-            if (!string.IsNullOrWhiteSpace(timeStr) && TimeSpan.TryParse(timeStr, out TimeSpan enteredTime))
-            {
-                administeredTime = DateTime.Today.Add(enteredTime);
-            }
-
-            var history = new MedicationHistory
-            {
-                MedicationId = SelectedMedication.Id,
-                MedicationName = SelectedMedication.Name,
-                Dose = SelectedMedication.Dose,
-                AdministeredTime = administeredTime,
-                UserType = _dataService.CurrentUserType
-            };
-
-            await _dataService.SaveMedicationHistoryAsync(history);
-            MedicationHistory.Insert(0, history);
-            _dataService.RebuildCombinedEvents();
-            OnPropertyChanged(nameof(FilteredMedicationHistory));
-            OnPropertyChanged(nameof(FilteredCombinedEvents));
-            await Application.Current?.MainPage?.DisplayAlert("✅ Registrado", $"Dosis de {SelectedMedication.Name} registrada a las {administeredTime:HH:mm}", "OK")!;
         }
 
         private async void DeleteMedicationHistory(MedicationHistory history)
