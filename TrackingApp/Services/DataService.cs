@@ -308,8 +308,9 @@ namespace TrackingApp.Services
                     });
                 }
 
-                // Agregar dosis programadas
-                foreach (var d in MedicationDoses)
+                // Agregar dosis programadas (SOLO las NO confirmadas)
+                // Las confirmadas ya están en MedicationHistory
+                foreach (var d in MedicationDoses.Where(dose => !dose.IsConfirmed))
                 {
                     list.Add(new MedicationEvent
                     {
@@ -321,9 +322,11 @@ namespace TrackingApp.Services
                         EventTime = d.ScheduledTime,
                         IsHistory = false,
                         SourceId = d.Id,
-                        IsConfirmed = d.IsConfirmed
+                        IsConfirmed = false  // Siempre false porque estamos filtrando solo las no confirmadas
                     });
                 }
+                
+                System.Diagnostics.Debug.WriteLine($"🔵 RebuildCombinedEvents: History={MedicationHistory.Count}, PendingDoses={MedicationDoses.Count(d => !d.IsConfirmed)}, Total={list.Count}");
 
                 var ordered = list.OrderByDescending(x => x.EventTime).ToList();
 
