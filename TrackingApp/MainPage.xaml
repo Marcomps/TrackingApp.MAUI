@@ -257,7 +257,8 @@
                            Margin="0,15,0,5"/>
                     
                     <ScrollView MaximumHeightRequest="500">
-                        <CollectionView ItemsSource="{Binding FilteredCombinedEvents}">
+                        <CollectionView ItemsSource="{Binding FilteredCombinedEvents}"
+                                        x:Name="CombinedEventsCollectionView">
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
                                     <SwipeView>
@@ -265,7 +266,7 @@
                                             <SwipeItems>
                                                 <SwipeItem Text="Eliminar"
                                                            BackgroundColor="#f44336"
-                                                           Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=DeleteEventCommand}"
+                                                           Command="{Binding Source={x:Reference CombinedEventsCollectionView}, Path=BindingContext.DeleteEventCommand}"
                                                            CommandParameter="{Binding .}"/>
                                             </SwipeItems>
                                         </SwipeView.RightItems>
@@ -290,14 +291,15 @@
                                                 </VerticalStackLayout>
                                                 <Button Grid.Column="2" 
                                                         Text="Confirmar"
-                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=ConfirmEventCommand}"
+                                                        Command="{Binding Source={x:Reference CombinedEventsCollectionView}, Path=BindingContext.ConfirmEventCommand}"
                                                         CommandParameter="{Binding .}"
                                                         BackgroundColor="#4CAF50"
                                                         TextColor="White"
                                                         FontAttributes="Bold"
                                                         FontSize="12"
                                                         Padding="8"
-                                                        IsVisible="{Binding IsHistory, Converter={StaticResource InverseBoolConverter}}"/>
+                                                        IsVisible="{Binding IsHistory, Converter={StaticResource InverseBoolConverter}}"
+                                                        Clicked="OnConfirmButtonClicked"/>
                                             </Grid>
                                         </Frame>
                                     </SwipeView>
