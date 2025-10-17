@@ -256,53 +256,55 @@
                            TextColor="#2a3d66"
                            Margin="0,15,0,5"/>
                     
-                    <CollectionView ItemsSource="{Binding FilteredCombinedEvents}" MaximumHeightRequest="500">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate>
-                                <SwipeView>
-                                    <SwipeView.RightItems>
-                                        <SwipeItems>
-                                            <SwipeItem Text="Eliminar"
-                                                       BackgroundColor="#f44336"
-                                                       Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=DeleteEventCommand}"
-                                                       CommandParameter="{Binding .}"/>
-                                        </SwipeItems>
-                                    </SwipeView.RightItems>
-                                    <Frame BackgroundColor="#f7f7f7" Padding="10" Margin="0,5" CornerRadius="5">
-                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-                                            <Label Grid.Column="0" 
-                                                   Text="{Binding DisplayTime}" 
-                                                   FontAttributes="Bold"
-                                                   FontSize="16"
-                                                   TextColor="#2196F3"
-                                                   VerticalOptions="Center"/>
-                                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
-                                                <Label Text="{Binding MedicationName}" 
+                    <ScrollView MaximumHeightRequest="500">
+                        <CollectionView ItemsSource="{Binding FilteredCombinedEvents}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <SwipeView>
+                                        <SwipeView.RightItems>
+                                            <SwipeItems>
+                                                <SwipeItem Text="Eliminar"
+                                                           BackgroundColor="#f44336"
+                                                           Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=DeleteEventCommand}"
+                                                           CommandParameter="{Binding .}"/>
+                                            </SwipeItems>
+                                        </SwipeView.RightItems>
+                                        <Frame BackgroundColor="#f7f7f7" Padding="10" Margin="0,5" CornerRadius="5">
+                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                                <Label Grid.Column="0" 
+                                                       Text="{Binding DisplayTime}" 
                                                        FontAttributes="Bold"
-                                                       TextColor="Black"/>
-                                                <Label Text="{Binding Dose}" 
-                                                       FontSize="12"
-                                                       TextColor="#666"/>
-                                                <Label Text="{Binding DisplayText}" 
-                                                       FontSize="12" 
-                                                       TextColor="#888"/>
-                                            </VerticalStackLayout>
-                                            <Button Grid.Column="2" 
-                                                    Text="Confirmar"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=ConfirmEventCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    BackgroundColor="#4CAF50"
-                                                    TextColor="White"
-                                                    FontAttributes="Bold"
-                                                    FontSize="12"
-                                                    Padding="8"
-                                                    IsVisible="{Binding IsHistory, Converter={StaticResource InverseBoolConverter}}"/>
-                                        </Grid>
-                                    </Frame>
-                                </SwipeView>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
+                                                       FontSize="16"
+                                                       TextColor="#2196F3"
+                                                       VerticalOptions="Center"/>
+                                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                                    <Label Text="{Binding MedicationName}" 
+                                                           FontAttributes="Bold"
+                                                           TextColor="Black"/>
+                                                    <Label Text="{Binding Dose}" 
+                                                           FontSize="12"
+                                                           TextColor="#666"/>
+                                                    <Label Text="{Binding DisplayText}" 
+                                                           FontSize="12" 
+                                                           TextColor="#888"/>
+                                                </VerticalStackLayout>
+                                                <Button Grid.Column="2" 
+                                                        Text="Confirmar"
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=ConfirmEventCommand}"
+                                                        CommandParameter="{Binding .}"
+                                                        BackgroundColor="#4CAF50"
+                                                        TextColor="White"
+                                                        FontAttributes="Bold"
+                                                        FontSize="12"
+                                                        Padding="8"
+                                                        IsVisible="{Binding IsHistory, Converter={StaticResource InverseBoolConverter}}"/>
+                                            </Grid>
+                                        </Frame>
+                                    </SwipeView>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </ScrollView>
                 </VerticalStackLayout>
             </Frame>
 
