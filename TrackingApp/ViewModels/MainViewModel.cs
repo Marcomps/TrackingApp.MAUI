@@ -395,7 +395,7 @@ namespace TrackingApp.ViewModels
                 FirstDoseTime = DateTime.Today.Add(MedicationTime)
             };
 
-            await _dataService.AddMedicationAsync(medication);
+            await _dataService.AddMedicationAsync(medication, SelectedDays);
 
             // Clear fields
             MedicationName = string.Empty;
@@ -407,7 +407,7 @@ namespace TrackingApp.ViewModels
             OnPropertyChanged(nameof(GroupedDoses));
             OnPropertyChanged(nameof(FilteredMedications));
             UpdateSelectedMedication();
-            await Application.Current?.MainPage?.DisplayAlert("Éxito", "Medicamento agregado", "OK")!;
+            await Application.Current?.MainPage?.DisplayAlert("Éxito", $"Medicamento agregado con dosis para {SelectedDays} días", "OK")!;
         }
 
         private async void DeleteFood(FoodEntry food)
@@ -697,11 +697,17 @@ namespace TrackingApp.ViewModels
         {
             get
             {
-                var (startDate, endDate) = GetDateRange();
+                // El historial muestra eventos PASADOS, no futuros
+                var now = DateTime.Now;
+                var (startDate, _) = GetDateRange();
+                
+                // Para historial, queremos desde startDate hacia atrás hasta ahora
                 var filtered = MedicationHistory
-                    .Where(h => h.AdministeredTime >= startDate && h.AdministeredTime <= endDate)
+                    .Where(h => h.AdministeredTime <= now) // Solo eventos pasados
                     .OrderByDescending(h => h.AdministeredTime)
                     .ToList();
+                
+                System.Diagnostics.Debug.WriteLine($"📊 FilteredMedicationHistory: Total en MedicationHistory={MedicationHistory.Count}, Filtrados={filtered.Count}");
                 
                 return new ObservableCollection<MedicationHistory>(filtered);
             }
@@ -790,13 +796,17 @@ namespace TrackingApp.ViewModels
                     UserType = _dataService.CurrentUserType
                 };
 
+                System.Diagnostics.Debug.WriteLine($"ConfirmEvent: Creating history - MedicationName={history.MedicationName}, Time={history.AdministeredTime}");
                 await _dataService.SaveMedicationHistoryAsync(history);
                 _dataService.MedicationHistory.Insert(0, history);
+                System.Diagnostics.Debug.WriteLine($"ConfirmEvent: History saved. Total in MedicationHistory={_dataService.MedicationHistory.Count}");
+                
                 _dataService.RebuildCombinedEvents();
                 OnPropertyChanged(nameof(FilteredCombinedEvents));
+                OnPropertyChanged(nameof(FilteredMedicationHistory));
                 OnPropertyChanged(nameof(GroupedDoses));
                 
-                System.Diagnostics.Debug.WriteLine("ConfirmEvent: Success");
+                System.Diagnostics.Debug.WriteLine("ConfirmEvent: Success - UI updated");
                 await Application.Current?.MainPage?.DisplayAlert("✅", $"Dosis de {ev.MedicationName} confirmada", "OK")!;
             }
             catch (Exception ex)

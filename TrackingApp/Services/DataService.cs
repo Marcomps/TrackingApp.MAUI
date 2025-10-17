@@ -80,12 +80,12 @@ namespace TrackingApp.Services
             FoodEntries.Insert(0, entry);
         }
 
-        public async Task AddMedicationAsync(Medication medication)
+        public async Task AddMedicationAsync(Medication medication, int days = 3)
         {
             medication.UserType = CurrentUserType;
             await _databaseService.SaveMedicationAsync(medication);
             Medications.Add(medication);
-            await GenerateDosesForMedicationAsync(medication, 3); // 3 días por defecto
+            await GenerateDosesForMedicationAsync(medication, days);
         }
 
         public async Task GenerateDosesForMedicationAsync(Medication medication, int days)
