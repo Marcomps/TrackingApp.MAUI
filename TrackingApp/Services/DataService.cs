@@ -197,6 +197,19 @@ namespace TrackingApp.Services
             Medications.Remove(medication);
         }
 
+        public async Task UpdateMedicationAsync(Medication medication)
+        {
+            await _databaseService.SaveMedicationAsync(medication);
+            // Actualizar las dosis asociadas para reflejar cambios en sus referencias de navegación
+            var associatedDoses = MedicationDoses.Where(d => d.MedicationId == medication.Id).ToList();
+            foreach (var dose in associatedDoses)
+            {
+                dose.Medication = medication;
+                await _databaseService.SaveDoseAsync(dose);
+            }
+            RebuildCombinedEvents();
+        }
+
         public async Task DeleteDoseAsync(MedicationDose dose)
         {
             await _databaseService.DeleteDoseAsync(dose);

@@ -28,6 +28,7 @@ namespace TrackingApp.ViewModels
             DeleteFoodCommand = new Command<FoodEntry>(DeleteFood);
             EditFoodCommand = new Command<FoodEntry>(EditFood);
             DeleteMedicationCommand = new Command<Medication>(DeleteMedication);
+            EditMedicationCommand = new Command<Medication>(EditMedication);
             ResetAllDataCommand = new Command(ResetAllData);
             ConfirmDoseCommand = new Command<MedicationDose>(ConfirmDose);
             EditDoseCommand = new Command<MedicationDose>(EditDose);
@@ -97,6 +98,8 @@ namespace TrackingApp.ViewModels
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(GroupedDoses));
                 OnPropertyChanged(nameof(SelectedMedicationFilterLabel));
+                OnPropertyChanged(nameof(FilteredCombinedEvents));
+                OnPropertyChanged(nameof(FilteredMedicationHistory));
             }
         }
 
@@ -108,6 +111,8 @@ namespace TrackingApp.ViewModels
                 _selectedMedicationId = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(GroupedDoses));
+                OnPropertyChanged(nameof(FilteredCombinedEvents));
+                OnPropertyChanged(nameof(FilteredMedicationHistory));
             }
         }
 
@@ -298,6 +303,7 @@ namespace TrackingApp.ViewModels
         public ICommand DeleteFoodCommand { get; }
         public ICommand EditFoodCommand { get; }
         public ICommand DeleteMedicationCommand { get; }
+        public ICommand EditMedicationCommand { get; }
         public ICommand ResetAllDataCommand { get; }
         public ICommand ConfirmDoseCommand { get; }
         public ICommand EditDoseCommand { get; }
@@ -464,6 +470,74 @@ namespace TrackingApp.ViewModels
                 OnPropertyChanged(nameof(FilteredMedications));
                 await Application.Current?.MainPage?.DisplayAlert("Eliminado", "Medicamento y dosis eliminados", "OK")!;
             }
+        }
+
+        private async void EditMedication(Medication medication)
+        {
+            var newName = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Nombre",
+                "Nuevo nombre:",
+                placeholder: medication.Name,
+                initialValue: medication.Name)!;
+
+            if (string.IsNullOrWhiteSpace(newName))
+                return;
+
+            var newDose = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Dosis",
+                "Nueva dosis:",
+                placeholder: medication.Dose,
+                initialValue: medication.Dose)!;
+
+            if (string.IsNullOrWhiteSpace(newDose))
+                return;
+
+            var newFreqHoursStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Frecuencia (Horas)",
+                "Horas (0-24):",
+                keyboard: Keyboard.Numeric,
+                initialValue: medication.FrequencyHours.ToString())!;
+
+            var newFreqMinutesStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Frecuencia (Minutos)",
+                "Minutos (0-59):",
+                keyboard: Keyboard.Numeric,
+                initialValue: medication.FrequencyMinutes.ToString())!;
+
+            int frequencyHours = 0;
+            int frequencyMinutes = 0;
+
+            if (!string.IsNullOrWhiteSpace(newFreqHoursStr) && !int.TryParse(newFreqHoursStr, out frequencyHours))
+            {
+                await Application.Current?.MainPage?.DisplayAlert("Error", "Las horas deben ser un número válido", "OK")!;
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(newFreqMinutesStr))
+            {
+                if (!int.TryParse(newFreqMinutesStr, out frequencyMinutes) || frequencyMinutes < 0 || frequencyMinutes > 59)
+                {
+                    await Application.Current?.MainPage?.DisplayAlert("Error", "Los minutos deben estar entre 0 y 59", "OK")!;
+                    return;
+                }
+            }
+
+            if (frequencyHours == 0 && frequencyMinutes == 0)
+            {
+                await Application.Current?.MainPage?.DisplayAlert("Error", "Debe ingresar al menos horas o minutos", "OK")!;
+                return;
+            }
+
+            medication.Name = newName;
+            medication.Dose = newDose;
+            medication.FrequencyHours = frequencyHours;
+            medication.FrequencyMinutes = frequencyMinutes;
+
+            await _dataService.UpdateMedicationAsync(medication);
+            OnPropertyChanged(nameof(FilteredMedications));
+            OnPropertyChanged(nameof(FilteredCombinedEvents));
+            OnPropertyChanged(nameof(GroupedDoses));
+            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Medicamento actualizado", "OK")!;
         }
 
         private async void ResetAllData()
@@ -697,11 +771,17 @@ namespace TrackingApp.ViewModels
             {
                 var (startDate, endDate) = GetDateRange();
                 var filtered = CombinedMedicationEvents
-                    .Where(e => e.EventTime >= startDate && e.EventTime <= endDate)
-                    .OrderByDescending(e => e.EventTime)
-                    .ToList();
+                    .Where(e => e.EventTime >= startDate && e.EventTime <= endDate);
 
-                return new ObservableCollection<MedicationEvent>(filtered);
+                // Aplicar filtro de medicamento si hay uno seleccionado
+                if (SelectedMedicationId.HasValue)
+                {
+                    filtered = filtered.Where(e => e.MedicationId == SelectedMedicationId.Value);
+                }
+
+                var ordered = filtered.OrderByDescending(e => e.EventTime).ToList();
+
+                return new ObservableCollection<MedicationEvent>(ordered);
             }
         }
 
