@@ -852,6 +852,10 @@ namespace TrackingApp.ViewModels
                 _dataService.MedicationHistory.Insert(0, history);
                 System.Diagnostics.Debug.WriteLine($"💾 History saved. Total={_dataService.MedicationHistory.Count}");
                 
+                // 🔄 IMPORTANTE: Recalcular las siguientes dosis desde la última confirmada
+                System.Diagnostics.Debug.WriteLine($"🔄 Recalculando siguientes dosis para {ev.MedicationName}...");
+                await _dataService.RecalculateNextDosesFromLastConfirmedAsync(dose.MedicationId, SelectedDays);
+                
                 _dataService.RebuildCombinedEvents();
                 OnPropertyChanged(nameof(FilteredCombinedEvents));
                 OnPropertyChanged(nameof(FilteredMedicationHistory));

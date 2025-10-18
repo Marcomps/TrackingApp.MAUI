@@ -105,6 +105,7 @@ namespace TrackingApp.ViewModels
 
         public ICommand DeleteMedicationHistoryCommand { get; }
         public ICommand DeleteFoodHistoryCommand { get; }
+        public ICommand EditMedicationHistoryCommand { get; }
         public ICommand EditFoodCommand { get; }
         public ICommand RefreshCommand { get; }
 
@@ -133,6 +134,7 @@ namespace TrackingApp.ViewModels
 
             DeleteMedicationHistoryCommand = new Command<MedicationHistory>(DeleteMedicationHistory);
             DeleteFoodHistoryCommand = new Command<FoodEntry>(DeleteFoodHistory);
+            EditMedicationHistoryCommand = new Command<MedicationHistory>(EditMedicationHistory);
             EditFoodCommand = new Command<FoodEntry>(EditFood);
             RefreshCommand = new Command(async () => await LoadHistoryAsync());
 
@@ -300,6 +302,38 @@ namespace TrackingApp.ViewModels
                 ApplyFilters();
                 await Application.Current?.MainPage?.DisplayAlert("Eliminado", "Registro de alimento eliminado", "OK")!;
             }
+        }
+
+        private async void EditMedicationHistory(MedicationHistory medicationHistory)
+        {
+            // Solo permitir editar la hora de administración
+            var newTimeStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Hora",
+                $"Hora de administración de {medicationHistory.MedicationName} (formato 12h, ej: 09:30 AM o 02:45 PM):",
+                initialValue: medicationHistory.AdministeredTime.ToString("hh:mm tt"))!;
+
+            if (string.IsNullOrWhiteSpace(newTimeStr)) return;
+
+            // Intentar parsear la hora
+            DateTime newTime;
+            if (DateTime.TryParse(newTimeStr, out var parsedTime))
+            {
+                newTime = medicationHistory.AdministeredTime.Date + parsedTime.TimeOfDay;
+            }
+            else
+            {
+                await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK")!;
+                return;
+            }
+
+            medicationHistory.AdministeredTime = newTime;
+            await _dataService.UpdateMedicationHistoryAsync(medicationHistory);
+            
+            // Actualizar la lista local y los filtros
+            UpdateAvailableFilters();
+            ApplyFilters();
+            
+            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Hora de administración actualizada", "OK")!;
         }
 
         private async void EditFood(FoodEntry food)

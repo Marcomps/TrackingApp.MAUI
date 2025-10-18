@@ -158,11 +158,96 @@ namespace TrackingApp.Services
         public async Task ConfirmDoseAsync(MedicationDose dose)
         {
             dose.IsConfirmed = !dose.IsConfirmed;
-            if (dose.IsConfirmed && !dose.ActualTime.HasValue)
+            if (dose.IsConfirmed)
             {
+                // Siempre guardar la hora actual cuando se confirma
+                // (puede haber retrasos/adelantos en la toma)
                 dose.ActualTime = DateTime.Now;
             }
             await _databaseService.SaveDoseAsync(dose);
+        }
+
+        /// <summary>
+        /// CRÍTICO: Recalcula las dosis pendientes (no confirmadas) de un medicamento
+        /// basándose en la última dosis confirmada + frecuencia.
+        /// Esto permite que si hay retraso, las siguientes dosis se ajusten automáticamente.
+        /// </summary>
+        public async Task RecalculateNextDosesFromLastConfirmedAsync(int medicationId, int days)
+        {
+            var medication = Medications.FirstOrDefault(m => m.Id == medicationId);
+            if (medication == null) return;
+
+            System.Diagnostics.Debug.WriteLine($"🔄 RecalculateNextDoses: Medication={medication.Name}");
+
+            // 1. Buscar la última dosis CONFIRMADA de este medicamento
+            var lastConfirmedDose = MedicationDoses
+                .Where(d => d.MedicationId == medicationId && d.IsConfirmed && d.ActualTime.HasValue)
+                .OrderByDescending(d => d.ActualTime!.Value)
+                .FirstOrDefault();
+
+            DateTime nextDoseTime;
+            
+            if (lastConfirmedDose != null)
+            {
+                // Si hay dosis confirmada, la siguiente empieza desde ahí + frecuencia
+                nextDoseTime = lastConfirmedDose.ActualTime!.Value.AddMinutes(medication.TotalFrequencyInMinutes);
+                System.Diagnostics.Debug.WriteLine($"  ✅ Última confirmada: {lastConfirmedDose.ActualTime:HH:mm}");
+                System.Diagnostics.Debug.WriteLine($"  ➡️ Siguiente dosis: {nextDoseTime:HH:mm}");
+            }
+            else
+            {
+                // Si no hay confirmadas, usar la primera dosis programada original
+                nextDoseTime = medication.FirstDoseTime;
+                if (nextDoseTime < DateTime.Now)
+                {
+                    nextDoseTime = DateTime.Now.Date.Add(medication.FirstDoseTime.TimeOfDay);
+                    if (nextDoseTime < DateTime.Now)
+                    {
+                        nextDoseTime = nextDoseTime.AddDays(1);
+                    }
+                }
+                System.Diagnostics.Debug.WriteLine($"  ℹ️ No hay confirmadas, usar FirstDoseTime: {nextDoseTime:HH:mm}");
+            }
+
+            // 2. Eliminar todas las dosis PENDIENTES (no confirmadas) de este medicamento
+            var pendingDoses = MedicationDoses
+                .Where(d => d.MedicationId == medicationId && !d.IsConfirmed)
+                .ToList();
+            
+            System.Diagnostics.Debug.WriteLine($"  🗑️ Eliminando {pendingDoses.Count} dosis pendientes...");
+            
+            foreach (var dose in pendingDoses)
+            {
+                await _databaseService.DeleteDoseAsync(dose);
+                MedicationDoses.Remove(dose);
+            }
+
+            // 3. Regenerar dosis desde nextDoseTime hasta días de cobertura
+            var endDate = DateTime.Now.AddDays(days);
+            var currentDose = nextDoseTime;
+            int count = 0;
+
+            System.Diagnostics.Debug.WriteLine($"  ➕ Generando nuevas dosis hasta {endDate:yyyy-MM-dd HH:mm}...");
+
+            while (currentDose < endDate)
+            {
+                var newDose = new MedicationDose
+                {
+                    MedicationId = medication.Id,
+                    Medication = medication,
+                    ScheduledTime = currentDose,
+                    IsConfirmed = false,
+                    IsEdited = false
+                };
+
+                await _databaseService.SaveDoseAsync(newDose);
+                MedicationDoses.Add(newDose);
+                count++;
+                
+                currentDose = currentDose.AddMinutes(medication.TotalFrequencyInMinutes);
+            }
+
+            System.Diagnostics.Debug.WriteLine($"  ✅ Generadas {count} nuevas dosis");
         }
 
         public async Task EditDoseTimeAsync(MedicationDose dose, DateTime newTime)
@@ -253,6 +338,12 @@ namespace TrackingApp.Services
         public async Task SaveMedicationHistoryAsync(MedicationHistory history)
         {
             await _databaseService.SaveMedicationHistoryAsync(history);
+        }
+
+        public async Task UpdateMedicationHistoryAsync(MedicationHistory history)
+        {
+            await _databaseService.SaveMedicationHistoryAsync(history);
+            // La UI se actualiza automáticamente gracias a ObservableCollection
         }
 
         public async Task AddMedicationHistoryAsync(Medication medication)

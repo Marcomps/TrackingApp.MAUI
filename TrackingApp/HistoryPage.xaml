@@ -107,6 +107,14 @@
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
                                     <SwipeView>
+                                        <SwipeView.LeftItems>
+                                            <SwipeItems>
+                                                <SwipeItem Text="Editar"
+                                                           BackgroundColor="#2196F3"
+                                                           Command="{Binding Source={x:Reference MedicationHistoryCollectionView}, Path=BindingContext.EditMedicationHistoryCommand}"
+                                                           CommandParameter="{Binding .}"/>
+                                            </SwipeItems>
+                                        </SwipeView.LeftItems>
                                         <SwipeView.RightItems>
                                             <SwipeItems>
                                                 <SwipeItem Text="Eliminar"
