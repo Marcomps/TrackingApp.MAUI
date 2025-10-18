@@ -105,6 +105,7 @@ namespace TrackingApp.ViewModels
 
         public ICommand DeleteMedicationHistoryCommand { get; }
         public ICommand DeleteFoodHistoryCommand { get; }
+        public ICommand EditFoodCommand { get; }
         public ICommand RefreshCommand { get; }
 
         public HistoryViewModel()
@@ -132,6 +133,7 @@ namespace TrackingApp.ViewModels
 
             DeleteMedicationHistoryCommand = new Command<MedicationHistory>(DeleteMedicationHistory);
             DeleteFoodHistoryCommand = new Command<FoodEntry>(DeleteFoodHistory);
+            EditFoodCommand = new Command<FoodEntry>(EditFood);
             RefreshCommand = new Command(async () => await LoadHistoryAsync());
 
             LoadHistoryAsync();
@@ -297,6 +299,60 @@ namespace TrackingApp.ViewModels
                 UpdateAvailableFilters();
                 ApplyFilters();
                 await Application.Current?.MainPage?.DisplayAlert("Eliminado", "Registro de alimento eliminado", "OK")!;
+            }
+        }
+
+        private async void EditFood(FoodEntry food)
+        {
+            // Prompt para editar tipo
+            var newType = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Alimento",
+                "Tipo de alimento:",
+                initialValue: food.FoodType)!;
+
+            if (string.IsNullOrWhiteSpace(newType)) return;
+
+            // Prompt para editar cantidad
+            var newAmountStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Cantidad",
+                "Cantidad:",
+                initialValue: food.Amount.ToString(),
+                keyboard: Keyboard.Numeric)!;
+
+            if (string.IsNullOrWhiteSpace(newAmountStr)) return;
+
+            // Prompt para editar hora
+            var newTimeStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Hora",
+                "Hora (formato 12h, ej: 09:30 AM o 02:45 PM):",
+                initialValue: food.Time.ToString("hh:mm tt"))!;
+
+            if (string.IsNullOrWhiteSpace(newTimeStr)) return;
+
+            if (double.TryParse(newAmountStr, out double newAmount))
+            {
+                // Intentar parsear la hora
+                DateTime newTime;
+                if (DateTime.TryParse(newTimeStr, out var parsedTime))
+                {
+                    newTime = food.Time.Date + parsedTime.TimeOfDay;
+                }
+                else
+                {
+                    await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK")!;
+                    return;
+                }
+
+                food.FoodType = newType;
+                food.Amount = newAmount;
+                food.Time = newTime;
+                await _dataService.UpdateFoodEntryAsync(food);
+                
+                // Actualizar la lista local y los filtros
+                UpdateAvailableFilters();
+                ApplyFilters();
+                
+                await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Alimento actualizado (incluye nueva hora)", "OK")!;
             }
         }
 
