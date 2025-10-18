@@ -58,58 +58,6 @@
                             TextColor="White"
                             FontAttributes="Bold"/>
                     
-                    <!-- Filtro de Historial -->
-                    <HorizontalStackLayout Spacing="10" Margin="0,10,0,5">
-                        <Label Text="Mostrar:" 
-                               VerticalOptions="Center"
-                               TextColor="#2a3d66"
-                               FontSize="14"
-                               FontAttributes="Bold"/>
-                        <Picker ItemsSource="{Binding HistoryRanges}"
-                                SelectedItem="{Binding SelectedHistoryRange}"
-                                TextColor="Black"
-                                BackgroundColor="#f5f5f5"
-                                HorizontalOptions="FillAndExpand"/>
-                    </HorizontalStackLayout>
-
-                    <Label Text="Historial de Alimentos:" 
-                           FontAttributes="Bold" 
-                           FontSize="16"
-                           TextColor="#2a3d66"
-                           Margin="0,10,0,5"/>
-                    <CollectionView ItemsSource="{Binding FilteredFoodEntries}" MaximumHeightRequest="200">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate>
-                                <SwipeView>
-                                    <SwipeView.LeftItems>
-                                        <SwipeItems>
-                                            <SwipeItem Text="Editar"
-                                                       BackgroundColor="#2196F3"
-                                                       Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=EditFoodCommand}"
-                                                       CommandParameter="{Binding .}"/>
-                                        </SwipeItems>
-                                    </SwipeView.LeftItems>
-                                    <SwipeView.RightItems>
-                                        <SwipeItems>
-                                            <SwipeItem Text="Eliminar"
-                                                       BackgroundColor="#f44336"
-                                                       Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=DeleteFoodCommand}"
-                                                       CommandParameter="{Binding .}"/>
-                                        </SwipeItems>
-                                    </SwipeView.RightItems>
-                                    <Frame BackgroundColor="#e8f5e9" 
-                                           Padding="10" 
-                                           Margin="0,2" 
-                                           CornerRadius="5"
-                                           BorderColor="#4CAF50">
-                                        <Label Text="{Binding DisplayText}" 
-                                               TextColor="Black"
-                                               FontSize="14"/>
-                                    </Frame>
-                                </SwipeView>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
                 </VerticalStackLayout>
             </Frame>
 

@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
              x:Class="TrackingApp.HistoryPage"
-             Title="Historial de Medicamentos">
+             Title="Historial">
 
     <ContentPage.BindingContext>
         <viewmodels:HistoryViewModel />
@@ -12,48 +12,96 @@
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="20">
 
-            <!-- Historial de Medicamentos Confirmados -->
+            <!-- FILTROS GENERALES -->
+            <Frame BackgroundColor="#2a3d66" Padding="15" CornerRadius="8" HasShadow="True">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="🔍 Filtros" 
+                           FontSize="18" 
+                           FontAttributes="Bold" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                    
+                    <!-- Filtro por perfil -->
+                    <HorizontalStackLayout Spacing="10">
+                        <Label Text="Perfil:" 
+                               TextColor="White" 
+                               VerticalOptions="Center"
+                               WidthRequest="80"/>
+                        <Picker ItemsSource="{Binding Profiles}"
+                                SelectedItem="{Binding SelectedProfileFilter}"
+                                TextColor="White"
+                                BackgroundColor="#1a2540"
+                                HorizontalOptions="FillAndExpand"/>
+                    </HorizontalStackLayout>
+
+                    <!-- Filtro por rango de fechas -->
+                    <HorizontalStackLayout Spacing="10">
+                        <Label Text="Período:" 
+                               TextColor="White" 
+                               VerticalOptions="Center"
+                               WidthRequest="80"/>
+                        <Picker ItemsSource="{Binding DateRangeOptions}"
+                                SelectedItem="{Binding SelectedDateRangeFilter}"
+                                TextColor="White"
+                                BackgroundColor="#1a2540"
+                                HorizontalOptions="FillAndExpand"/>
+                    </HorizontalStackLayout>
+
+                    <Button Text="🔄 Actualizar"
+                            Command="{Binding RefreshCommand}"
+                            BackgroundColor="#4CAF50"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            HorizontalOptions="Center"
+                            WidthRequest="150"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- HISTORIAL DE MEDICAMENTOS -->
             <Frame BackgroundColor="White" Padding="15" CornerRadius="8" HasShadow="True">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="📜 Historial de Medicamentos Confirmados" 
-                           FontSize="24" 
+                    <Label Text="💊 Historial de Medicamentos" 
+                           FontSize="22" 
                            FontAttributes="Bold" 
                            TextColor="#2a3d66"
                            HorizontalOptions="Center"/>
                     
-                    <Label Text="Todas las dosis confirmadas aparecen aquí" 
-                           FontSize="14"
-                           TextColor="#666"
-                           HorizontalOptions="Center"
-                           HorizontalTextAlignment="Center"
-                           Margin="0,0,0,15"/>
+                    <!-- Filtros específicos de medicamentos -->
+                    <Frame BackgroundColor="#f5f5f5" Padding="10" CornerRadius="5" HasShadow="False">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Filtros de medicamentos:" 
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="#2a3d66"/>
+                            
+                            <HorizontalStackLayout Spacing="10">
+                                <Label Text="Medicamento:" 
+                                       VerticalOptions="Center"
+                                       TextColor="Black"
+                                       WidthRequest="100"/>
+                                <Picker ItemsSource="{Binding MedicationNames}"
+                                        SelectedItem="{Binding SelectedMedicationFilter}"
+                                        TextColor="Black"
+                                        BackgroundColor="White"
+                                        HorizontalOptions="FillAndExpand"/>
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </Frame>
                     
-                    <Label Text="Dosis confirmadas:" 
-                           FontAttributes="Bold" 
-                           FontSize="16"
-                           TextColor="#4CAF50"
-                           Margin="0,10,0,5"/>
-                    
-                    <ScrollView MaximumHeightRequest="600">
-                        <CollectionView ItemsSource="{Binding MedicationHistory}"
-                                        x:Name="HistoryCollectionView">
+                    <ScrollView MaximumHeightRequest="400">
+                        <CollectionView ItemsSource="{Binding FilteredMedicationHistory}"
+                                        x:Name="MedicationHistoryCollectionView">
                             <CollectionView.EmptyView>
                                 <StackLayout Padding="20" VerticalOptions="Center">
                                     <Label Text="📭" 
                                            FontSize="48"
                                            HorizontalOptions="Center"
                                            Margin="0,20,0,10"/>
-                                    <Label Text="No hay dosis confirmadas aún"
+                                    <Label Text="No hay dosis confirmadas"
                                            TextColor="#999"
                                            FontAttributes="Italic"
                                            FontSize="16"
                                            HorizontalOptions="Center"/>
-                                    <Label Text="Las dosis confirmadas aparecerán aquí automáticamente"
-                                           TextColor="#ccc"
-                                           FontSize="12"
-                                           HorizontalOptions="Center"
-                                           HorizontalTextAlignment="Center"
-                                           Margin="10,5,10,0"/>
                                 </StackLayout>
                             </CollectionView.EmptyView>
                             <CollectionView.ItemTemplate>
@@ -63,7 +111,7 @@
                                             <SwipeItems>
                                                 <SwipeItem Text="Eliminar"
                                                            BackgroundColor="#f44336"
-                                                           Command="{Binding Source={x:Reference HistoryCollectionView}, Path=BindingContext.DeleteHistoryCommand}"
+                                                           Command="{Binding Source={x:Reference MedicationHistoryCollectionView}, Path=BindingContext.DeleteMedicationHistoryCommand}"
                                                            CommandParameter="{Binding .}"/>
                                             </SwipeItems>
                                         </SwipeView.RightItems>
@@ -112,18 +160,152 @@
                         </CollectionView>
                     </ScrollView>
 
-                    <!-- Estadísticas opcionales -->
+                    <!-- Estadísticas de medicamentos -->
                     <Frame BackgroundColor="#f0f0f0" 
                            Padding="15" 
                            CornerRadius="8" 
-                           Margin="0,15,0,0"
+                           Margin="0,10,0,0"
                            HasShadow="False">
                         <VerticalStackLayout Spacing="5">
-                            <Label Text="📊 Estadísticas" 
+                            <Label Text="📊 Estadísticas de Medicamentos" 
                                    FontAttributes="Bold"
                                    FontSize="14"
                                    TextColor="#2a3d66"/>
                             <Label Text="{Binding TotalConfirmedDoses, StringFormat='Total de dosis confirmadas: {0}'}"
+                                   FontSize="12"
+                                   TextColor="#666"/>
+                        </VerticalStackLayout>
+                    </Frame>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- HISTORIAL DE ALIMENTOS -->
+            <Frame BackgroundColor="White" Padding="15" CornerRadius="8" HasShadow="True">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="🍽️ Historial de Alimentos" 
+                           FontSize="22" 
+                           FontAttributes="Bold" 
+                           TextColor="#2a3d66"
+                           HorizontalOptions="Center"/>
+                    
+                    <!-- Filtros específicos de alimentos -->
+                    <Frame BackgroundColor="#f5f5f5" Padding="10" CornerRadius="5" HasShadow="False">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Filtros de alimentos:" 
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="#2a3d66"/>
+                            
+                            <HorizontalStackLayout Spacing="10">
+                                <Label Text="Tipo:" 
+                                       VerticalOptions="Center"
+                                       TextColor="Black"
+                                       WidthRequest="100"/>
+                                <Picker ItemsSource="{Binding FoodTypes}"
+                                        SelectedItem="{Binding SelectedFoodTypeFilter}"
+                                        TextColor="Black"
+                                        BackgroundColor="White"
+                                        HorizontalOptions="FillAndExpand"/>
+                            </HorizontalStackLayout>
+
+                            <HorizontalStackLayout Spacing="10">
+                                <Label Text="Unidad:" 
+                                       VerticalOptions="Center"
+                                       TextColor="Black"
+                                       WidthRequest="100"/>
+                                <Picker ItemsSource="{Binding Units}"
+                                        SelectedItem="{Binding SelectedUnitFilter}"
+                                        TextColor="Black"
+                                        BackgroundColor="White"
+                                        HorizontalOptions="FillAndExpand"/>
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </Frame>
+                    
+                    <ScrollView MaximumHeightRequest="400">
+                        <CollectionView ItemsSource="{Binding FilteredFoodHistory}"
+                                        x:Name="FoodHistoryCollectionView">
+                            <CollectionView.EmptyView>
+                                <StackLayout Padding="20" VerticalOptions="Center">
+                                    <Label Text="🍽️" 
+                                           FontSize="48"
+                                           HorizontalOptions="Center"
+                                           Margin="0,20,0,10"/>
+                                    <Label Text="No hay registros de alimentos"
+                                           TextColor="#999"
+                                           FontAttributes="Italic"
+                                           FontSize="16"
+                                           HorizontalOptions="Center"/>
+                                </StackLayout>
+                            </CollectionView.EmptyView>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <SwipeView>
+                                        <SwipeView.RightItems>
+                                            <SwipeItems>
+                                                <SwipeItem Text="Eliminar"
+                                                           BackgroundColor="#f44336"
+                                                           Command="{Binding Source={x:Reference FoodHistoryCollectionView}, Path=BindingContext.DeleteFoodHistoryCommand}"
+                                                           CommandParameter="{Binding .}"/>
+                                            </SwipeItems>
+                                        </SwipeView.RightItems>
+                                        <Frame BackgroundColor="#fff3e0" 
+                                               Padding="12" 
+                                               Margin="0,5" 
+                                               CornerRadius="8" 
+                                               BorderColor="#FF9800"
+                                               HasShadow="False">
+                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                                <Label Grid.Column="0" 
+                                                       Text="{Binding FormattedTime}" 
+                                                       FontAttributes="Bold"
+                                                       FontSize="18"
+                                                       TextColor="#FF9800"
+                                                       VerticalOptions="Center"/>
+                                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                                    <Label Text="{Binding FoodType}" 
+                                                           FontAttributes="Bold"
+                                                           FontSize="16"
+                                                           TextColor="Black"/>
+                                                    <Label Text="{Binding DisplayAmount}" 
+                                                           FontSize="13"
+                                                           TextColor="#666"/>
+                                                    <Label Text="{Binding FormattedDate}" 
+                                                           FontSize="12" 
+                                                           TextColor="#888"/>
+                                                </VerticalStackLayout>
+                                                <Label Grid.Column="2" 
+                                                       Text="{Binding UserType}"
+                                                       FontSize="13"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#2196F3"
+                                                       VerticalOptions="Center"/>
+                                            </Grid>
+                                        </Frame>
+                                    </SwipeView>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </ScrollView>
+
+                    <!-- Estadísticas de alimentos -->
+                    <Frame BackgroundColor="#f0f0f0" 
+                           Padding="15" 
+                           CornerRadius="8" 
+                           Margin="0,10,0,0"
+                           HasShadow="False">
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="📊 Estadísticas de Alimentos" 
+                                   FontAttributes="Bold"
+                                   FontSize="14"
+                                   TextColor="#2a3d66"/>
+                            <Label Text="{Binding TotalFoodEntries, StringFormat='Total de registros: {0}'}"
+                                   FontSize="12"
+                                   TextColor="#666"/>
+                            <Label Text="{Binding TotalFoodAmount, StringFormat='Cantidad total: {0:F1}'}"
+                                   FontSize="12"
+                                   TextColor="#666"/>
+                            <Label Text="{Binding MostFrequentFoodType, StringFormat='Tipo más frecuente: {0}'}"
                                    FontSize="12"
                                    TextColor="#666"/>
                         </VerticalStackLayout>

@@ -15,5 +15,14 @@ namespace TrackingApp.Models
 
         [Ignore]
         public string DisplayText => $"{Amount} {Unit} de {FoodType} a las {Time:hh:mm tt}";
+        
+        [Ignore]
+        public string DisplayAmount => $"{Amount} {Unit}";
+        
+        [Ignore]
+        public string FormattedTime => Time.ToString("hh:mm tt");
+        
+        [Ignore]
+        public string FormattedDate => Time.ToString("dd/MM/yyyy");
     }
 }
