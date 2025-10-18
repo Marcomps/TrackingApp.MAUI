@@ -387,5 +387,11 @@ namespace TrackingApp.Services
             await _databaseService.DeleteAppointmentAsync(appointment);
             Appointments.Remove(appointment);
         }
+
+        // Historial
+        public async Task<List<MedicationHistory>> GetAllMedicationHistoryAsync()
+        {
+            return await _databaseService.GetAllMedicationHistoryAsync();
+        }
     }
 }
