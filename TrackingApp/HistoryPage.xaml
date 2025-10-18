@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
+             x:Class="TrackingApp.HistoryPage"
+             Title="Historial de Medicamentos">
+
+    <ContentPage.BindingContext>
+        <viewmodels:HistoryViewModel />
+    </ContentPage.BindingContext>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+
+            <!-- Historial de Medicamentos Confirmados -->
+            <Frame BackgroundColor="White" Padding="15" CornerRadius="8" HasShadow="True">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="📜 Historial de Medicamentos Confirmados" 
+                           FontSize="24" 
+                           FontAttributes="Bold" 
+                           TextColor="#2a3d66"
+                           HorizontalOptions="Center"/>
+                    
+                    <Label Text="Todas las dosis confirmadas aparecen aquí" 
+                           FontSize="14"
+                           TextColor="#666"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center"
+                           Margin="0,0,0,15"/>
+                    
+                    <Label Text="Dosis confirmadas:" 
+                           FontAttributes="Bold" 
+                           FontSize="16"
+                           TextColor="#4CAF50"
+                           Margin="0,10,0,5"/>
+                    
+                    <ScrollView MaximumHeightRequest="600">
+                        <CollectionView ItemsSource="{Binding MedicationHistory}"
+                                        x:Name="HistoryCollectionView">
+                            <CollectionView.EmptyView>
+                                <StackLayout Padding="20" VerticalOptions="Center">
+                                    <Label Text="📭" 
+                                           FontSize="48"
+                                           HorizontalOptions="Center"
+                                           Margin="0,20,0,10"/>
+                                    <Label Text="No hay dosis confirmadas aún"
+                                           TextColor="#999"
+                                           FontAttributes="Italic"
+                                           FontSize="16"
+                                           HorizontalOptions="Center"/>
+                                    <Label Text="Las dosis confirmadas aparecerán aquí automáticamente"
+                                           TextColor="#ccc"
+                                           FontSize="12"
+                                           HorizontalOptions="Center"
+                                           HorizontalTextAlignment="Center"
+                                           Margin="10,5,10,0"/>
+                                </StackLayout>
+                            </CollectionView.EmptyView>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <SwipeView>
+                                        <SwipeView.RightItems>
+                                            <SwipeItems>
+                                                <SwipeItem Text="Eliminar"
+                                                           BackgroundColor="#f44336"
+                                                           Command="{Binding Source={x:Reference HistoryCollectionView}, Path=BindingContext.DeleteHistoryCommand}"
+                                                           CommandParameter="{Binding .}"/>
+                                            </SwipeItems>
+                                        </SwipeView.RightItems>
+                                        <Frame BackgroundColor="#e8f5e9" 
+                                               Padding="12" 
+                                               Margin="0,5" 
+                                               CornerRadius="8" 
+                                               BorderColor="#4CAF50"
+                                               HasShadow="False">
+                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                                <Label Grid.Column="0" 
+                                                       Text="{Binding FormattedTime}" 
+                                                       FontAttributes="Bold"
+                                                       FontSize="18"
+                                                       TextColor="#4CAF50"
+                                                       VerticalOptions="Center"/>
+                                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                                    <HorizontalStackLayout Spacing="8">
+                                                        <Label Text="{Binding MedicationName}" 
+                                                               FontAttributes="Bold"
+                                                               FontSize="16"
+                                                               TextColor="Black"/>
+                                                        <Label Text="✓" 
+                                                               FontSize="18"
+                                                               TextColor="#4CAF50"
+                                                               FontAttributes="Bold"/>
+                                                    </HorizontalStackLayout>
+                                                    <Label Text="{Binding Dose}" 
+                                                           FontSize="13"
+                                                           TextColor="#666"/>
+                                                    <Label Text="{Binding FormattedDate}" 
+                                                           FontSize="12" 
+                                                           TextColor="#888"/>
+                                                </VerticalStackLayout>
+                                                <Label Grid.Column="2" 
+                                                       Text="{Binding UserType}"
+                                                       FontSize="13"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#2196F3"
+                                                       VerticalOptions="Center"/>
+                                            </Grid>
+                                        </Frame>
+                                    </SwipeView>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </ScrollView>
+
+                    <!-- Estadísticas opcionales -->
+                    <Frame BackgroundColor="#f0f0f0" 
+                           Padding="15" 
+                           CornerRadius="8" 
+                           Margin="0,15,0,0"
+                           HasShadow="False">
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="📊 Estadísticas" 
+                                   FontAttributes="Bold"
+                                   FontSize="14"
+                                   TextColor="#2a3d66"/>
+                            <Label Text="{Binding TotalConfirmedDoses, StringFormat='Total de dosis confirmadas: {0}'}"
+                                   FontSize="12"
+                                   TextColor="#666"/>
+                        </VerticalStackLayout>
+                    </Frame>
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

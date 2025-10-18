@@ -444,13 +444,34 @@ namespace TrackingApp.ViewModels
 
             if (string.IsNullOrWhiteSpace(newAmountStr)) return;
 
+            // Prompt para editar hora
+            var newTimeStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Hora",
+                "Hora (formato 12h, ej: 09:30 AM o 02:45 PM):",
+                initialValue: food.Time.ToString("hh:mm tt"))!;
+
+            if (string.IsNullOrWhiteSpace(newTimeStr)) return;
+
             if (double.TryParse(newAmountStr, out double newAmount))
             {
+                // Intentar parsear la hora
+                DateTime newTime;
+                if (DateTime.TryParse(newTimeStr, out var parsedTime))
+                {
+                    newTime = food.Time.Date + parsedTime.TimeOfDay;
+                }
+                else
+                {
+                    await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK")!;
+                    return;
+                }
+
                 food.FoodType = newType;
                 food.Amount = newAmount;
+                food.Time = newTime;
                 await _dataService.UpdateFoodEntryAsync(food);
                 OnPropertyChanged(nameof(FilteredFoodEntries));
-                await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Alimento actualizado", "OK")!;
+                await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Alimento actualizado (incluye nueva hora)", "OK")!;
             }
         }
 
@@ -502,6 +523,12 @@ namespace TrackingApp.ViewModels
                 keyboard: Keyboard.Numeric,
                 initialValue: medication.FrequencyMinutes.ToString())!;
 
+            // Prompt para editar hora de primera dosis
+            var newFirstDoseTimeStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Hora Primera Dosis",
+                "Hora de primera dosis (formato 12h, ej: 09:00 AM):",
+                initialValue: medication.FirstDoseTime.ToString("hh:mm tt"))!;
+
             int frequencyHours = 0;
             int frequencyMinutes = 0;
 
@@ -526,16 +553,33 @@ namespace TrackingApp.ViewModels
                 return;
             }
 
+            // Parsear la nueva hora de primera dosis
+            DateTime newFirstDoseTime;
+            if (!string.IsNullOrWhiteSpace(newFirstDoseTimeStr) && DateTime.TryParse(newFirstDoseTimeStr, out var parsedTime))
+            {
+                newFirstDoseTime = medication.FirstDoseTime.Date + parsedTime.TimeOfDay;
+            }
+            else
+            {
+                await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK")!;
+                return;
+            }
+
             medication.Name = newName;
             medication.Dose = newDose;
             medication.FrequencyHours = frequencyHours;
             medication.FrequencyMinutes = frequencyMinutes;
+            medication.FirstDoseTime = newFirstDoseTime;
 
             await _dataService.UpdateMedicationAsync(medication);
+            
+            // Regenerar dosis con la nueva configuración usando los días actuales seleccionados
+            await _dataService.RegenerateDosesAsync(SelectedDays);
+            
             OnPropertyChanged(nameof(FilteredMedications));
             OnPropertyChanged(nameof(FilteredCombinedEvents));
             OnPropertyChanged(nameof(GroupedDoses));
-            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Medicamento actualizado", "OK")!;
+            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Medicamento actualizado y dosis regeneradas", "OK")!;
         }
 
         private async void ResetAllData()
@@ -1001,13 +1045,49 @@ namespace TrackingApp.ViewModels
                 "Ubicación:",
                 initialValue: appointment.Location)!;
 
+            // Prompt para editar fecha
+            var newDateStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Fecha",
+                "Fecha (dd/MM/yyyy):",
+                initialValue: appointment.AppointmentDate.ToString("dd/MM/yyyy"))!;
+
+            // Prompt para editar hora
+            var newTimeStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Hora",
+                "Hora (formato 12h, ej: 09:30 AM):",
+                initialValue: appointment.AppointmentDate.ToString("hh:mm tt"))!;
+
+            // Parsear fecha y hora
+            DateTime newDate;
+            if (!string.IsNullOrWhiteSpace(newDateStr) && DateTime.TryParseExact(newDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out newDate))
+            {
+                // Fecha válida
+            }
+            else
+            {
+                await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de fecha inválido. Use dd/MM/yyyy", "OK")!;
+                return;
+            }
+
+            TimeSpan newTime;
+            if (!string.IsNullOrWhiteSpace(newTimeStr) && DateTime.TryParse(newTimeStr, out var parsedTime))
+            {
+                newTime = parsedTime.TimeOfDay;
+            }
+            else
+            {
+                await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK")!;
+                return;
+            }
+
             appointment.Title = newTitle;
             appointment.Doctor = newDoctor ?? string.Empty;
             appointment.Location = newLocation ?? string.Empty;
+            appointment.AppointmentDate = newDate.Add(newTime);
 
             await _dataService.UpdateAppointmentAsync(appointment);
             OnPropertyChanged(nameof(FilteredAppointments));
-            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizada", "Cita actualizada correctamente", "OK")!;
+            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizada", "Cita actualizada correctamente (incluye fecha y hora)", "OK")!;
         }
 
         private async void DeleteAppointment(MedicalAppointment appointment)
