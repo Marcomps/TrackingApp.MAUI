@@ -14,6 +14,10 @@ namespace TrackingApp.Models
         public string Doctor { get; set; } = string.Empty;
         public string Notes { get; set; } = string.Empty;
         public string UserType { get; set; } = string.Empty;
+        
+        // Nuevas propiedades para confirmar citas
+        public bool IsConfirmed { get; set; }
+        public DateTime? ConfirmedDate { get; set; }
 
         // Propiedad calculada para el display
         [Ignore]

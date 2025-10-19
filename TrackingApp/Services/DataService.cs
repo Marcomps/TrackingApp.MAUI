@@ -478,6 +478,13 @@ namespace TrackingApp.Services
             await _databaseService.DeleteAppointmentAsync(appointment);
             Appointments.Remove(appointment);
         }
+        
+        public async Task ConfirmAppointmentAsync(MedicalAppointment appointment)
+        {
+            appointment.IsConfirmed = true;
+            appointment.ConfirmedDate = DateTime.Now;
+            await _databaseService.SaveAppointmentAsync(appointment);
+        }
 
         // Historial
         public async Task<List<MedicationHistory>> GetAllMedicationHistoryAsync()

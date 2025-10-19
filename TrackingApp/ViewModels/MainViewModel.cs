@@ -11,7 +11,7 @@ namespace TrackingApp.ViewModels
     {
         private readonly DataService _dataService;
         private string _selectedUserType = "Bebé";
-        private int _selectedDays = 3;
+        private int _selectedDays = 1;
         private int? _selectedMedicationId;
         private Medication? _selectedMedication;
         private string _selectedHistoryRange = "Esta semana";
@@ -40,6 +40,7 @@ namespace TrackingApp.ViewModels
             AddAppointmentCommand = new Command(AddAppointment);
             EditAppointmentCommand = new Command<MedicalAppointment>(EditAppointment);
             DeleteAppointmentCommand = new Command<MedicalAppointment>(DeleteAppointment);
+            ConfirmAppointmentCommand = new Command<MedicalAppointment>(ConfirmAppointment);
 
             // Subscribe to collection changes
             _dataService.Medications.CollectionChanged += (s, e) => UpdateSelectedMedication();
@@ -321,6 +322,7 @@ namespace TrackingApp.ViewModels
         public ICommand AddAppointmentCommand { get; }
         public ICommand EditAppointmentCommand { get; }
         public ICommand DeleteAppointmentCommand { get; }
+        public ICommand ConfirmAppointmentCommand { get; }
 
         private async void AddFood()
         {
@@ -775,10 +777,17 @@ namespace TrackingApp.ViewModels
 
             if (confirm)
             {
+                int medicationId = history.MedicationId;
                 await _dataService.DeleteMedicationHistoryAsync(history);
+                
+                // 🔄 IMPORTANTE: Recalcular las siguientes dosis después de borrar del historial
+                System.Diagnostics.Debug.WriteLine($"🔄 Recalculando dosis después de borrar historial de {history.MedicationName}...");
+                await _dataService.RecalculateNextDosesFromLastConfirmedAsync(medicationId, SelectedDays);
+                
                 _dataService.RebuildCombinedEvents();
+                NotifyDosesChanged();
                 OnPropertyChanged(nameof(FilteredMedicationHistory));
-                OnPropertyChanged(nameof(FilteredCombinedEvents));
+                OnPropertyChanged(nameof(GroupedDoses));
             }
         }
 
@@ -987,6 +996,38 @@ namespace TrackingApp.ViewModels
             }
         }
 
+        // Citas pendientes (no confirmadas)
+        public ObservableCollection<MedicalAppointment> PendingAppointments
+        {
+            get
+            {
+                var (startDate, endDate) = GetDateRange();
+                var pending = Appointments
+                    .Where(a => !a.IsConfirmed)
+                    .Where(a => a.AppointmentDate >= startDate && a.AppointmentDate <= endDate)
+                    .OrderBy(a => a.AppointmentDate)
+                    .ToList();
+                
+                return new ObservableCollection<MedicalAppointment>(pending);
+            }
+        }
+
+        // Citas confirmadas (historial)
+        public ObservableCollection<MedicalAppointment> ConfirmedAppointments
+        {
+            get
+            {
+                var (startDate, endDate) = GetDateRange();
+                var confirmed = Appointments
+                    .Where(a => a.IsConfirmed)
+                    .Where(a => a.AppointmentDate >= startDate && a.AppointmentDate <= endDate)
+                    .OrderByDescending(a => a.ConfirmedDate ?? a.AppointmentDate)
+                    .ToList();
+                
+                return new ObservableCollection<MedicalAppointment>(confirmed);
+            }
+        }
+
         private string _appointmentTitle = string.Empty;
         public string AppointmentTitle
         {
@@ -1081,6 +1122,8 @@ namespace TrackingApp.ViewModels
             AppointmentDoctor = string.Empty;
 
             OnPropertyChanged(nameof(FilteredAppointments));
+            OnPropertyChanged(nameof(PendingAppointments));
+            OnPropertyChanged(nameof(ConfirmedAppointments));
             await Application.Current?.MainPage?.DisplayAlert("✅ Cita agregada", "La cita médica ha sido registrada", "OK")!;
         }
 
@@ -1145,6 +1188,8 @@ namespace TrackingApp.ViewModels
 
             await _dataService.UpdateAppointmentAsync(appointment);
             OnPropertyChanged(nameof(FilteredAppointments));
+            OnPropertyChanged(nameof(PendingAppointments));
+            OnPropertyChanged(nameof(ConfirmedAppointments));
             await Application.Current?.MainPage?.DisplayAlert("✅ Actualizada", "Cita actualizada correctamente (incluye fecha y hora)", "OK")!;
         }
 
@@ -1159,7 +1204,32 @@ namespace TrackingApp.ViewModels
             {
                 await _dataService.DeleteAppointmentAsync(appointment);
                 OnPropertyChanged(nameof(FilteredAppointments));
+                OnPropertyChanged(nameof(PendingAppointments));
+                OnPropertyChanged(nameof(ConfirmedAppointments));
                 await Application.Current?.MainPage?.DisplayAlert("Eliminada", "Cita eliminada", "OK")!;
+            }
+        }
+
+        private async void ConfirmAppointment(MedicalAppointment appointment)
+        {
+            if (appointment.IsConfirmed)
+            {
+                await Application.Current?.MainPage?.DisplayAlert("Información", "Esta cita ya fue confirmada", "OK")!;
+                return;
+            }
+
+            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+                "Confirmar Cita",
+                $"¿Confirmar la cita '{appointment.Title}'?",
+                "Sí", "No")!;
+
+            if (confirm)
+            {
+                await _dataService.ConfirmAppointmentAsync(appointment);
+                OnPropertyChanged(nameof(FilteredAppointments));
+                OnPropertyChanged(nameof(PendingAppointments));
+                OnPropertyChanged(nameof(ConfirmedAppointments));
+                await Application.Current?.MainPage?.DisplayAlert("✅ Confirmada", $"Cita '{appointment.Title}' confirmada", "OK")!;
             }
         }
 
