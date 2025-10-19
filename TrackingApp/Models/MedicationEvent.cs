@@ -31,6 +31,10 @@ namespace TrackingApp.Models
         // Si el evento fue confirmado (para dosis programadas)
         public bool IsConfirmed { get; set; }
 
+        // Indica si esta es la siguiente dosis que se debe tomar (la más cercana en el futuro)
+        [Ignore]
+        public bool IsNextDose { get; set; }
+
         [Ignore]
         public string DisplayTime => EventTime.ToString("hh:mm tt"); // Formato 12 horas con AM/PM
 

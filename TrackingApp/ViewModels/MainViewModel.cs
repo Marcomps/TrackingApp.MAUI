@@ -48,8 +48,15 @@ namespace TrackingApp.ViewModels
             {
                 OnPropertyChanged(nameof(FilteredMedicationHistory));
                 OnPropertyChanged(nameof(FilteredCombinedEvents));
+                OnPropertyChanged(nameof(PendingDoses));
+                OnPropertyChanged(nameof(ConfirmedDoses));
             };
-            _dataService.CombinedMedicationEvents.CollectionChanged += (s, e) => OnPropertyChanged(nameof(FilteredCombinedEvents));
+            _dataService.CombinedMedicationEvents.CollectionChanged += (s, e) => 
+            {
+                OnPropertyChanged(nameof(FilteredCombinedEvents));
+                OnPropertyChanged(nameof(PendingDoses));
+                OnPropertyChanged(nameof(ConfirmedDoses));
+            };
             _dataService.Appointments.CollectionChanged += (s, e) => OnPropertyChanged(nameof(FilteredAppointments));
             
             // Set first medication as default
@@ -577,7 +584,7 @@ namespace TrackingApp.ViewModels
             await _dataService.RegenerateDosesAsync(SelectedDays);
             
             OnPropertyChanged(nameof(FilteredMedications));
-            OnPropertyChanged(nameof(FilteredCombinedEvents));
+            NotifyDosesChanged();
             OnPropertyChanged(nameof(GroupedDoses));
             await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Medicamento actualizado y dosis regeneradas", "OK")!;
         }
@@ -775,33 +782,80 @@ namespace TrackingApp.ViewModels
             }
         }
 
-        public ObservableCollection<MedicationEvent> FilteredCombinedEvents
+        // NUEVA IMPLEMENTACIÓN: Dosis pendientes ordenadas con la siguiente dosis marcada
+        public ObservableCollection<MedicationEvent> PendingDoses
         {
             get
             {
+                var now = DateTime.Now;
                 var (startDate, endDate) = GetDateRange();
-                System.Diagnostics.Debug.WriteLine($"📅 FilteredCombinedEvents: Rango de fechas {startDate:yyyy-MM-dd HH:mm} a {endDate:yyyy-MM-dd HH:mm}");
-                System.Diagnostics.Debug.WriteLine($"📊 Total eventos en CombinedMedicationEvents: {CombinedMedicationEvents.Count}");
                 
-                // FILTRO CRÍTICO: Solo mostrar dosis NO confirmadas (pendientes)
-                // Las confirmadas se muestran en FilteredMedicationHistory
-                var filtered = CombinedMedicationEvents
-                    .Where(e => !e.IsHistory && !e.IsConfirmed) // Solo pendientes
+                // Filtrar solo eventos pendientes (no confirmados, no históricos)
+                var pending = CombinedMedicationEvents
+                    .Where(e => !e.IsHistory && !e.IsConfirmed)
                     .Where(e => e.EventTime >= startDate && e.EventTime <= endDate);
 
                 // Aplicar filtro de medicamento si hay uno seleccionado
                 if (SelectedMedicationId.HasValue)
                 {
-                    filtered = filtered.Where(e => e.MedicationId == SelectedMedicationId.Value);
-                    System.Diagnostics.Debug.WriteLine($"🔍 Filtrando por medicamento ID: {SelectedMedicationId.Value}");
+                    pending = pending.Where(e => e.MedicationId == SelectedMedicationId.Value);
                 }
 
-                var ordered = filtered.OrderByDescending(e => e.EventTime).ToList();
-                System.Diagnostics.Debug.WriteLine($"✅ Eventos filtrados (solo pendientes): {ordered.Count}");
+                var list = pending.ToList();
+                
+                // Identificar la siguiente dosis (la más cercana en el futuro o presente)
+                var nextDose = list
+                    .Where(e => e.EventTime >= now)
+                    .OrderBy(e => e.EventTime)
+                    .FirstOrDefault();
 
+                // Marcar la siguiente dosis
+                foreach (var dose in list)
+                {
+                    dose.IsNextDose = (nextDose != null && dose.Id == nextDose.Id);
+                }
+
+                // Ordenar: siguiente dosis primero, luego por hora ascendente
+                var ordered = list
+                    .OrderByDescending(e => e.IsNextDose)
+                    .ThenBy(e => e.EventTime)
+                    .ToList();
+
+                System.Diagnostics.Debug.WriteLine($"✅ Dosis pendientes: {ordered.Count}, Siguiente: {nextDose?.EventTime:HH:mm}");
+                
                 return new ObservableCollection<MedicationEvent>(ordered);
             }
         }
+
+        // Historial de dosis confirmadas (ordenadas de más reciente a más antigua)
+        public ObservableCollection<MedicationEvent> ConfirmedDoses
+        {
+            get
+            {
+                var (startDate, endDate) = GetDateRange();
+                
+                // Filtrar solo eventos confirmados/históricos
+                var confirmed = CombinedMedicationEvents
+                    .Where(e => e.IsHistory || e.IsConfirmed)
+                    .Where(e => e.EventTime >= startDate && e.EventTime <= endDate);
+
+                // Aplicar filtro de medicamento si hay uno seleccionado
+                if (SelectedMedicationId.HasValue)
+                {
+                    confirmed = confirmed.Where(e => e.MedicationId == SelectedMedicationId.Value);
+                }
+
+                // Ordenar de más reciente a más antiguo
+                var ordered = confirmed.OrderByDescending(e => e.EventTime).ToList();
+                
+                System.Diagnostics.Debug.WriteLine($"✅ Dosis confirmadas: {ordered.Count}");
+                
+                return new ObservableCollection<MedicationEvent>(ordered);
+            }
+        }
+
+        // DEPRECADO: Mantener por compatibilidad pero redirigir a PendingDoses
+        public ObservableCollection<MedicationEvent> FilteredCombinedEvents => PendingDoses;
 
         private async void ConfirmEvent(MedicationEvent ev)
         {
@@ -857,7 +911,7 @@ namespace TrackingApp.ViewModels
                 await _dataService.RecalculateNextDosesFromLastConfirmedAsync(dose.MedicationId, SelectedDays);
                 
                 _dataService.RebuildCombinedEvents();
-                OnPropertyChanged(nameof(FilteredCombinedEvents));
+                NotifyDosesChanged();
                 OnPropertyChanged(nameof(FilteredMedicationHistory));
                 OnPropertyChanged(nameof(GroupedDoses));
                 
@@ -1112,6 +1166,14 @@ namespace TrackingApp.ViewModels
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        // Helper para notificar cambios en las listas de dosis
+        private void NotifyDosesChanged()
+        {
+            OnPropertyChanged(nameof(FilteredCombinedEvents));
+            OnPropertyChanged(nameof(PendingDoses));
+            OnPropertyChanged(nameof(ConfirmedDoses));
         }
     }
 }

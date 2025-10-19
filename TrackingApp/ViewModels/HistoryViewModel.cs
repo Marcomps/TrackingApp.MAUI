@@ -329,11 +329,16 @@ namespace TrackingApp.ViewModels
             medicationHistory.AdministeredTime = newTime;
             await _dataService.UpdateMedicationHistoryAsync(medicationHistory);
             
+            // 🔄 CRÍTICO: Recalcular las siguientes dosis desde esta dosis editada
+            // Esto asegura que si cambias la hora de una dosis pasada, las futuras se ajusten
+            System.Diagnostics.Debug.WriteLine($"🔄 Recalculando dosis futuras después de editar {medicationHistory.MedicationName}...");
+            await _dataService.RecalculateNextDosesFromLastConfirmedAsync(medicationHistory.MedicationId, 3); // Usar 3 días por defecto
+            
             // Actualizar la lista local y los filtros
             UpdateAvailableFilters();
             ApplyFilters();
             
-            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Hora de administración actualizada", "OK")!;
+            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Hora actualizada y dosis futuras recalculadas", "OK")!;
         }
 
         private async void EditFood(FoodEntry food)

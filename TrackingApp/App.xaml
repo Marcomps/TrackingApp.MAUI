@@ -18,6 +18,12 @@
             <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
             <converters:BoolToHistoryBackgroundConverter x:Key="BoolToHistoryBackgroundConverter" />
             <converters:BoolToHistoryTextColorConverter x:Key="BoolToHistoryTextColorConverter" />
+            
+            <!-- Converters para la siguiente dosis -->
+            <converters:BoolToNextDoseColorConverter x:Key="BoolToNextDoseColorConverter" />
+            <converters:BoolToNextDoseBackgroundConverter x:Key="BoolToNextDoseBackgroundConverter" />
+            <converters:BoolToNextDoseTextConverter x:Key="BoolToNextDoseTextConverter" />
+            <converters:BoolToConfirmButtonColorConverter x:Key="BoolToConfirmButtonColorConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
