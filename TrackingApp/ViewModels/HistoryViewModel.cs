@@ -280,10 +280,19 @@ namespace TrackingApp.ViewModels
 
             if (confirm)
             {
+                // Guardar el medicationId antes de borrar
+                int medicationId = history.MedicationId;
+                
                 await _dataService.DeleteMedicationHistoryAsync(history);
                 _allMedicationHistory.Remove(history);
+                
+                // 🔄 Recalcular las dosis pendientes después de borrar del historial
+                System.Diagnostics.Debug.WriteLine($"🔄 Recalculando dosis pendientes tras borrar historial de medicamento {medicationId}...");
+                await _dataService.RecalculateNextDosesFromLastConfirmedAsync(medicationId, 7); // 7 días por defecto
+                _dataService.RebuildCombinedEvents();
+                
                 ApplyFilters();
-                await Application.Current?.MainPage?.DisplayAlert("Eliminado", "Registro eliminado del historial", "OK")!;
+                await Application.Current?.MainPage?.DisplayAlert("Eliminado", "Registro eliminado del historial y dosis recalculadas", "OK")!;
             }
         }
 
