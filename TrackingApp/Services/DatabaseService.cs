@@ -183,6 +183,14 @@ namespace TrackingApp.Services
             return await _database!.DeleteAsync(history);
         }
 
+        public async Task<int> DeleteMedicationHistoryByMedicationAsync(int medicationId)
+        {
+            await InitializeAsync();
+            return await _database!.ExecuteAsync(
+                "DELETE FROM MedicationHistory WHERE MedicationId = ?", 
+                medicationId);
+        }
+
         // ========== MEDICAL APPOINTMENTS ==========
         
         public async Task<List<MedicalAppointment>> GetAllAppointmentsAsync()

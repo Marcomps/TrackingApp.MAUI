@@ -19,7 +19,7 @@ namespace TrackingApp.ViewModels
         private string _selectedFoodTypeFilter = "Todos";
         private string _selectedUnitFilter = "Todos";
         private string _selectedProfileFilter = "Todos";
-        private string _selectedDateRangeFilter = "Todo el historial";
+        private string _selectedDateRangeFilter = "Hoy";
         private DateTime? _customStartDate;
         private DateTime? _customEndDate;
 
@@ -229,7 +229,7 @@ namespace TrackingApp.ViewModels
             // Filtro por unidad
             if (SelectedUnitFilter != "Todos")
             {
-                filteredFoods = filteredFoods.Where(f => f.Unit == SelectedUnitFilter);
+                filteredFoods = filteredFoods.Where(f => f.Unit.GetDisplayName() == SelectedUnitFilter);
             }
 
             // Filtro por perfil
@@ -315,26 +315,27 @@ namespace TrackingApp.ViewModels
 
         private async void EditMedicationHistory(MedicationHistory medicationHistory)
         {
-            // Solo permitir editar la hora de administración
-            var newTimeStr = await Application.Current?.MainPage?.DisplayPromptAsync(
-                "Editar Hora",
-                $"Hora de administración de {medicationHistory.MedicationName} (formato 12h, ej: 09:30 AM o 02:45 PM):",
-                initialValue: medicationHistory.AdministeredTime.ToString("hh:mm tt"))!;
-
-            if (string.IsNullOrWhiteSpace(newTimeStr)) return;
-
-            // Intentar parsear la hora
-            DateTime newTime;
-            if (DateTime.TryParse(newTimeStr, out var parsedTime))
+            // Usar TimePicker visual como en AddFood
+            var timePicker = new TrackingApp.Views.TimePickerPopup(medicationHistory.AdministeredTime.TimeOfDay);
+            await Application.Current?.MainPage?.Navigation.PushModalAsync(timePicker)!;
+            
+            // Esperar a que se cierre el popup
+            await Task.Run(async () =>
             {
-                newTime = medicationHistory.AdministeredTime.Date + parsedTime.TimeOfDay;
-            }
-            else
+                while (Application.Current?.MainPage?.Navigation.ModalStack.Count > 0)
+                {
+                    await Task.Delay(100);
+                }
+            });
+
+            // Si el usuario canceló, salir
+            if (!timePicker.SelectedTime.HasValue)
             {
-                await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK")!;
                 return;
             }
 
+            // Aplicar la nueva hora al historial
+            DateTime newTime = medicationHistory.AdministeredTime.Date + timePicker.SelectedTime.Value;
             medicationHistory.AdministeredTime = newTime;
             await _dataService.UpdateMedicationHistoryAsync(medicationHistory);
             
@@ -347,7 +348,7 @@ namespace TrackingApp.ViewModels
             UpdateAvailableFilters();
             ApplyFilters();
             
-            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Hora actualizada y dosis futuras recalculadas", "OK")!;
+            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", $"Hora actualizada a {newTime:hh:mm tt} y dosis futuras recalculadas", "OK")!;
         }
 
         private async void EditFood(FoodEntry food)

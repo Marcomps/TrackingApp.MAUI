@@ -20,6 +20,9 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 
+		<!-- Optimizaciones globales para reducir tamaño -->
+		<EnableCompressionInSingleFile Condition="'$(Configuration)'=='Release'">true</EnableCompressionInSingleFile>
+
 		<!-- Display name -->
 		<ApplicationTitle>Tracking App</ApplicationTitle>
 
@@ -42,7 +45,37 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
-	  <RunAOTCompilation>True</RunAOTCompilation>
+	  <RunAOTCompilation>False</RunAOTCompilation>
+	  <PublishTrimmed>False</PublishTrimmed>
+	</PropertyGroup>
+
+	<!-- ✅ OPTIMIZACIONES PARA RELEASE - AOT + TRIMMING AGRESIVO + ARM64 -->
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|AnyCPU'">
+		<!-- AOT Compilation - Mejora rendimiento hasta 30% -->
+		<RunAOTCompilation>True</RunAOTCompilation>
+		
+		<!-- Trimming agresivo - Reduce tamaño del APK eliminando código no usado -->
+		<PublishTrimmed>True</PublishTrimmed>
+		<TrimMode>full</TrimMode>
+		
+		<!-- Solo ARM64 - 99% de dispositivos Android modernos -->
+		<RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
+		
+		<!-- Optimizaciones adicionales para reducir tamaño -->
+		<AndroidEnableProfiledAot>true</AndroidEnableProfiledAot>
+		<AndroidLinkMode>Full</AndroidLinkMode>
+		<AndroidPackageFormat>apk</AndroidPackageFormat>
+		
+		<!-- Compresión y optimización -->
+		<AndroidUseApkSigner>true</AndroidUseApkSigner>
+		<AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
+		<EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+		<DebuggerSupport>false</DebuggerSupport>
+		<Optimize>true</Optimize>
+		
+		<!-- Remover símbolos de debug para reducir tamaño -->
+		<DebugSymbols>false</DebugSymbols>
+		<DebugType>none</DebugType>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -54,7 +87,7 @@
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
-		<MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="300,185" />
+		<MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="200,123" />
 		
 		<!-- Custom Fonts -->
 		<MauiFont Include="Resources\Fonts\*" />
@@ -65,7 +98,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.5" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.5" Condition="'$(Configuration)'=='Debug'" />
 		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 		<PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.11" />
 	</ItemGroup>

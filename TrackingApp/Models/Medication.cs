@@ -13,6 +13,10 @@ namespace TrackingApp.Models
         public int FrequencyMinutes { get; set; } // Minutos (ej: 0, 30, 45)
         public DateTime FirstDoseTime { get; set; }
         public string UserType { get; set; } = string.Empty; // "Bebé", "Adulto", "Animal"
+        
+        // Fechas de tratamiento
+        public DateTime TreatmentStartDate { get; set; }
+        public DateTime? TreatmentEndDate { get; set; } // Null si es tratamiento continuo
 
         [Ignore]
         public string DisplayText 

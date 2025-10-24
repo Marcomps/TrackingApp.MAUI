@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using TrackingApp.Models;
 using TrackingApp.Services;
+using System.Globalization;
 
 namespace TrackingApp.ViewModels
 {
@@ -11,7 +12,7 @@ namespace TrackingApp.ViewModels
     {
         private readonly DataService _dataService;
         private string _selectedUserType = "Bebé";
-        private int _selectedDays = 1;
+        private int _selectedDays = 2;
         private int? _selectedMedicationId;
         private Medication? _selectedMedication;
         private string _selectedHistoryRange = "Esta semana";
@@ -39,11 +40,17 @@ namespace TrackingApp.ViewModels
             DeleteEventCommand = new Command<MedicationEvent>(DeleteEvent);
             AddAppointmentCommand = new Command(AddAppointment);
             EditAppointmentCommand = new Command<MedicalAppointment>(EditAppointment);
+            ChangeAppointmentDateTimeCommand = new Command<MedicalAppointment>(ChangeAppointmentDateTime);
             DeleteAppointmentCommand = new Command<MedicalAppointment>(DeleteAppointment);
             ConfirmAppointmentCommand = new Command<MedicalAppointment>(ConfirmAppointment);
 
             // Subscribe to collection changes
-            _dataService.Medications.CollectionChanged += (s, e) => UpdateSelectedMedication();
+            _dataService.Medications.CollectionChanged += (s, e) => 
+            {
+                UpdateSelectedMedication();
+                OnPropertyChanged(nameof(FilteredMedications));
+                System.Diagnostics.Debug.WriteLine($"🔔 Medications changed, count: {Medications.Count}");
+            };
             _dataService.FoodEntries.CollectionChanged += (s, e) => OnPropertyChanged(nameof(FilteredFoodEntries));
             _dataService.MedicationHistory.CollectionChanged += (s, e) => 
             {
@@ -62,6 +69,20 @@ namespace TrackingApp.ViewModels
             
             // Set first medication as default
             UpdateSelectedMedication();
+            
+            // Forzar notificación inicial después de que se carguen los datos
+            Task.Run(async () =>
+            {
+                await Task.Delay(500); // Esperar a que termine la carga inicial
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    OnPropertyChanged(nameof(PendingDoses));
+                    OnPropertyChanged(nameof(ConfirmedDoses));
+                    OnPropertyChanged(nameof(FilteredCombinedEvents));
+                    OnPropertyChanged(nameof(FilteredMedications));
+                    System.Diagnostics.Debug.WriteLine($"🔔 Notificación inicial - {Medications.Count} medicamentos");
+                });
+            });
         }
 
         // Properties
@@ -80,7 +101,7 @@ namespace TrackingApp.ViewModels
         }
 
         public List<string> UserTypes => new() { "Bebé", "Adulto", "Animal" };
-        public List<string> Units => new() { "oz", "ml", "g", "taza", "cucharada", "minutos", "horas" };
+        public List<string> Units => UnitExtensions.GetCommonUnits().Select(u => u.GetDisplayName()).ToList();
         public List<int> DaysOptions => new() { 1, 2, 3, 5, 7 };
 
         public int SelectedDays
@@ -89,10 +110,17 @@ namespace TrackingApp.ViewModels
             set
             {
                 _selectedDays = value;
-                _ = _dataService.RegenerateDosesAsync(value);
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(GroupedDoses));
+                // 🔄 Regenerar dosis automáticamente al cambiar días
+                _ = UpdateDosesForSelectedDaysAsync();
             }
+        }
+
+        private async Task UpdateDosesForSelectedDaysAsync()
+        {
+            await _dataService.RegenerateDosesAsync(_selectedDays);
+            _dataService.RebuildCombinedEvents();
+            NotifyDosesChanged();
         }
 
         public Medication? SelectedMedication
@@ -104,6 +132,7 @@ namespace TrackingApp.ViewModels
                 _selectedMedicationId = value?.Id;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(GroupedDoses));
+                OnPropertyChanged(nameof(PendingDoses));
                 OnPropertyChanged(nameof(SelectedMedicationFilterLabel));
                 OnPropertyChanged(nameof(FilteredCombinedEvents));
                 OnPropertyChanged(nameof(FilteredMedicationHistory));
@@ -171,9 +200,10 @@ namespace TrackingApp.ViewModels
         {
             get
             {
-                var (startDate, endDate) = GetDateRange();
-                var filtered = Medications.Where(m => m.FirstDoseTime >= startDate && m.FirstDoseTime <= endDate).ToList();
-                return new ObservableCollection<Medication>(filtered);
+                // IMPORTANTE: NO filtrar medicamentos por fecha
+                // Los medicamentos deben mostrarse SIEMPRE para poder editarlos/eliminarlos
+                // independientemente de cuándo fue la primera dosis
+                return new ObservableCollection<Medication>(Medications);
             }
         }
 
@@ -226,7 +256,7 @@ namespace TrackingApp.ViewModels
             }
         }
 
-        private string _foodUnit = "oz";
+        private string _foodUnit = "g";
         public string FoodUnit
         {
             get => _foodUnit;
@@ -321,6 +351,7 @@ namespace TrackingApp.ViewModels
         public ICommand DeleteEventCommand { get; }
         public ICommand AddAppointmentCommand { get; }
         public ICommand EditAppointmentCommand { get; }
+        public ICommand ChangeAppointmentDateTimeCommand { get; }
         public ICommand DeleteAppointmentCommand { get; }
         public ICommand ConfirmAppointmentCommand { get; }
 
@@ -332,19 +363,65 @@ namespace TrackingApp.ViewModels
                 return;
             }
 
-            if (!double.TryParse(FoodAmount, out double amount))
+            if (!double.TryParse(FoodAmount, NumberStyles.Any, CultureInfo.InvariantCulture, out double amount))
             {
                 await Application.Current?.MainPage?.DisplayAlert("Error", "La cantidad debe ser un número", "OK")!;
                 return;
             }
 
+            // Preguntar si quiere registrar con duración
+            bool withDuration = await Application.Current?.MainPage?.DisplayAlert(
+                "Duración",
+                "¿Desea registrar con hora de inicio y fin?",
+                "Sí", "No")!;
+
             var entry = new FoodEntry
             {
                 FoodType = FoodType,
                 Amount = amount,
-                Unit = FoodUnit,
+                Unit = ConvertStringToUnit(FoodUnit),
                 Time = DateTime.Today.Add(FoodTime)
             };
+
+            if (withDuration)
+            {
+                // Pedir hora de inicio con TimePicker visual
+                var startTimePicker = new TrackingApp.Views.TimePickerPopup(DateTime.Now.TimeOfDay);
+                await Application.Current?.MainPage?.Navigation.PushModalAsync(startTimePicker)!;
+                
+                // Esperar a que se cierre el popup
+                await Task.Run(async () =>
+                {
+                    while (Application.Current?.MainPage?.Navigation.ModalStack.Count > 0)
+                    {
+                        await Task.Delay(100);
+                    }
+                });
+
+                if (!startTimePicker.SelectedTime.HasValue)
+                {
+                    await Application.Current?.MainPage?.DisplayAlert("Cancelado", "Registro cancelado", "OK")!;
+                    return;
+                }
+
+                // Pedir duración en minutos
+                string? durationStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                    "Duración",
+                    "Ingrese la duración en minutos (ej: 20):",
+                    initialValue: "20",
+                    keyboard: Keyboard.Numeric);
+
+                if (string.IsNullOrWhiteSpace(durationStr) || !int.TryParse(durationStr, out int durationMinutes))
+                {
+                    await Application.Current?.MainPage?.DisplayAlert("Error", "Duración inválida", "OK")!;
+                    return;
+                }
+
+                // Usar la hora seleccionada
+                entry.StartTime = DateTime.Today.Add(startTimePicker.SelectedTime.Value);
+                entry.EndTime = entry.StartTime.Value.AddMinutes(durationMinutes);
+                entry.Time = entry.StartTime.Value; // Usar StartTime como Time principal
+            }
 
             await _dataService.AddFoodEntryAsync(entry);
 
@@ -354,7 +431,12 @@ namespace TrackingApp.ViewModels
             FoodTime = DateTime.Now.TimeOfDay;
 
             OnPropertyChanged(nameof(FilteredFoodEntries));
-            await Application.Current?.MainPage?.DisplayAlert("Éxito", "Alimento agregado", "OK")!;
+            
+            string successMsg = withDuration && entry.StartTime.HasValue && entry.EndTime.HasValue
+                ? $"Alimento agregado\n{entry.DurationText} desde {entry.StartTime:hh:mm tt}"
+                : "Alimento agregado";
+            
+            await Application.Current?.MainPage?.DisplayAlert("Éxito", successMsg, "OK")!;
         }
 
         private async void AddMedication()
@@ -395,16 +477,77 @@ namespace TrackingApp.ViewModels
                 return;
             }
 
+            // Preguntar por fechas de tratamiento
+            var startDateStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Fecha de Inicio",
+                "Ingrese fecha de inicio del tratamiento (dd/MM/yyyy):",
+                initialValue: DateTime.Today.ToString("dd/MM/yyyy"))!;
+
+            DateTime treatmentStart = DateTime.Today;
+            if (!string.IsNullOrWhiteSpace(startDateStr) && 
+                DateTime.TryParseExact(startDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedStart))
+            {
+                treatmentStart = parsedStart;
+            }
+
+            // Preguntar si tiene fecha de fin (tratamiento temporal)
+            bool hasDuration = await Application.Current?.MainPage?.DisplayAlert(
+                "Duración del Tratamiento",
+                "¿Este tratamiento tiene fecha de finalización?",
+                "Sí", "No (Continuo)")!;
+
+            DateTime? treatmentEnd = null;
+            if (hasDuration)
+            {
+                var endDateStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                    "Fecha de Fin",
+                    "Ingrese fecha de fin del tratamiento (dd/MM/yyyy):",
+                    initialValue: DateTime.Today.AddDays(30).ToString("dd/MM/yyyy"))!;
+
+                if (!string.IsNullOrWhiteSpace(endDateStr) && 
+                    DateTime.TryParseExact(endDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedEnd))
+                {
+                    treatmentEnd = parsedEnd;
+                }
+            }
+
+            // 🆕 NUEVO ENFOQUE: La primera dosis SIEMPRE se registra en el historial
+            // Esto simplifica la edición y hace que la primera dosis sea el punto de referencia
+            var firstDoseTime = DateTime.Today.Add(MedicationTime);
+            
+            bool confirmFirstDose = await Application.Current?.MainPage?.DisplayAlert(
+                "Confirmar Primera Dosis",
+                $"¿Ya tomaste tu primera dosis de {MedicationName} a las {firstDoseTime:HH:mm}?\n\n" +
+                $"Esta dosis se registrará en el historial y se usará como referencia para calcular las siguientes dosis.",
+                "Sí, ya la tomé", "No, la tomaré después")!;
+
+            if (!confirmFirstDose)
+            {
+                await Application.Current?.MainPage?.DisplayAlert(
+                    "Información",
+                    $"Cuando tomes tu primera dosis a las {firstDoseTime:HH:mm}, regístrala en esta app.\n\n" +
+                    $"Por ahora, NO se creará el medicamento.",
+                    "Entendido")!;
+                return;
+            }
+
+            // Crear el medicamento
             var medication = new Medication
             {
                 Name = MedicationName,
                 Dose = MedicationDose,
                 FrequencyHours = hours,
                 FrequencyMinutes = minutes,
-                FirstDoseTime = DateTime.Today.Add(MedicationTime)
+                FirstDoseTime = firstDoseTime,
+                TreatmentStartDate = treatmentStart,
+                TreatmentEndDate = treatmentEnd
             };
 
-            await _dataService.AddMedicationAsync(medication, SelectedDays);
+            // Agregar medicamento (sin generar primera dosis como pendiente)
+            await _dataService.AddMedicationAsync(medication, SelectedDays, true); // ← true = primera dosis ya tomada
+            
+            // Notificar creación del historial
+            OnPropertyChanged(nameof(FilteredMedicationHistory));
 
             // Clear fields
             MedicationName = string.Empty;
@@ -416,7 +559,11 @@ namespace TrackingApp.ViewModels
             OnPropertyChanged(nameof(GroupedDoses));
             OnPropertyChanged(nameof(FilteredMedications));
             UpdateSelectedMedication();
-            await Application.Current?.MainPage?.DisplayAlert("Éxito", $"Medicamento agregado con dosis para {SelectedDays} días", "OK")!;
+            
+            string durationMsg = treatmentEnd.HasValue 
+                ? $" (hasta {treatmentEnd.Value:dd/MM/yyyy})" 
+                : " (tratamiento continuo)";
+            await Application.Current?.MainPage?.DisplayAlert("Éxito", $"Medicamento agregado con dosis para {SelectedDays} días{durationMsg}", "OK")!;
         }
 
         private async void DeleteFood(FoodEntry food)
@@ -532,12 +679,6 @@ namespace TrackingApp.ViewModels
                 keyboard: Keyboard.Numeric,
                 initialValue: medication.FrequencyMinutes.ToString())!;
 
-            // Prompt para editar hora de primera dosis
-            var newFirstDoseTimeStr = await Application.Current?.MainPage?.DisplayPromptAsync(
-                "Editar Hora Primera Dosis",
-                "Hora de primera dosis (formato 12h, ej: 09:00 AM):",
-                initialValue: medication.FirstDoseTime.ToString("hh:mm tt"))!;
-
             int frequencyHours = 0;
             int frequencyMinutes = 0;
 
@@ -562,33 +703,24 @@ namespace TrackingApp.ViewModels
                 return;
             }
 
-            // Parsear la nueva hora de primera dosis
-            DateTime newFirstDoseTime;
-            if (!string.IsNullOrWhiteSpace(newFirstDoseTimeStr) && DateTime.TryParse(newFirstDoseTimeStr, out var parsedTime))
-            {
-                newFirstDoseTime = medication.FirstDoseTime.Date + parsedTime.TimeOfDay;
-            }
-            else
-            {
-                await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK")!;
-                return;
-            }
-
+            // 🆕 Solo actualizar nombre, dosis y frecuencia
+            // Las dosis se regeneran automáticamente desde el historial
             medication.Name = newName;
             medication.Dose = newDose;
             medication.FrequencyHours = frequencyHours;
             medication.FrequencyMinutes = frequencyMinutes;
-            medication.FirstDoseTime = newFirstDoseTime;
 
             await _dataService.UpdateMedicationAsync(medication);
             
-            // Regenerar dosis con la nueva configuración usando los días actuales seleccionados
-            await _dataService.RegenerateDosesAsync(SelectedDays);
+            // 🔄 Recalcular las dosis pendientes desde el último registro del historial
+            System.Diagnostics.Debug.WriteLine($"🔄 Recalculando dosis del medicamento editado: {medication.Name}");
+            await _dataService.RecalculateNextDosesFromLastConfirmedAsync(medication.Id, SelectedDays);
             
+            _dataService.RebuildCombinedEvents();
             OnPropertyChanged(nameof(FilteredMedications));
             NotifyDosesChanged();
             OnPropertyChanged(nameof(GroupedDoses));
-            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Medicamento actualizado y dosis regeneradas", "OK")!;
+            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Medicamento actualizado. Las dosis futuras se calculan desde tu última toma registrada en el historial.", "OK")!;
         }
 
         private async void ResetAllData()
@@ -679,26 +811,66 @@ namespace TrackingApp.ViewModels
 
         private async void ConfirmDose(MedicationDose dose)
         {
-            // Confirmar la dosis y registrar en el historial
-            await _dataService.ConfirmDoseAsync(dose);
+            System.Diagnostics.Debug.WriteLine($"🔔 ConfirmDose: {dose.Medication?.Name} - Scheduled: {dose.ScheduledTime:HH:mm}");
+            
+            if (dose.IsConfirmed)
+            {
+                System.Diagnostics.Debug.WriteLine($"⚠️ Dosis ya confirmada, ignorando...");
+                return;
+            }
+            
+            // 🆕 Preguntar si quiere usar hora actual o programada
+            bool useScheduledTime = await Application.Current?.MainPage?.DisplayAlert(
+                "Confirmar Hora de Dosis",
+                $"Dosis programada: {dose.ScheduledTime:HH:mm}\n" +
+                $"Hora actual: {DateTime.Now:HH:mm}\n\n" +
+                $"¿Qué hora deseas registrar?",
+                $"Programada ({dose.ScheduledTime:HH:mm})", 
+                $"Actual ({DateTime.Now:HH:mm})")!;
+            
+            // Confirmar la dosis con la hora elegida
+            await _dataService.ConfirmDoseAsync(dose, useScheduledTime);
             
             // Agregar al historial de medicamentos
             if (dose.Medication != null && dose.IsConfirmed)
             {
-                var history = new MedicationHistory
+                // Verificar que no exista ya en el historial (evitar duplicados)
+                var existingHistory = MedicationHistory.FirstOrDefault(h => 
+                    h.MedicationId == dose.MedicationId && 
+                    Math.Abs((h.AdministeredTime - (dose.ActualTime ?? DateTime.Now)).TotalMinutes) < 1);
+                
+                if (existingHistory != null)
                 {
-                    MedicationId = dose.MedicationId,
-                    MedicationName = dose.Medication.Name,
-                    Dose = dose.Medication.Dose,
-                    AdministeredTime = dose.ActualTime ?? DateTime.Now,
-                    UserType = _dataService.CurrentUserType
-                };
-                await _dataService.SaveMedicationHistoryAsync(history);
-                MedicationHistory.Insert(0, history);
+                    System.Diagnostics.Debug.WriteLine($"⚠️ Ya existe historial para esta dosis, evitando duplicado");
+                }
+                else
+                {
+                    var history = new MedicationHistory
+                    {
+                        MedicationId = dose.MedicationId,
+                        MedicationName = dose.Medication.Name,
+                        Dose = dose.Medication.Dose,
+                        AdministeredTime = dose.ActualTime ?? DateTime.Now,
+                        UserType = _dataService.CurrentUserType,
+                        TreatmentStartDate = dose.Medication.TreatmentStartDate,
+                        TreatmentEndDate = dose.Medication.TreatmentEndDate
+                    };
+                    await _dataService.SaveMedicationHistoryAsync(history);
+                    MedicationHistory.Insert(0, history);
+                    System.Diagnostics.Debug.WriteLine($"💾 Historial creado: {history.MedicationName} at {history.AdministeredTime:HH:mm}");
+                }
+                
                 OnPropertyChanged(nameof(FilteredMedicationHistory));
+                
+                // 🔄 CRÍTICO: Recalcular las siguientes dosis basadas en la hora real de administración
+                System.Diagnostics.Debug.WriteLine($"🔄 Recalculando siguientes dosis desde {dose.ActualTime:HH:mm}...");
+                await _dataService.RecalculateNextDosesFromLastConfirmedAsync(dose.MedicationId, SelectedDays);
             }
             
+            _dataService.RebuildCombinedEvents();
+            NotifyDosesChanged();
             OnPropertyChanged(nameof(GroupedDoses));
+            OnPropertyChanged(nameof(PendingDoses));
         }
 
         private async void EditDose(MedicationDose dose)
@@ -899,21 +1071,41 @@ namespace TrackingApp.ViewModels
                 }
 
                 System.Diagnostics.Debug.WriteLine($"✅ Found dose {dose.Id}, confirming...");
+                
+                if (dose.IsConfirmed)
+                {
+                    System.Diagnostics.Debug.WriteLine($"⚠️ Dosis ya confirmada, ignorando...");
+                    await Application.Current?.MainPage?.DisplayAlert("Información", "Esta dosis ya fue confirmada", "OK")!;
+                    return;
+                }
+                
                 await _dataService.ConfirmDoseAsync(dose);
 
-                var history = new MedicationHistory
+                // Verificar que no exista ya en el historial (evitar duplicados)
+                var existingHistory = _dataService.MedicationHistory.FirstOrDefault(h => 
+                    h.MedicationId == dose.MedicationId && 
+                    Math.Abs((h.AdministeredTime - (dose.ActualTime ?? DateTime.Now)).TotalMinutes) < 1);
+                
+                if (existingHistory != null)
                 {
-                    MedicationId = dose.MedicationId,
-                    MedicationName = dose.Medication?.Name ?? string.Empty,
-                    Dose = dose.Medication?.Dose ?? string.Empty,
-                    AdministeredTime = dose.ActualTime ?? DateTime.Now,
-                    UserType = _dataService.CurrentUserType
-                };
+                    System.Diagnostics.Debug.WriteLine($"⚠️ Ya existe historial para esta dosis, evitando duplicado");
+                }
+                else
+                {
+                    var history = new MedicationHistory
+                    {
+                        MedicationId = dose.MedicationId,
+                        MedicationName = dose.Medication?.Name ?? string.Empty,
+                        Dose = dose.Medication?.Dose ?? string.Empty,
+                        AdministeredTime = dose.ActualTime ?? DateTime.Now,
+                        UserType = _dataService.CurrentUserType
+                    };
 
-                System.Diagnostics.Debug.WriteLine($"📝 Creating history: {history.MedicationName} at {history.AdministeredTime:HH:mm}");
-                await _dataService.SaveMedicationHistoryAsync(history);
-                _dataService.MedicationHistory.Insert(0, history);
-                System.Diagnostics.Debug.WriteLine($"💾 History saved. Total={_dataService.MedicationHistory.Count}");
+                    System.Diagnostics.Debug.WriteLine($"📝 Creating history: {history.MedicationName} at {history.AdministeredTime:HH:mm}");
+                    await _dataService.SaveMedicationHistoryAsync(history);
+                    _dataService.MedicationHistory.Insert(0, history);
+                    System.Diagnostics.Debug.WriteLine($"💾 History saved. Total={_dataService.MedicationHistory.Count}");
+                }
                 
                 // 🔄 IMPORTANTE: Recalcular las siguientes dosis desde la última confirmada
                 System.Diagnostics.Debug.WriteLine($"🔄 Recalculando siguientes dosis para {ev.MedicationName}...");
@@ -1129,6 +1321,9 @@ namespace TrackingApp.ViewModels
 
         private async void EditAppointment(MedicalAppointment appointment)
         {
+            // 🆕 Simplificado: Solo editar título, doctor y ubicación
+            // Para cambiar fecha/hora, el usuario debe eliminar y crear nueva cita
+            
             var newTitle = await Application.Current?.MainPage?.DisplayPromptAsync(
                 "Editar Cita",
                 "Título:",
@@ -1146,51 +1341,226 @@ namespace TrackingApp.ViewModels
                 "Ubicación:",
                 initialValue: appointment.Location)!;
 
-            // Prompt para editar fecha
-            var newDateStr = await Application.Current?.MainPage?.DisplayPromptAsync(
-                "Editar Fecha",
-                "Fecha (dd/MM/yyyy):",
-                initialValue: appointment.AppointmentDate.ToString("dd/MM/yyyy"))!;
-
-            // Prompt para editar hora
-            var newTimeStr = await Application.Current?.MainPage?.DisplayPromptAsync(
-                "Editar Hora",
-                "Hora (formato 12h, ej: 09:30 AM):",
-                initialValue: appointment.AppointmentDate.ToString("hh:mm tt"))!;
-
-            // Parsear fecha y hora
-            DateTime newDate;
-            if (!string.IsNullOrWhiteSpace(newDateStr) && DateTime.TryParseExact(newDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out newDate))
-            {
-                // Fecha válida
-            }
-            else
-            {
-                await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de fecha inválido. Use dd/MM/yyyy", "OK")!;
-                return;
-            }
-
-            TimeSpan newTime;
-            if (!string.IsNullOrWhiteSpace(newTimeStr) && DateTime.TryParse(newTimeStr, out var parsedTime))
-            {
-                newTime = parsedTime.TimeOfDay;
-            }
-            else
-            {
-                await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK")!;
-                return;
-            }
+            var newDescription = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Descripción",
+                "Descripción (opcional):",
+                initialValue: appointment.Description)!;
 
             appointment.Title = newTitle;
             appointment.Doctor = newDoctor ?? string.Empty;
             appointment.Location = newLocation ?? string.Empty;
-            appointment.AppointmentDate = newDate.Add(newTime);
+            appointment.Description = newDescription ?? string.Empty;
 
             await _dataService.UpdateAppointmentAsync(appointment);
             OnPropertyChanged(nameof(FilteredAppointments));
             OnPropertyChanged(nameof(PendingAppointments));
             OnPropertyChanged(nameof(ConfirmedAppointments));
-            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizada", "Cita actualizada correctamente (incluye fecha y hora)", "OK")!;
+            
+            await Application.Current?.MainPage?.DisplayAlert(
+                "✅ Actualizada", 
+                "Cita actualizada correctamente.", 
+                "OK")!;
+        }
+
+        private async void ChangeAppointmentDateTime(MedicalAppointment appointment)
+        {
+            System.Diagnostics.Debug.WriteLine($"🔵 ChangeAppointmentDateTime ejecutado para: {appointment?.Title}");
+            
+            if (appointment == null)
+            {
+                System.Diagnostics.Debug.WriteLine("⚠️ Appointment es null!");
+                return;
+            }
+
+            try
+            {
+                // 🆕 Modal visual con DatePicker y TimePicker para cambiar fecha/hora
+                var modal = new ContentPage
+                {
+                    Title = "Cambiar Fecha y Hora",
+                    BackgroundColor = Colors.White
+                };
+
+            // DatePicker con estilo más visual que muestra calendario nativo al tocar
+            var datePicker = new DatePicker
+            {
+                Date = appointment.AppointmentDate.Date,
+                MinimumDate = DateTime.Today,
+                Format = "dddd dd MMMM yyyy", // Formato personalizado: Viernes 24 Octubre 2025
+                FontSize = 16,
+                TextColor = Color.FromArgb("#333"),
+                BackgroundColor = Color.FromArgb("#f5f5f5"),
+                Margin = new Thickness(20, 10),
+                HeightRequest = 50,
+                HorizontalOptions = LayoutOptions.Fill
+            };
+
+            var timePicker = new TimePicker
+            {
+                Time = appointment.AppointmentDate.TimeOfDay,
+                Format = "HH:mm",
+                FontSize = 20,
+                TextColor = Color.FromArgb("#333"),
+                BackgroundColor = Color.FromArgb("#f5f5f5"),
+                Margin = new Thickness(20, 10),
+                HeightRequest = 50,
+                HorizontalOptions = LayoutOptions.Center
+            };
+
+            var saveButton = new Button
+            {
+                Text = "Guardar Cambios",
+                BackgroundColor = Color.FromArgb("#4CAF50"),
+                TextColor = Colors.White,
+                Margin = new Thickness(20, 20),
+                CornerRadius = 10,
+                HeightRequest = 50
+            };
+
+            var cancelButton = new Button
+            {
+                Text = "Cancelar",
+                BackgroundColor = Color.FromArgb("#f44336"),
+                TextColor = Colors.White,
+                Margin = new Thickness(20, 0),
+                CornerRadius = 10,
+                HeightRequest = 50
+            };
+
+            saveButton.Clicked += async (s, e) =>
+            {
+                try
+                {
+                    var newDateTime = datePicker.Date.Add(timePicker.Time);
+                    appointment.AppointmentDate = newDateTime;
+                    
+                    await _dataService.UpdateAppointmentAsync(appointment);
+                    
+                    // Cerrar modal primero
+                    if (Application.Current?.MainPage?.Navigation != null)
+                    {
+                        await Application.Current.MainPage.Navigation.PopModalAsync();
+                    }
+                    
+                    // Actualizar UI
+                    OnPropertyChanged(nameof(FilteredAppointments));
+                    OnPropertyChanged(nameof(PendingAppointments));
+                    OnPropertyChanged(nameof(ConfirmedAppointments));
+                    
+                    // Mostrar confirmación
+                    if (Application.Current?.MainPage != null)
+                    {
+                        await Application.Current.MainPage.DisplayAlert(
+                            "✅ Fecha Actualizada",
+                            $"La cita se ha movido a:\n{newDateTime:dd/MM/yyyy HH:mm}",
+                            "OK");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (Application.Current?.MainPage != null)
+                    {
+                        await Application.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+                    }
+                }
+            };
+
+            cancelButton.Clicked += async (s, e) =>
+            {
+                if (Application.Current?.MainPage?.Navigation != null)
+                {
+                    await Application.Current.MainPage.Navigation.PopModalAsync();
+                }
+            };
+
+                modal.Content = new ScrollView
+                {
+                    Content = new StackLayout
+                    {
+                        Padding = new Thickness(20),
+                        Spacing = 15,
+                        Children =
+                        {
+                            new Frame
+                            {
+                                BackgroundColor = Color.FromArgb("#E3F2FD"),
+                                BorderColor = Color.FromArgb("#2196F3"),
+                                CornerRadius = 10,
+                                Padding = 15,
+                                Margin = new Thickness(0, 10, 0, 20),
+                                Content = new StackLayout
+                                {
+                                    Children =
+                                    {
+                                        new Label
+                                        {
+                                            Text = $"📅 {appointment.Title}",
+                                            FontSize = 20,
+                                            FontAttributes = FontAttributes.Bold,
+                                            HorizontalOptions = LayoutOptions.Center,
+                                            TextColor = Color.FromArgb("#1976D2")
+                                        },
+                                        new Label
+                                        {
+                                            Text = $"Fecha actual: {appointment.AppointmentDate:dd/MM/yyyy HH:mm}",
+                                            FontSize = 14,
+                                            HorizontalOptions = LayoutOptions.Center,
+                                            TextColor = Color.FromArgb("#555"),
+                                            Margin = new Thickness(0, 5, 0, 0)
+                                        }
+                                    }
+                                }
+                            },
+                            new Label
+                            {
+                                Text = "📆 Toca para abrir el calendario:",
+                                FontSize = 16,
+                                FontAttributes = FontAttributes.Bold,
+                                TextColor = Color.FromArgb("#333"),
+                                Margin = new Thickness(0, 10, 0, 5)
+                            },
+                            datePicker,
+                            new Label
+                            {
+                                Text = "🕐 Selecciona la hora:",
+                                FontSize = 16,
+                                FontAttributes = FontAttributes.Bold,
+                                TextColor = Color.FromArgb("#333"),
+                                Margin = new Thickness(0, 20, 0, 5)
+                            },
+                            timePicker,
+                            saveButton,
+                            cancelButton
+                        }
+                    }
+                };
+
+                // Envolver en NavigationPage para que se muestre correctamente
+                var navigationPage = new NavigationPage(modal);
+                
+                System.Diagnostics.Debug.WriteLine("🔵 Intentando mostrar modal...");
+                
+                if (Application.Current?.MainPage?.Navigation != null)
+                {
+                    await Application.Current.MainPage.Navigation.PushModalAsync(navigationPage);
+                    System.Diagnostics.Debug.WriteLine("✅ Modal mostrado correctamente");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("⚠️ Navigation es null!");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error en ChangeAppointmentDateTime: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"   Stack: {ex.StackTrace}");
+                
+                if (Application.Current?.MainPage != null)
+                {
+                    await Application.Current.MainPage.DisplayAlert("Error", 
+                        $"No se pudo abrir el editor de fecha: {ex.Message}", "OK");
+                }
+            }
         }
 
         private async void DeleteAppointment(MedicalAppointment appointment)
@@ -1244,6 +1614,21 @@ namespace TrackingApp.ViewModels
             OnPropertyChanged(nameof(FilteredCombinedEvents));
             OnPropertyChanged(nameof(PendingDoses));
             OnPropertyChanged(nameof(ConfirmedDoses));
+        }
+
+        private Unit ConvertStringToUnit(string unitString)
+        {
+            return unitString switch
+            {
+                "g" => Unit.Gram,
+                "kg" => Unit.Kilogram,
+                "lb" => Unit.Pound,
+                "oz" => Unit.Ounce,
+                "ml" => Unit.Milliliter,
+                "L" => Unit.Liter,
+                "pieza" => Unit.Piece,
+                _ => Unit.Gram
+            };
         }
     }
 }

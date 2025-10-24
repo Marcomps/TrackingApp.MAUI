@@ -31,27 +31,27 @@ namespace TrackingApp.Services
                 // Cargar alimentos
                 var foods = await _databaseService.GetAllFoodEntriesAsync();
                 FoodEntries.Clear();
-                foreach (var food in foods)
+                for (int i = 0; i < foods.Count; i++)
                 {
-                    FoodEntries.Add(food);
+                    FoodEntries.Add(foods[i]);
                 }
 
                 // Cargar medicamentos
                 var medications = await _databaseService.GetAllMedicationsAsync();
                 Medications.Clear();
-                foreach (var med in medications)
+                for (int i = 0; i < medications.Count; i++)
                 {
-                    Medications.Add(med);
+                    Medications.Add(medications[i]);
                 }
 
                 // Cargar dosis
                 var doses = await _databaseService.GetAllDosesAsync();
                 MedicationDoses.Clear();
-                foreach (var dose in doses)
+                for (int i = 0; i < doses.Count; i++)
                 {
                     // Obtener el medicamento asociado
-                    dose.Medication = Medications.FirstOrDefault(m => m.Id == dose.MedicationId);
-                    MedicationDoses.Add(dose);
+                    doses[i].Medication = Medications.FirstOrDefault(m => m.Id == doses[i].MedicationId);
+                    MedicationDoses.Add(doses[i]);
                 }
 
                 // Cargar historial de medicamentos
@@ -60,16 +60,64 @@ namespace TrackingApp.Services
                 // Cargar citas médicas
                 await LoadAppointmentsAsync();
 
+                // ✅ CRÍTICO: Sincronizar dosis con historial al cargar la app
+                // Esto asegura que las dosis pendientes estén calculadas desde la última dosis confirmada
+                System.Diagnostics.Debug.WriteLine($"🔄 Sincronizando dosis con historial...");
+                await SyncDosesWithHistoryAsync();
+
                 // Suscribirse a cambios para mantener la colección unificada
                 MedicationDoses.CollectionChanged += (s, e) => RebuildCombinedEvents();
                 MedicationHistory.CollectionChanged += (s, e) => RebuildCombinedEvents();
 
                 // Construir la lista combinada inicial
                 RebuildCombinedEvents();
+                
+                System.Diagnostics.Debug.WriteLine($"✅ Data loaded: {Medications.Count} meds, {MedicationDoses.Count} doses, {MedicationHistory.Count} history");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading data: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Sincroniza las dosis pendientes con el historial confirmado al cargar la aplicación.
+        /// Verifica si hay historial confirmado y recalcula las dosis pendientes desde ahí.
+        /// </summary>
+        private async Task SyncDosesWithHistoryAsync()
+        {
+            bool needsRefresh = false;
+            
+            for (int i = 0; i < Medications.Count; i++)
+            {
+                var medication = Medications[i];
+                var hasHistory = MedicationHistory.Any(h => h.MedicationId == medication.Id);
+                
+                if (hasHistory)
+                {
+                    System.Diagnostics.Debug.WriteLine($"  🔄 {medication.Name}: Sincronizando con historial...");
+                    await RecalculateNextDosesFromLastConfirmedAsync(medication.Id, 3); // Usar 3 días por defecto
+                    needsRefresh = true;
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"  ✓ {medication.Name}: Sin historial, dosis OK");
+                }
+            }
+            
+            // ✅ CRÍTICO: Recargar dosis desde la base de datos después de sincronizar
+            // Esto asegura que la UI muestre las dosis recalculadas correctamente
+            if (needsRefresh)
+            {
+                System.Diagnostics.Debug.WriteLine($"🔄 Refrescando dosis en UI...");
+                var doses = await _databaseService.GetAllDosesAsync();
+                MedicationDoses.Clear();
+                for (int i = 0; i < doses.Count; i++)
+                {
+                    doses[i].Medication = Medications.FirstOrDefault(m => m.Id == doses[i].MedicationId);
+                    MedicationDoses.Add(doses[i]);
+                }
+                System.Diagnostics.Debug.WriteLine($"✅ UI actualizada con {MedicationDoses.Count} dosis");
             }
         }
 
@@ -80,39 +128,65 @@ namespace TrackingApp.Services
             FoodEntries.Insert(0, entry);
         }
 
-        public async Task AddMedicationAsync(Medication medication, int days = 3)
+        public async Task AddMedicationAsync(Medication medication, int days = 3, bool firstDoseAlreadyTaken = false)
         {
             medication.UserType = CurrentUserType;
             await _databaseService.SaveMedicationAsync(medication);
             Medications.Add(medication);
-            await GenerateDosesForMedicationAsync(medication, days);
+            await GenerateDosesForMedicationAsync(medication, days, firstDoseAlreadyTaken);
         }
 
-        public async Task GenerateDosesForMedicationAsync(Medication medication, int days)
+        public async Task GenerateDosesForMedicationAsync(Medication medication, int days, bool firstDoseAlreadyTaken = false)
         {
-            System.Diagnostics.Debug.WriteLine($"🔵 GenerateDosesForMedicationAsync: Medication={medication.Name}, Days={days}, Frequency={medication.TotalFrequencyInMinutes}min");
+            System.Diagnostics.Debug.WriteLine($"🔵 GenerateDosesForMedicationAsync: Medication={medication.Name}, Days={days}, Frequency={medication.TotalFrequencyInMinutes}min, FirstDoseAlreadyTaken={firstDoseAlreadyTaken}");
             
-            // Limpiar dosis anteriores de este medicamento
-            await _databaseService.DeleteDosesByMedicationAsync(medication.Id);
+            // ✅ CRÍTICO: Solo eliminar dosis NO confirmadas (pendientes) de este medicamento
+            var pendingDoses = MedicationDoses.Where(d => d.MedicationId == medication.Id && !d.IsConfirmed).ToList();
             
-            var oldDoses = MedicationDoses.Where(d => d.MedicationId == medication.Id).ToList();
-            foreach (var dose in oldDoses)
+            System.Diagnostics.Debug.WriteLine($"🗑️ Eliminando {pendingDoses.Count} dosis pendientes (NO confirmadas)...");
+            
+            for (int i = 0; i < pendingDoses.Count; i++)
             {
-                MedicationDoses.Remove(dose);
+                await _databaseService.DeleteDoseAsync(pendingDoses[i]);
+                MedicationDoses.Remove(pendingDoses[i]);
             }
-            System.Diagnostics.Debug.WriteLine($"🔵 Cleared old doses. Generating doses for {days} days...");
+
+            System.Diagnostics.Debug.WriteLine($"🔵 Cleared pending doses. Generating doses for {days} days...");
 
             var now = DateTime.Now;
             var firstDose = medication.FirstDoseTime;
 
-            // Si la primera dosis ya pasó, usar la hora de hoy
-            if (firstDose < now)
+            // 🆕 Si el usuario confirmó que ya tomó la primera dosis, agregarla al historial
+            if (firstDoseAlreadyTaken)
             {
-                firstDose = DateTime.Today.Add(medication.FirstDoseTime.TimeOfDay);
+                var history = new MedicationHistory
+                {
+                    MedicationId = medication.Id,
+                    MedicationName = medication.Name,
+                    Dose = medication.Dose,
+                    AdministeredTime = firstDose,
+                    UserType = CurrentUserType,
+                    TreatmentStartDate = medication.TreatmentStartDate,
+                    TreatmentEndDate = medication.TreatmentEndDate
+                };
+                await SaveMedicationHistoryAsync(history);
+                MedicationHistory.Insert(0, history);
+                System.Diagnostics.Debug.WriteLine($"✅ Primera dosis agregada al historial: {firstDose:HH:mm}");
+                
+                // La siguiente dosis empieza desde firstDose + frecuencia
+                firstDose = firstDose.AddMinutes(medication.TotalFrequencyInMinutes);
+            }
+            else
+            {
+                // Si la primera dosis ya pasó, usar la hora de hoy o mañana
                 if (firstDose < now)
                 {
-                    // Si ya pasó la hora hoy, empezar mañana
-                    firstDose = firstDose.AddDays(1);
+                    firstDose = DateTime.Today.Add(medication.FirstDoseTime.TimeOfDay);
+                    if (firstDose < now)
+                    {
+                        // Si ya pasó la hora hoy, empezar mañana
+                        firstDose = firstDose.AddDays(1);
+                    }
                 }
             }
 
@@ -149,21 +223,46 @@ namespace TrackingApp.Services
 
         public async Task RegenerateDosesAsync(int days)
         {
-            foreach (var medication in Medications)
+            System.Diagnostics.Debug.WriteLine($"🔄 RegenerateDosesAsync: Regenerando para {Medications.Count} medicamentos con {days} días de cobertura");
+            
+            for (int i = 0; i < Medications.Count; i++)
             {
-                await GenerateDosesForMedicationAsync(medication, days);
+                var medication = Medications[i];
+                
+                // ✅ CRÍTICO: Verificar si hay historial confirmado
+                var hasConfirmedHistory = MedicationHistory.Any(h => h.MedicationId == medication.Id);
+                
+                if (hasConfirmedHistory)
+                {
+                    // Si hay historial, usar RecalculateNextDosesFromLastConfirmedAsync
+                    System.Diagnostics.Debug.WriteLine($"  📊 {medication.Name}: Tiene historial confirmado, recalculando desde última dosis...");
+                    await RecalculateNextDosesFromLastConfirmedAsync(medication.Id, days);
+                }
+                else
+                {
+                    // Si NO hay historial, usar GenerateDosesForMedicationAsync
+                    System.Diagnostics.Debug.WriteLine($"  🆕 {medication.Name}: Sin historial, generando dosis desde FirstDoseTime...");
+                    await GenerateDosesForMedicationAsync(medication, days);
+                }
             }
+            
+            System.Diagnostics.Debug.WriteLine($"✅ RegenerateDosesAsync completado");
         }
 
-        public async Task ConfirmDoseAsync(MedicationDose dose)
+        public async Task ConfirmDoseAsync(MedicationDose dose, bool useScheduledTime = false)
         {
-            dose.IsConfirmed = !dose.IsConfirmed;
             if (dose.IsConfirmed)
             {
-                // Siempre guardar la hora actual cuando se confirma
-                // (puede haber retrasos/adelantos en la toma)
-                dose.ActualTime = DateTime.Now;
+                System.Diagnostics.Debug.WriteLine($"⚠️ Dosis ya confirmada: {dose.Medication?.Name} - {dose.ScheduledTime:HH:mm}");
+                return; // Ya está confirmada, evitar duplicación
             }
+            
+            dose.IsConfirmed = true;
+            // 🆕 Usar hora programada o actual según elección del usuario
+            dose.ActualTime = useScheduledTime ? dose.ScheduledTime : DateTime.Now;
+            
+            System.Diagnostics.Debug.WriteLine($"✅ Confirmando dosis: {dose.Medication?.Name} - Scheduled: {dose.ScheduledTime:HH:mm}, Actual: {dose.ActualTime:HH:mm}");
+            
             await _databaseService.SaveDoseAsync(dose);
         }
 
@@ -177,36 +276,49 @@ namespace TrackingApp.Services
             var medication = Medications.FirstOrDefault(m => m.Id == medicationId);
             if (medication == null) return;
 
-            System.Diagnostics.Debug.WriteLine($"🔄 RecalculateNextDoses: Medication={medication.Name}");
+            System.Diagnostics.Debug.WriteLine($"🔄 RecalculateNextDoses: Medication={medication.Name}, Frequency={medication.TotalFrequencyInMinutes}min");
 
-            // 1. Buscar la última dosis CONFIRMADA de este medicamento
-            var lastConfirmedDose = MedicationDoses
-                .Where(d => d.MedicationId == medicationId && d.IsConfirmed && d.ActualTime.HasValue)
-                .OrderByDescending(d => d.ActualTime!.Value)
+            // 1. Buscar la última entrada en el historial de este medicamento
+            var lastHistory = MedicationHistory
+                .Where(h => h.MedicationId == medicationId)
+                .OrderByDescending(h => h.AdministeredTime)
                 .FirstOrDefault();
 
             DateTime nextDoseTime;
             
-            if (lastConfirmedDose != null)
+            if (lastHistory != null)
             {
-                // Si hay dosis confirmada, la siguiente empieza desde ahí + frecuencia
-                nextDoseTime = lastConfirmedDose.ActualTime!.Value.AddMinutes(medication.TotalFrequencyInMinutes);
-                System.Diagnostics.Debug.WriteLine($"  ✅ Última confirmada: {lastConfirmedDose.ActualTime:HH:mm}");
-                System.Diagnostics.Debug.WriteLine($"  ➡️ Siguiente dosis: {nextDoseTime:HH:mm}");
+                // Si hay historial, la siguiente empieza desde ahí + frecuencia
+                nextDoseTime = lastHistory.AdministeredTime.AddMinutes(medication.TotalFrequencyInMinutes);
+                System.Diagnostics.Debug.WriteLine($"  ✅ Último historial encontrado: {lastHistory.AdministeredTime:yyyy-MM-dd HH:mm:ss}");
+                System.Diagnostics.Debug.WriteLine($"  ➡️ Cálculo: {lastHistory.AdministeredTime:HH:mm} + {medication.TotalFrequencyInMinutes}min = {nextDoseTime:HH:mm}");
             }
             else
             {
-                // Si no hay confirmadas, usar la primera dosis programada original
+                // ✅ MEJORADO: Si no hay historial, calcular la próxima dosis basándose en cuántas dosis han transcurrido
+                // Esto coincide con la lógica de app.js para consistencia
+                var now = DateTime.Now;
                 nextDoseTime = medication.FirstDoseTime;
-                if (nextDoseTime < DateTime.Now)
+                
+                if (nextDoseTime < now)
                 {
-                    nextDoseTime = DateTime.Now.Date.Add(medication.FirstDoseTime.TimeOfDay);
-                    if (nextDoseTime < DateTime.Now)
-                    {
-                        nextDoseTime = nextDoseTime.AddDays(1);
-                    }
+                    // Calcular cuánto tiempo ha pasado desde la primera dosis
+                    var elapsedMinutes = (now - nextDoseTime).TotalMinutes;
+                    
+                    // Calcular cuántas dosis han transcurrido (redondear hacia arriba)
+                    var dosesElapsed = Math.Ceiling(elapsedMinutes / medication.TotalFrequencyInMinutes);
+                    
+                    // Calcular la próxima dosis sumando las dosis transcurridas * frecuencia
+                    nextDoseTime = medication.FirstDoseTime.AddMinutes(dosesElapsed * medication.TotalFrequencyInMinutes);
+                    
+                    System.Diagnostics.Debug.WriteLine($"  ℹ️ No hay historial. FirstDoseTime: {medication.FirstDoseTime:yyyy-MM-dd HH:mm}");
+                    System.Diagnostics.Debug.WriteLine($"  ⏱️ Tiempo transcurrido: {elapsedMinutes:F0} min, Dosis transcurridas: {dosesElapsed}");
+                    System.Diagnostics.Debug.WriteLine($"  ➡️ Próxima dosis calculada: {nextDoseTime:yyyy-MM-dd HH:mm}");
                 }
-                System.Diagnostics.Debug.WriteLine($"  ℹ️ No hay confirmadas, usar FirstDoseTime: {nextDoseTime:HH:mm}");
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"  ℹ️ No hay historial, FirstDoseTime está en el futuro: {nextDoseTime:yyyy-MM-dd HH:mm:ss}");
+                }
             }
 
             // 2. Eliminar todas las dosis PENDIENTES (no confirmadas) de este medicamento
@@ -216,10 +328,10 @@ namespace TrackingApp.Services
             
             System.Diagnostics.Debug.WriteLine($"  🗑️ Eliminando {pendingDoses.Count} dosis pendientes...");
             
-            foreach (var dose in pendingDoses)
+            for (int i = 0; i < pendingDoses.Count; i++)
             {
-                await _databaseService.DeleteDoseAsync(dose);
-                MedicationDoses.Remove(dose);
+                await _databaseService.DeleteDoseAsync(pendingDoses[i]);
+                MedicationDoses.Remove(pendingDoses[i]);
             }
 
             // 3. Regenerar dosis desde nextDoseTime hasta días de cobertura
@@ -227,7 +339,7 @@ namespace TrackingApp.Services
             var currentDose = nextDoseTime;
             int count = 0;
 
-            System.Diagnostics.Debug.WriteLine($"  ➕ Generando nuevas dosis hasta {endDate:yyyy-MM-dd HH:mm}...");
+            System.Diagnostics.Debug.WriteLine($"  ➕ Generando nuevas dosis desde {nextDoseTime:yyyy-MM-dd HH:mm} hasta {endDate:yyyy-MM-dd HH:mm}...");
 
             while (currentDose < endDate)
             {
@@ -244,10 +356,11 @@ namespace TrackingApp.Services
                 MedicationDoses.Add(newDose);
                 count++;
                 
+                System.Diagnostics.Debug.WriteLine($"    📅 Nueva dosis #{count}: {currentDose:yyyy-MM-dd HH:mm}");
                 currentDose = currentDose.AddMinutes(medication.TotalFrequencyInMinutes);
             }
 
-            System.Diagnostics.Debug.WriteLine($"  ✅ Generadas {count} nuevas dosis");
+            System.Diagnostics.Debug.WriteLine($"  ✅ Generadas {count} nuevas dosis. Primera: {nextDoseTime:HH:mm}, Última: {currentDose.AddMinutes(-medication.TotalFrequencyInMinutes):HH:mm}");
         }
 
         public async Task EditDoseTimeAsync(MedicationDose dose, DateTime newTime)
@@ -284,13 +397,22 @@ namespace TrackingApp.Services
 
         public async Task DeleteMedicationAsync(Medication medication)
         {
-            // Eliminar todas las dosis asociadas
+            // Eliminar el historial de este medicamento
+            await _databaseService.DeleteMedicationHistoryByMedicationAsync(medication.Id);
+            
+            var historyToRemove = MedicationHistory.Where(h => h.MedicationId == medication.Id).ToList();
+            for (int i = 0; i < historyToRemove.Count; i++)
+            {
+                MedicationHistory.Remove(historyToRemove[i]);
+            }
+            
+            // Eliminar las dosis asociadas
             await _databaseService.DeleteDosesByMedicationAsync(medication.Id);
             
             var dosesToRemove = MedicationDoses.Where(d => d.MedicationId == medication.Id).ToList();
-            foreach (var dose in dosesToRemove)
+            for (int i = 0; i < dosesToRemove.Count; i++)
             {
-                MedicationDoses.Remove(dose);
+                MedicationDoses.Remove(dosesToRemove[i]);
             }
 
             // Eliminar el medicamento
@@ -303,10 +425,10 @@ namespace TrackingApp.Services
             await _databaseService.SaveMedicationAsync(medication);
             // Actualizar las dosis asociadas para reflejar cambios en sus referencias de navegación
             var associatedDoses = MedicationDoses.Where(d => d.MedicationId == medication.Id).ToList();
-            foreach (var dose in associatedDoses)
+            for (int i = 0; i < associatedDoses.Count; i++)
             {
-                dose.Medication = medication;
-                await _databaseService.SaveDoseAsync(dose);
+                associatedDoses[i].Medication = medication;
+                await _databaseService.SaveDoseAsync(associatedDoses[i]);
             }
             RebuildCombinedEvents();
         }
@@ -354,7 +476,9 @@ namespace TrackingApp.Services
                 MedicationName = medication.Name,
                 Dose = medication.Dose,
                 AdministeredTime = DateTime.Now,
-                UserType = CurrentUserType
+                UserType = CurrentUserType,
+                TreatmentStartDate = medication.TreatmentStartDate,
+                TreatmentEndDate = medication.TreatmentEndDate
             };
 
             await _databaseService.SaveMedicationHistoryAsync(history);
@@ -367,9 +491,9 @@ namespace TrackingApp.Services
             {
                 var history = await _databaseService.GetAllMedicationHistoryAsync();
                 MedicationHistory.Clear();
-                foreach (var item in history)
+                for (int i = 0; i < history.Count; i++)
                 {
-                    MedicationHistory.Add(item);
+                    MedicationHistory.Add(history[i]);
                 }
                 RebuildCombinedEvents();
             }
@@ -393,8 +517,9 @@ namespace TrackingApp.Services
                 var list = new List<MedicationEvent>();
 
                 // Agregar historial (eventos reales)
-                foreach (var h in MedicationHistory)
+                for (int i = 0; i < MedicationHistory.Count; i++)
                 {
+                    var h = MedicationHistory[i];
                     list.Add(new MedicationEvent
                     {
                         Id = h.Id,
@@ -410,8 +535,10 @@ namespace TrackingApp.Services
 
                 // Agregar dosis programadas (SOLO las NO confirmadas)
                 // Las confirmadas ya están en MedicationHistory
-                foreach (var d in MedicationDoses.Where(dose => !dose.IsConfirmed))
+                var pendingDoses = MedicationDoses.Where(dose => !dose.IsConfirmed).ToList();
+                for (int i = 0; i < pendingDoses.Count; i++)
                 {
+                    var d = pendingDoses[i];
                     list.Add(new MedicationEvent
                     {
                         Id = d.Id,
@@ -431,9 +558,9 @@ namespace TrackingApp.Services
                 var ordered = list.OrderByDescending(x => x.EventTime).ToList();
 
                 CombinedMedicationEvents.Clear();
-                foreach (var ev in ordered)
+                for (int i = 0; i < ordered.Count; i++)
                 {
-                    CombinedMedicationEvents.Add(ev);
+                    CombinedMedicationEvents.Add(ordered[i]);
                 }
             }
             catch (Exception ex)
@@ -450,9 +577,9 @@ namespace TrackingApp.Services
             {
                 var appointments = await _databaseService.GetAllAppointmentsAsync();
                 Appointments.Clear();
-                foreach (var appointment in appointments)
+                for (int i = 0; i < appointments.Count; i++)
                 {
-                    Appointments.Add(appointment);
+                    Appointments.Add(appointments[i]);
                 }
             }
             catch (Exception ex)

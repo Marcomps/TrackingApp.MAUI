@@ -20,6 +20,10 @@ namespace TrackingApp.Models
         public DateTime AdministeredTime { get; set; }
         public string UserType { get; set; } = string.Empty;
         public string Notes { get; set; } = string.Empty; // Notas opcionales
+        
+        // Detalles de tratamiento (copiados del medicamento)
+        public DateTime? TreatmentStartDate { get; set; }
+        public DateTime? TreatmentEndDate { get; set; }
 
         [Ignore]
         public string DisplayText => $"{MedicationName} - {Dose} - {AdministeredTime:dd/MM/yyyy hh:mm tt}";
