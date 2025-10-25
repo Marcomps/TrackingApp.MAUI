@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
              x:Class="TrackingApp.MainPage"
-             Title="Tracking de Alimentos y Medicamentos">
+             Title="Tracking de Alimentos y Medicamentos"
+             x:DataType="viewmodels:MainViewModel">
 
     <ContentPage.BindingContext>
         <viewmodels:MainViewModel />
@@ -353,6 +354,20 @@
                             FontAttributes="Bold"
                             HorizontalOptions="Center"
                             WidthRequest="250"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Próximas dosis -->
+            <Frame BackgroundColor="#e3f2fd" Padding="15" CornerRadius="8" HasShadow="True">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Próximas Dosis" FontSize="20" FontAttributes="Bold" TextColor="#1e88e5"/>
+                    <CollectionView ItemsSource="{Binding NextDoses}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Label Text="{Binding .}" TextColor="Black" FontSize="16"/>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
                 </VerticalStackLayout>
             </Frame>
 

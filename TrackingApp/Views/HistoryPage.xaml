@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
              x:Class="TrackingApp.HistoryPage"
-             Title="Historial">
+             Title="Historial"
+             x:DataType="viewmodels:HistoryViewModel">
 
     <ContentPage.BindingContext>
         <viewmodels:HistoryViewModel />

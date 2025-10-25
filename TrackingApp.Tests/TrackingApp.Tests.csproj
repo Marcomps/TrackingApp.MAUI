@@ -25,6 +25,7 @@
   <!-- Link to model files from main project instead of project reference -->
   <ItemGroup>
     <Compile Include="..\TrackingApp\Models\*.cs" LinkBase="Models" />
+    <Compile Include="..\TrackingApp\Services\IDataService.cs" LinkBase="Services\IDataService.cs" />
   </ItemGroup>
 
 </Project>

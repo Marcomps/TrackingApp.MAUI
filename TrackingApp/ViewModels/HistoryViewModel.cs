@@ -17,34 +17,24 @@ namespace TrackingApp.ViewModels
         
         private string _selectedMedicationFilter = "Todos";
         private string _selectedFoodTypeFilter = "Todos";
-        private string _selectedUnitFilter = "Todos";
-        private string _selectedProfileFilter = "Todos";
-        private string _selectedDateRangeFilter = "Hoy";
-        private DateTime? _customStartDate;
-        private DateTime? _customEndDate;
 
-        public ObservableCollection<MedicationHistory> FilteredMedicationHistory { get; set; }
-        public ObservableCollection<FoodEntry> FilteredFoodHistory { get; set; }
-        public ObservableCollection<string> MedicationNames { get; set; }
-        public ObservableCollection<string> FoodTypes { get; set; }
-        public ObservableCollection<string> Units { get; set; }
-        public ObservableCollection<string> Profiles { get; set; }
-        public ObservableCollection<string> DateRangeOptions { get; set; }
-
-        public int TotalConfirmedDoses => FilteredMedicationHistory?.Count ?? 0;
-        public int TotalFoodEntries => FilteredFoodHistory?.Count ?? 0;
-        public double TotalFoodAmount => FilteredFoodHistory?.Sum(f => f.Amount) ?? 0;
-        public string MostFrequentFoodType 
+        public ObservableCollection<MedicationHistory> AllMedicationHistory
         {
-            get
+            get => _allMedicationHistory;
+            set
             {
-                if (FilteredFoodHistory == null || !FilteredFoodHistory.Any())
-                    return "N/A";
-                
-                return FilteredFoodHistory
-                    .GroupBy(f => f.FoodType)
-                    .OrderByDescending(g => g.Count())
-                    .FirstOrDefault()?.Key ?? "N/A";
+                _allMedicationHistory = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ObservableCollection<FoodEntry> AllFoodHistory
+        {
+            get => _allFoodHistory;
+            set
+            {
+                _allFoodHistory = value;
+                OnPropertyChanged();
             }
         }
 
@@ -55,7 +45,7 @@ namespace TrackingApp.ViewModels
             {
                 _selectedMedicationFilter = value;
                 OnPropertyChanged();
-                ApplyFilters();
+                FilterMedicationHistory();
             }
         }
 
@@ -66,239 +56,143 @@ namespace TrackingApp.ViewModels
             {
                 _selectedFoodTypeFilter = value;
                 OnPropertyChanged();
-                ApplyFilters();
+                FilterFoodHistory();
             }
         }
 
-        public string SelectedUnitFilter
-        {
-            get => _selectedUnitFilter;
-            set
-            {
-                _selectedUnitFilter = value;
-                OnPropertyChanged();
-                ApplyFilters();
-            }
-        }
+        public ObservableCollection<MedicationHistory> FilteredMedicationHistory { get; set; }
+        public ObservableCollection<FoodEntry> FilteredFoodHistory { get; set; }
 
-        public string SelectedProfileFilter
-        {
-            get => _selectedProfileFilter;
-            set
-            {
-                _selectedProfileFilter = value;
-                OnPropertyChanged();
-                ApplyFilters();
-            }
-        }
+        public List<string> MedicationFilterOptions { get; set; }
+        public List<string> FoodTypeFilterOptions { get; set; }
 
-        public string SelectedDateRangeFilter
-        {
-            get => _selectedDateRangeFilter;
-            set
-            {
-                _selectedDateRangeFilter = value;
-                OnPropertyChanged();
-                ApplyFilters();
-            }
-        }
+        public ICommand DeleteMedicationHistoryCommand { get; set; }
+        public ICommand DeleteFoodHistoryCommand { get; set; }
+        public ICommand EditMedicationHistoryCommand { get; set; }
+        public ICommand EditFoodCommand { get; set; }
+        public ICommand RefreshCommand { get; set; }
 
-        public ICommand DeleteMedicationHistoryCommand { get; }
-        public ICommand DeleteFoodHistoryCommand { get; }
-        public ICommand EditMedicationHistoryCommand { get; }
-        public ICommand EditFoodCommand { get; }
-        public ICommand RefreshCommand { get; }
+        public string FormattedTime { get; set; }
+        public string MedicationName { get; set; }
+        public string Dose { get; set; }
+        public string FormattedDate { get; set; }
+        public string UserType { get; set; }
+        public string FoodType { get; set; }
+        public string DisplayAmount { get; set; }
 
         public HistoryViewModel()
         {
             _dataService = DataService.Instance;
-            
-            _allMedicationHistory = new ObservableCollection<MedicationHistory>();
-            _allFoodHistory = new ObservableCollection<FoodEntry>();
+
+            AllMedicationHistory = _dataService.MedicationHistory;
+            AllFoodHistory = _dataService.FoodEntries;
             FilteredMedicationHistory = new ObservableCollection<MedicationHistory>();
             FilteredFoodHistory = new ObservableCollection<FoodEntry>();
-            
-            MedicationNames = new ObservableCollection<string> { "Todos" };
-            FoodTypes = new ObservableCollection<string> { "Todos" };
-            Units = new ObservableCollection<string> { "Todos", "g", "ml", "unidades", "cucharadas", "tazas" };
-            Profiles = new ObservableCollection<string> { "Todos", "Adulto", "Niño" };
-            DateRangeOptions = new ObservableCollection<string> 
-            { 
-                "Todo el historial",
-                "Hoy", 
-                "Últimos 7 días", 
+
+            MedicationFilterOptions = new List<string>
+            {
+                "Todos",
+                "Últimos 7 días",
                 "Últimos 30 días",
                 "Este mes",
                 "Mes anterior"
             };
 
-            DeleteMedicationHistoryCommand = new Command<MedicationHistory>(DeleteMedicationHistory);
-            DeleteFoodHistoryCommand = new Command<FoodEntry>(DeleteFoodHistory);
+            FoodTypeFilterOptions = new List<string>
+            {
+                "Todos",
+                "Desayuno",
+                "Almuerzo",
+                "Cena",
+                "Merienda"
+            };
+
+            DeleteMedicationHistoryCommand = new Command<MedicationHistory>(async (history) => await DeleteMedicationHistory(history));
+            DeleteFoodHistoryCommand = new Command<FoodEntry>(async (food) => await DeleteFoodHistory(food));
             EditMedicationHistoryCommand = new Command<MedicationHistory>(EditMedicationHistory);
             EditFoodCommand = new Command<FoodEntry>(EditFood);
             RefreshCommand = new Command(async () => await LoadHistoryAsync());
 
-            LoadHistoryAsync();
+            FormattedTime = string.Empty;
+            MedicationName = string.Empty;
+            Dose = string.Empty;
+            FormattedDate = string.Empty;
+            UserType = string.Empty;
+            FoodType = string.Empty;
+            DisplayAmount = string.Empty;
+
+            _ = LoadHistoryAsync(); // Ensure the call is awaited
         }
 
         private async Task LoadHistoryAsync()
         {
-            // Cargar historial de medicamentos
-            var medHistory = await _dataService.GetAllMedicationHistoryAsync();
-            _allMedicationHistory.Clear();
-            foreach (var item in medHistory.OrderByDescending(h => h.AdministeredTime))
+            try
             {
-                _allMedicationHistory.Add(item);
+                FilterMedicationHistory();
+                FilterFoodHistory();
             }
-
-            // Cargar historial de alimentos (todos los registros)
-            var foodHistory = _dataService.FoodEntries.OrderByDescending(f => f.Time).ToList();
-            _allFoodHistory.Clear();
-            foreach (var item in foodHistory)
+            catch (Exception ex)
             {
-                _allFoodHistory.Add(item);
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Error", $"Error loading history: {ex.Message}", "OK");
             }
-
-            // Actualizar filtros disponibles
-            UpdateAvailableFilters();
-
-            // Aplicar filtros
-            ApplyFilters();
         }
 
-        private void UpdateAvailableFilters()
+        private void FilterMedicationHistory()
         {
-            // Actualizar nombres de medicamentos
-            var medNames = _allMedicationHistory.Select(h => h.MedicationName).Distinct().OrderBy(n => n).ToList();
-            MedicationNames.Clear();
-            MedicationNames.Add("Todos");
-            foreach (var name in medNames)
-            {
-                MedicationNames.Add(name);
-            }
+            var filtered = AllMedicationHistory.AsEnumerable();
 
-            // Actualizar tipos de alimentos
-            var foodTypes = _allFoodHistory.Select(f => f.FoodType).Distinct().OrderBy(t => t).ToList();
-            FoodTypes.Clear();
-            FoodTypes.Add("Todos");
-            foreach (var type in foodTypes)
-            {
-                FoodTypes.Add(type);
-            }
-
-            OnPropertyChanged(nameof(MedicationNames));
-            OnPropertyChanged(nameof(FoodTypes));
-        }
-
-        private void ApplyFilters()
-        {
-            // Filtrar medicamentos
-            var filteredMeds = _allMedicationHistory.AsEnumerable();
-
-            // Filtro por medicamento
             if (SelectedMedicationFilter != "Todos")
             {
-                filteredMeds = filteredMeds.Where(h => h.MedicationName == SelectedMedicationFilter);
+                filtered = SelectedMedicationFilter switch
+                {
+                    "Últimos 7 días" => filtered.Where(m => m.AdministeredTime >= DateTime.Now.AddDays(-7)),
+                    "Últimos 30 días" => filtered.Where(m => m.AdministeredTime >= DateTime.Now.AddDays(-30)),
+                    "Este mes" => filtered.Where(m => m.AdministeredTime.Month == DateTime.Now.Month && m.AdministeredTime.Year == DateTime.Now.Year),
+                    "Mes anterior" => filtered.Where(m => m.AdministeredTime.Month == DateTime.Now.AddMonths(-1).Month && m.AdministeredTime.Year == DateTime.Now.AddMonths(-1).Year),
+                    _ => filtered
+                };
             }
-
-            // Filtro por perfil
-            if (SelectedProfileFilter != "Todos")
-            {
-                filteredMeds = filteredMeds.Where(h => h.UserType == SelectedProfileFilter);
-            }
-
-            // Filtro por rango de fechas
-            var (startDate, endDate) = GetDateRange();
-            filteredMeds = filteredMeds.Where(h => h.AdministeredTime >= startDate && h.AdministeredTime <= endDate);
 
             FilteredMedicationHistory.Clear();
-            foreach (var item in filteredMeds.OrderByDescending(h => h.AdministeredTime))
+            foreach (var item in filtered.OrderByDescending(m => m.AdministeredTime))
             {
                 FilteredMedicationHistory.Add(item);
             }
+        }
 
-            // Filtrar alimentos
-            var filteredFoods = _allFoodHistory.AsEnumerable();
+        private void FilterFoodHistory()
+        {
+            var filtered = AllFoodHistory.AsEnumerable();
 
-            // Filtro por tipo de alimento
             if (SelectedFoodTypeFilter != "Todos")
             {
-                filteredFoods = filteredFoods.Where(f => f.FoodType == SelectedFoodTypeFilter);
+                filtered = filtered.Where(f => f.FoodType == SelectedFoodTypeFilter);
             }
-
-            // Filtro por unidad
-            if (SelectedUnitFilter != "Todos")
-            {
-                filteredFoods = filteredFoods.Where(f => f.Unit.GetDisplayName() == SelectedUnitFilter);
-            }
-
-            // Filtro por perfil
-            if (SelectedProfileFilter != "Todos")
-            {
-                filteredFoods = filteredFoods.Where(f => f.UserType == SelectedProfileFilter);
-            }
-
-            // Filtro por rango de fechas
-            filteredFoods = filteredFoods.Where(f => f.Time >= startDate && f.Time <= endDate);
 
             FilteredFoodHistory.Clear();
-            foreach (var item in filteredFoods.OrderByDescending(f => f.Time))
+            foreach (var item in filtered.OrderByDescending(f => f.Time))
             {
                 FilteredFoodHistory.Add(item);
             }
-
-            // Actualizar estadísticas
-            OnPropertyChanged(nameof(TotalConfirmedDoses));
-            OnPropertyChanged(nameof(TotalFoodEntries));
-            OnPropertyChanged(nameof(TotalFoodAmount));
-            OnPropertyChanged(nameof(MostFrequentFoodType));
         }
 
-        private (DateTime startDate, DateTime endDate) GetDateRange()
+        private async Task DeleteMedicationHistory(MedicationHistory history)
         {
-            var now = DateTime.Now;
-            var endDate = now.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
-
-            return SelectedDateRangeFilter switch
-            {
-                "Hoy" => (now.Date, endDate),
-                "Últimos 7 días" => (now.Date.AddDays(-7), endDate),
-                "Últimos 30 días" => (now.Date.AddDays(-30), endDate),
-                "Este mes" => (new DateTime(now.Year, now.Month, 1), endDate),
-                "Mes anterior" => (new DateTime(now.Year, now.Month, 1).AddMonths(-1), new DateTime(now.Year, now.Month, 1).AddDays(-1).AddHours(23).AddMinutes(59)),
-                "Rango personalizado" when _customStartDate.HasValue && _customEndDate.HasValue => (_customStartDate.Value, _customEndDate.Value.AddHours(23).AddMinutes(59)),
-                _ => (DateTime.MinValue, DateTime.MaxValue) // Todo el historial
-            };
-        }
-
-        private async void DeleteMedicationHistory(MedicationHistory history)
-        {
-            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+            bool confirm = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert(
                 "Confirmar",
-                $"¿Eliminar registro de {history.MedicationName} administrado el {history.FormattedDate}?",
+                $"¿Eliminar registro de {history.MedicationName} del historial?",
                 "Sí", "No")!;
 
             if (confirm)
             {
-                // Guardar el medicationId antes de borrar
-                int medicationId = history.MedicationId;
-                
                 await _dataService.DeleteMedicationHistoryAsync(history);
-                _allMedicationHistory.Remove(history);
-                
-                // 🔄 Recalcular las dosis pendientes después de borrar del historial
-                System.Diagnostics.Debug.WriteLine($"🔄 Recalculando dosis pendientes tras borrar historial de medicamento {medicationId}...");
-                await _dataService.RecalculateNextDosesFromLastConfirmedAsync(medicationId, 7); // 7 días por defecto
-                _dataService.RebuildCombinedEvents();
-                
-                ApplyFilters();
-                await Application.Current?.MainPage?.DisplayAlert("Eliminado", "Registro eliminado del historial y dosis recalculadas", "OK")!;
+                await LoadHistoryAsync();
             }
         }
 
-        private async void DeleteFoodHistory(FoodEntry food)
+        private async Task DeleteFoodHistory(FoodEntry food)
         {
-            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+            bool confirm = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert(
                 "Confirmar",
                 $"¿Eliminar registro de {food.FoodType} del historial?",
                 "Sí", "No")!;
@@ -306,10 +200,7 @@ namespace TrackingApp.ViewModels
             if (confirm)
             {
                 await _dataService.DeleteFoodEntryAsync(food);
-                _allFoodHistory.Remove(food);
-                UpdateAvailableFilters();
-                ApplyFilters();
-                await Application.Current?.MainPage?.DisplayAlert("Eliminado", "Registro de alimento eliminado", "OK")!;
+                await LoadHistoryAsync();
             }
         }
 
@@ -317,95 +208,84 @@ namespace TrackingApp.ViewModels
         {
             // Usar TimePicker visual como en AddFood
             var timePicker = new TrackingApp.Views.TimePickerPopup(medicationHistory.AdministeredTime.TimeOfDay);
-            await Application.Current?.MainPage?.Navigation.PushModalAsync(timePicker)!;
+            await Application.Current?.Windows?.FirstOrDefault()?.Page?.Navigation.PushModalAsync(timePicker)!;
             
             // Esperar a que se cierre el popup
             await Task.Run(async () =>
             {
-                while (Application.Current?.MainPage?.Navigation.ModalStack.Count > 0)
+                while (Application.Current?.Windows?.FirstOrDefault()?.Page?.Navigation.ModalStack.Count > 0)
                 {
                     await Task.Delay(100);
                 }
             });
 
-            // Si el usuario canceló, salir
-            if (!timePicker.SelectedTime.HasValue)
+            // Actualizar la hora
+            var newTime = timePicker.SelectedTime;
+            if (newTime.HasValue)
             {
-                return;
-            }
+                medicationHistory.AdministeredTime = medicationHistory.AdministeredTime.Date.Add(newTime.Value);
+                await _dataService.UpdateMedicationHistoryAsync(medicationHistory);
 
-            // Aplicar la nueva hora al historial
-            DateTime newTime = medicationHistory.AdministeredTime.Date + timePicker.SelectedTime.Value;
-            medicationHistory.AdministeredTime = newTime;
-            await _dataService.UpdateMedicationHistoryAsync(medicationHistory);
-            
-            // 🔄 CRÍTICO: Recalcular las siguientes dosis desde esta dosis editada
-            // Esto asegura que si cambias la hora de una dosis pasada, las futuras se ajusten
-            System.Diagnostics.Debug.WriteLine($"🔄 Recalculando dosis futuras después de editar {medicationHistory.MedicationName}...");
-            await _dataService.RecalculateNextDosesFromLastConfirmedAsync(medicationHistory.MedicationId, 3); // Usar 3 días por defecto
-            
-            // Actualizar la lista local y los filtros
-            UpdateAvailableFilters();
-            ApplyFilters();
-            
-            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", $"Hora actualizada a {newTime:hh:mm tt} y dosis futuras recalculadas", "OK")!;
+                // Recalcular próximas dosis
+                await _dataService.RecalculateNextDosesFromLastConfirmedAsync(medicationHistory.MedicationId, 3);
+
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("✅ Actualizado", $"Hora actualizada a {newTime:hh:mm tt} y dosis futuras recalculadas", "OK")!;
+                await LoadHistoryAsync();
+            }
         }
 
-        private async void EditFood(FoodEntry food)
+        private async void EditFood(FoodEntry foodEntry)
         {
-            // Prompt para editar tipo
-            var newType = await Application.Current?.MainPage?.DisplayPromptAsync(
-                "Editar Alimento",
-                "Tipo de alimento:",
-                initialValue: food.FoodType)!;
+            // Editar tipo de comida
+            var newType = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
+                "Editar Tipo de Comida",
+                "Nuevo tipo:",
+                initialValue: foodEntry.FoodType,
+                keyboard: Keyboard.Text)!;
 
-            if (string.IsNullOrWhiteSpace(newType)) return;
+            if (!string.IsNullOrWhiteSpace(newType))
+            {
+                foodEntry.FoodType = newType;
+            }
 
-            // Prompt para editar cantidad
-            var newAmountStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+            // Editar cantidad
+            var newAmountStr = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                 "Editar Cantidad",
-                "Cantidad:",
-                initialValue: food.Amount.ToString(),
+                "Nueva cantidad:",
+                initialValue: foodEntry.Amount.ToString(),
                 keyboard: Keyboard.Numeric)!;
 
-            if (string.IsNullOrWhiteSpace(newAmountStr)) return;
-
-            // Prompt para editar hora
-            var newTimeStr = await Application.Current?.MainPage?.DisplayPromptAsync(
-                "Editar Hora",
-                "Hora (formato 12h, ej: 09:30 AM o 02:45 PM):",
-                initialValue: food.Time.ToString("hh:mm tt"))!;
-
-            if (string.IsNullOrWhiteSpace(newTimeStr)) return;
-
-            if (double.TryParse(newAmountStr, out double newAmount))
+            if (!string.IsNullOrWhiteSpace(newAmountStr) && double.TryParse(newAmountStr, out double newAmount))
             {
-                // Intentar parsear la hora
-                DateTime newTime;
-                if (DateTime.TryParse(newTimeStr, out var parsedTime))
+                foodEntry.Amount = newAmount;
+            }
+
+            // Editar hora
+            var newTimeStr = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
+                "Editar Hora",
+                "Nueva hora (formato 12h con AM/PM, ej: 02:30 PM):",
+                initialValue: foodEntry.Time.ToString("hh:mm tt"),
+                keyboard: Keyboard.Text)!;
+
+            if (!string.IsNullOrWhiteSpace(newTimeStr))
+            {
+                if (DateTime.TryParse(newTimeStr, out DateTime newTime))
                 {
-                    newTime = food.Time.Date + parsedTime.TimeOfDay;
+                    foodEntry.Time = newTime;
                 }
                 else
                 {
-                    await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK")!;
+                    await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK")!;
                     return;
                 }
-
-                food.FoodType = newType;
-                food.Amount = newAmount;
-                food.Time = newTime;
-                await _dataService.UpdateFoodEntryAsync(food);
-                
-                // Actualizar la lista local y los filtros
-                UpdateAvailableFilters();
-                ApplyFilters();
-                
-                await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Alimento actualizado (incluye nueva hora)", "OK")!;
             }
+
+            await _dataService.UpdateFoodEntryAsync(foodEntry);
+            await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("✅ Actualizado", "Alimento actualizado (incluye nueva hora)", "OK")!;
+            await LoadHistoryAsync();
         }
 
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

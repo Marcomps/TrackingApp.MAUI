@@ -26,7 +26,8 @@ namespace TrackingApp.Models
         Piece,
         Slice,
         Tablet,
-        Capsule
+        Capsule,
+        Unit // Unidad genérica
     }
 
     public static class UnitExtensions
@@ -53,6 +54,7 @@ namespace TrackingApp.Models
                 Unit.Slice => "rebanada",
                 Unit.Tablet => "tableta",
                 Unit.Capsule => "cápsula",
+                Unit.Unit => "unidad",
                 _ => unit.ToString()
             };
         }

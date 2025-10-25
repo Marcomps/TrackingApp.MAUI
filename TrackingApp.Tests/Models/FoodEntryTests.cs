@@ -16,7 +16,7 @@ public class FoodEntryTests
         entry.Id.Should().Be(0);
         entry.FoodType.Should().Be(string.Empty);
         entry.Amount.Should().Be(0);
-        entry.Unit.Should().Be(string.Empty);
+        entry.Unit.Should().Be(Unit.Gram);
         entry.UserType.Should().Be(string.Empty);
         entry.StartTime.Should().BeNull();
         entry.EndTime.Should().BeNull();
@@ -31,7 +31,7 @@ public class FoodEntryTests
             Id = 1,
             FoodType = "Leche materna",
             Amount = 120,
-            Unit = "ml",
+            Unit = Unit.Milliliter,
             Time = new DateTime(2024, 1, 1, 10, 0, 0),
             UserType = "Bebé"
         };
@@ -40,7 +40,7 @@ public class FoodEntryTests
         entry.Id.Should().Be(1);
         entry.FoodType.Should().Be("Leche materna");
         entry.Amount.Should().Be(120);
-        entry.Unit.Should().Be("ml");
+        entry.Unit.Should().Be(Unit.Milliliter);
         entry.UserType.Should().Be("Bebé");
     }
     
@@ -51,7 +51,7 @@ public class FoodEntryTests
         var entry = new FoodEntry
         {
             Amount = 150,
-            Unit = "ml"
+            Unit = Unit.Milliliter
         };
         
         // Act
@@ -151,7 +151,7 @@ public class FoodEntryTests
         var entry = new FoodEntry
         {
             Amount = 100,
-            Unit = "ml",
+            Unit = Unit.Milliliter,
             FoodType = "Leche",
             StartTime = new DateTime(2024, 1, 1, 10, 0, 0),
             EndTime = new DateTime(2024, 1, 1, 10, 20, 0)

@@ -5,6 +5,7 @@ using System.Windows.Input;
 using TrackingApp.Models;
 using TrackingApp.Services;
 using System.Globalization;
+using Microsoft.Maui.Controls.Shapes;
 
 namespace TrackingApp.ViewModels
 {
@@ -17,7 +18,7 @@ namespace TrackingApp.ViewModels
         private Medication? _selectedMedication;
         private string _selectedHistoryRange = "Esta semana";
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged = delegate { };
 
         public MainViewModel()
         {
@@ -83,6 +84,8 @@ namespace TrackingApp.ViewModels
                     System.Diagnostics.Debug.WriteLine($"🔔 Notificación inicial - {Medications.Count} medicamentos");
                 });
             });
+
+            DisplayText = string.Empty; // Initialize non-nullable property
         }
 
         // Properties
@@ -334,6 +337,46 @@ namespace TrackingApp.ViewModels
             }
         }
 
+        private DateTime _firstDoseTime = DateTime.Now;
+        private int _doseFrequency = 6; // Frecuencia en horas
+
+        public DateTime FirstDoseTime
+        {
+            get => _firstDoseTime;
+            set
+            {
+                _firstDoseTime = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(NextDoses));
+            }
+        }
+
+        public int DoseFrequency
+        {
+            get => _doseFrequency;
+            set
+            {
+                _doseFrequency = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(NextDoses));
+            }
+        }
+
+        public List<DateTime> NextDoses
+        {
+            get
+            {
+                var doses = new List<DateTime>();
+                var currentTime = FirstDoseTime;
+                while (currentTime.Date <= DateTime.Now.Date.AddDays(SelectedDays - 1))
+                {
+                    doses.Add(currentTime);
+                    currentTime = currentTime.AddHours(DoseFrequency);
+                }
+                return doses;
+            }
+        }
+
         // Commands
         public ICommand AddFoodCommand { get; }
         public ICommand AddMedicationCommand { get; }
@@ -359,18 +402,18 @@ namespace TrackingApp.ViewModels
         {
             if (string.IsNullOrWhiteSpace(FoodType) || string.IsNullOrWhiteSpace(FoodAmount))
             {
-                await Application.Current?.MainPage?.DisplayAlert("Error", "Por favor complete todos los campos", "OK")!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Error", "Por favor complete todos los campos", "OK")!;
                 return;
             }
 
             if (!double.TryParse(FoodAmount, NumberStyles.Any, CultureInfo.InvariantCulture, out double amount))
             {
-                await Application.Current?.MainPage?.DisplayAlert("Error", "La cantidad debe ser un número", "OK")!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Error", "La cantidad debe ser un número", "OK")!;
                 return;
             }
 
             // Preguntar si quiere registrar con duración
-            bool withDuration = await Application.Current?.MainPage?.DisplayAlert(
+            bool withDuration = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert(
                 "Duración",
                 "¿Desea registrar con hora de inicio y fin?",
                 "Sí", "No")!;
@@ -387,12 +430,12 @@ namespace TrackingApp.ViewModels
             {
                 // Pedir hora de inicio con TimePicker visual
                 var startTimePicker = new TrackingApp.Views.TimePickerPopup(DateTime.Now.TimeOfDay);
-                await Application.Current?.MainPage?.Navigation.PushModalAsync(startTimePicker)!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.Navigation.PushModalAsync(startTimePicker)!;
                 
                 // Esperar a que se cierre el popup
                 await Task.Run(async () =>
                 {
-                    while (Application.Current?.MainPage?.Navigation.ModalStack.Count > 0)
+                    while (Application.Current?.Windows?.FirstOrDefault()?.Page?.Navigation.ModalStack.Count > 0)
                     {
                         await Task.Delay(100);
                     }
@@ -400,12 +443,12 @@ namespace TrackingApp.ViewModels
 
                 if (!startTimePicker.SelectedTime.HasValue)
                 {
-                    await Application.Current?.MainPage?.DisplayAlert("Cancelado", "Registro cancelado", "OK")!;
+                    await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Cancelado", "Registro cancelado", "OK")!;
                     return;
                 }
 
                 // Pedir duración en minutos
-                string? durationStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                string? durationStr = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                     "Duración",
                     "Ingrese la duración en minutos (ej: 20):",
                     initialValue: "20",
@@ -413,7 +456,7 @@ namespace TrackingApp.ViewModels
 
                 if (string.IsNullOrWhiteSpace(durationStr) || !int.TryParse(durationStr, out int durationMinutes))
                 {
-                    await Application.Current?.MainPage?.DisplayAlert("Error", "Duración inválida", "OK")!;
+                    await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Error", "Duración inválida", "OK")!;
                     return;
                 }
 
@@ -436,7 +479,7 @@ namespace TrackingApp.ViewModels
                 ? $"Alimento agregado\n{entry.DurationText} desde {entry.StartTime:hh:mm tt}"
                 : "Alimento agregado";
             
-            await Application.Current?.MainPage?.DisplayAlert("Éxito", successMsg, "OK")!;
+            await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Éxito", successMsg, "OK")!;
         }
 
         private async void AddMedication()
@@ -444,7 +487,7 @@ namespace TrackingApp.ViewModels
             if (string.IsNullOrWhiteSpace(MedicationName) || 
                 string.IsNullOrWhiteSpace(MedicationDose))
             {
-                await Application.Current?.MainPage?.DisplayAlert("Error", "Por favor complete nombre y dosis", "OK")!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Error", "Por favor complete nombre y dosis", "OK")!;
                 return;
             }
 
@@ -456,7 +499,7 @@ namespace TrackingApp.ViewModels
             {
                 if (!int.TryParse(MedicationFrequencyHours, out hours) || hours < 0)
                 {
-                    await Application.Current?.MainPage?.DisplayAlert("Error", "Las horas deben ser un número válido", "OK")!;
+                    await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Error", "Las horas deben ser un número válido", "OK")!;
                     return;
                 }
             }
@@ -465,7 +508,7 @@ namespace TrackingApp.ViewModels
             {
                 if (!int.TryParse(MedicationFrequencyMinutes, out minutes) || minutes < 0 || minutes >= 60)
                 {
-                    await Application.Current?.MainPage?.DisplayAlert("Error", "Los minutos deben estar entre 0 y 59", "OK")!;
+                    await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Error", "Los minutos deben estar entre 0 y 59", "OK")!;
                     return;
                 }
             }
@@ -473,12 +516,12 @@ namespace TrackingApp.ViewModels
             // Validar que al menos uno tenga valor
             if (hours == 0 && minutes == 0)
             {
-                await Application.Current?.MainPage?.DisplayAlert("Error", "Debe ingresar al menos horas o minutos", "OK")!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Error", "Debe ingresar al menos horas o minutos", "OK")!;
                 return;
             }
 
             // Preguntar por fechas de tratamiento
-            var startDateStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var startDateStr = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                 "Fecha de Inicio",
                 "Ingrese fecha de inicio del tratamiento (dd/MM/yyyy):",
                 initialValue: DateTime.Today.ToString("dd/MM/yyyy"))!;
@@ -491,7 +534,7 @@ namespace TrackingApp.ViewModels
             }
 
             // Preguntar si tiene fecha de fin (tratamiento temporal)
-            bool hasDuration = await Application.Current?.MainPage?.DisplayAlert(
+            bool hasDuration = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert(
                 "Duración del Tratamiento",
                 "¿Este tratamiento tiene fecha de finalización?",
                 "Sí", "No (Continuo)")!;
@@ -499,7 +542,7 @@ namespace TrackingApp.ViewModels
             DateTime? treatmentEnd = null;
             if (hasDuration)
             {
-                var endDateStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                var endDateStr = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                     "Fecha de Fin",
                     "Ingrese fecha de fin del tratamiento (dd/MM/yyyy):",
                     initialValue: DateTime.Today.AddDays(30).ToString("dd/MM/yyyy"))!;
@@ -515,7 +558,7 @@ namespace TrackingApp.ViewModels
             // Esto simplifica la edición y hace que la primera dosis sea el punto de referencia
             var firstDoseTime = DateTime.Today.Add(MedicationTime);
             
-            bool confirmFirstDose = await Application.Current?.MainPage?.DisplayAlert(
+            bool confirmFirstDose = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert(
                 "Confirmar Primera Dosis",
                 $"¿Ya tomaste tu primera dosis de {MedicationName} a las {firstDoseTime:HH:mm}?\n\n" +
                 $"Esta dosis se registrará en el historial y se usará como referencia para calcular las siguientes dosis.",
@@ -523,7 +566,7 @@ namespace TrackingApp.ViewModels
 
             if (!confirmFirstDose)
             {
-                await Application.Current?.MainPage?.DisplayAlert(
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert(
                     "Información",
                     $"Cuando tomes tu primera dosis a las {firstDoseTime:HH:mm}, regístrala en esta app.\n\n" +
                     $"Por ahora, NO se creará el medicamento.",
@@ -563,12 +606,12 @@ namespace TrackingApp.ViewModels
             string durationMsg = treatmentEnd.HasValue 
                 ? $" (hasta {treatmentEnd.Value:dd/MM/yyyy})" 
                 : " (tratamiento continuo)";
-            await Application.Current?.MainPage?.DisplayAlert("Éxito", $"Medicamento agregado con dosis para {SelectedDays} días{durationMsg}", "OK")!;
+            await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Éxito", $"Medicamento agregado con dosis para {SelectedDays} días{durationMsg}", "OK")!;
         }
 
         private async void DeleteFood(FoodEntry food)
         {
-            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+            bool confirm = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert(
                 "Confirmar",
                 $"¿Eliminar '{food.FoodType}'?",
                 "Sí", "No")!;
@@ -577,14 +620,14 @@ namespace TrackingApp.ViewModels
             {
                 await _dataService.DeleteFoodEntryAsync(food);
                 OnPropertyChanged(nameof(FilteredFoodEntries));
-                await Application.Current?.MainPage?.DisplayAlert("Eliminado", "Alimento eliminado", "OK")!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Eliminado", "Alimento eliminado", "OK")!;
             }
         }
 
         private async void EditFood(FoodEntry food)
         {
             // Prompt para editar tipo
-            var newType = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var newType = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                 "Editar Alimento",
                 "Tipo de alimento:",
                 initialValue: food.FoodType)!;
@@ -592,7 +635,7 @@ namespace TrackingApp.ViewModels
             if (string.IsNullOrWhiteSpace(newType)) return;
 
             // Prompt para editar cantidad
-            var newAmountStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var newAmountStr = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                 "Editar Cantidad",
                 "Cantidad:",
                 initialValue: food.Amount.ToString(),
@@ -601,7 +644,7 @@ namespace TrackingApp.ViewModels
             if (string.IsNullOrWhiteSpace(newAmountStr)) return;
 
             // Prompt para editar hora
-            var newTimeStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var newTimeStr = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                 "Editar Hora",
                 "Hora (formato 12h, ej: 09:30 AM o 02:45 PM):",
                 initialValue: food.Time.ToString("hh:mm tt"))!;
@@ -618,7 +661,7 @@ namespace TrackingApp.ViewModels
                 }
                 else
                 {
-                    await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK")!;
+                    await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK")!;
                     return;
                 }
 
@@ -627,13 +670,13 @@ namespace TrackingApp.ViewModels
                 food.Time = newTime;
                 await _dataService.UpdateFoodEntryAsync(food);
                 OnPropertyChanged(nameof(FilteredFoodEntries));
-                await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Alimento actualizado (incluye nueva hora)", "OK")!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("✅ Actualizado", "Alimento actualizado (incluye nueva hora)", "OK")!;
             }
         }
 
         private async void DeleteMedication(Medication medication)
         {
-            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+            bool confirm = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert(
                 "Confirmar",
                 $"¿Eliminar '{medication.Name}' y todas sus dosis?",
                 "Sí", "No")!;
@@ -643,13 +686,13 @@ namespace TrackingApp.ViewModels
                 await _dataService.DeleteMedicationAsync(medication);
                 OnPropertyChanged(nameof(GroupedDoses));
                 OnPropertyChanged(nameof(FilteredMedications));
-                await Application.Current?.MainPage?.DisplayAlert("Eliminado", "Medicamento y dosis eliminados", "OK")!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Eliminado", "Medicamento y dosis eliminados", "OK")!;
             }
         }
 
         private async void EditMedication(Medication medication)
         {
-            var newName = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var newName = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                 "Editar Nombre",
                 "Nuevo nombre:",
                 placeholder: medication.Name,
@@ -658,7 +701,7 @@ namespace TrackingApp.ViewModels
             if (string.IsNullOrWhiteSpace(newName))
                 return;
 
-            var newDose = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var newDose = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                 "Editar Dosis",
                 "Nueva dosis:",
                 placeholder: medication.Dose,
@@ -667,13 +710,13 @@ namespace TrackingApp.ViewModels
             if (string.IsNullOrWhiteSpace(newDose))
                 return;
 
-            var newFreqHoursStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var newFreqHoursStr = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                 "Editar Frecuencia (Horas)",
                 "Horas (0-24):",
                 keyboard: Keyboard.Numeric,
                 initialValue: medication.FrequencyHours.ToString())!;
 
-            var newFreqMinutesStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var newFreqMinutesStr = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                 "Editar Frecuencia (Minutos)",
                 "Minutos (0-59):",
                 keyboard: Keyboard.Numeric,
@@ -684,7 +727,7 @@ namespace TrackingApp.ViewModels
 
             if (!string.IsNullOrWhiteSpace(newFreqHoursStr) && !int.TryParse(newFreqHoursStr, out frequencyHours))
             {
-                await Application.Current?.MainPage?.DisplayAlert("Error", "Las horas deben ser un número válido", "OK")!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Error", "Las horas deben ser un número válido", "OK")!;
                 return;
             }
 
@@ -692,14 +735,14 @@ namespace TrackingApp.ViewModels
             {
                 if (!int.TryParse(newFreqMinutesStr, out frequencyMinutes) || frequencyMinutes < 0 || frequencyMinutes > 59)
                 {
-                    await Application.Current?.MainPage?.DisplayAlert("Error", "Los minutos deben estar entre 0 y 59", "OK")!;
+                    await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Error", "Los minutos deben estar entre 0 y 59", "OK")!;
                     return;
                 }
             }
 
             if (frequencyHours == 0 && frequencyMinutes == 0)
             {
-                await Application.Current?.MainPage?.DisplayAlert("Error", "Debe ingresar al menos horas o minutos", "OK")!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Error", "Debe ingresar al menos horas o minutos", "OK")!;
                 return;
             }
 
@@ -720,12 +763,12 @@ namespace TrackingApp.ViewModels
             OnPropertyChanged(nameof(FilteredMedications));
             NotifyDosesChanged();
             OnPropertyChanged(nameof(GroupedDoses));
-            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Medicamento actualizado. Las dosis futuras se calculan desde tu última toma registrada en el historial.", "OK")!;
+            await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("✅ Actualizado", "Medicamento actualizado. Las dosis futuras se calculan desde tu última toma registrada en el historial.", "OK")!;
         }
 
         private async void ResetAllData()
         {
-            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+            bool confirm = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert(
                 "⚠️ ADVERTENCIA",
                 "Esto borrará TODOS los datos:\n• Todos los alimentos\n• Todos los medicamentos\n• Todos los horarios\n\n¿Estás seguro?",
                 "Sí, borrar todo", "Cancelar")!;
@@ -733,7 +776,7 @@ namespace TrackingApp.ViewModels
             if (!confirm) return;
 
             // Segunda confirmación
-            bool doubleConfirm = await Application.Current?.MainPage?.DisplayAlert(
+            bool doubleConfirm = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert(
                 "⚠️ ÚLTIMA CONFIRMACIÓN",
                 "Esta acción NO se puede deshacer.\n¿Continuar?",
                 "Sí, estoy seguro", "No")!;
@@ -744,7 +787,7 @@ namespace TrackingApp.ViewModels
                 OnPropertyChanged(nameof(GroupedDoses));
                 OnPropertyChanged(nameof(FilteredFoodEntries));
                 OnPropertyChanged(nameof(FilteredMedications));
-                await Application.Current?.MainPage?.DisplayAlert("✅ Completado", "Todos los datos han sido eliminados", "OK")!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("✅ Completado", "Todos los datos han sido eliminados", "OK")!;
             }
         }
 
@@ -765,7 +808,7 @@ namespace TrackingApp.ViewModels
 
         private async Task ShowCustomDateRangePicker()
         {
-            var startDateStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var startDateStr = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                 "Fecha Inicial",
                 "Ingresa la fecha de inicio (dd/MM/yyyy):",
                 placeholder: DateTime.Today.AddDays(-30).ToString("dd/MM/yyyy"))!;
@@ -776,7 +819,7 @@ namespace TrackingApp.ViewModels
                 return;
             }
 
-            var endDateStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var endDateStr = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                 "Fecha Final",
                 "Ingresa la fecha de fin (dd/MM/yyyy):",
                 placeholder: DateTime.Today.ToString("dd/MM/yyyy"))!;
@@ -792,7 +835,7 @@ namespace TrackingApp.ViewModels
             {
                 if (start > end)
                 {
-                    await Application.Current?.MainPage?.DisplayAlert("Error", "La fecha inicial no puede ser mayor que la fecha final", "OK")!;
+                    await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Error", "La fecha inicial no puede ser mayor que la fecha final", "OK")!;
                     SelectedHistoryRange = "Hoy";
                     return;
                 }
@@ -804,7 +847,7 @@ namespace TrackingApp.ViewModels
             }
             else
             {
-                await Application.Current?.MainPage?.DisplayAlert("Error", "Formato de fecha inválido. Usa dd/MM/yyyy", "OK")!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Error", "Formato de fecha inválido. Usa dd/MM/yyyy", "OK")!;
                 SelectedHistoryRange = "Hoy";
             }
         }
@@ -820,7 +863,7 @@ namespace TrackingApp.ViewModels
             }
             
             // 🆕 Preguntar si quiere usar hora actual o programada
-            bool useScheduledTime = await Application.Current?.MainPage?.DisplayAlert(
+            bool useScheduledTime = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert(
                 "Confirmar Hora de Dosis",
                 $"Dosis programada: {dose.ScheduledTime:HH:mm}\n" +
                 $"Hora actual: {DateTime.Now:HH:mm}\n\n" +
@@ -875,7 +918,7 @@ namespace TrackingApp.ViewModels
 
         private async void EditDose(MedicationDose dose)
         {
-            var result = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var result = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                 "Editar Hora",
                 "Ingrese la nueva hora (HH:mm):",
                 initialValue: dose.ScheduledTime.ToString("HH:mm")
@@ -891,7 +934,7 @@ namespace TrackingApp.ViewModels
 
         private async void DeleteDose(MedicationDose dose)
         {
-            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+            bool confirm = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert(
                 "Confirmar",
                 $"¿Eliminar dosis de {dose.Medication?.Name} programada para {dose.ScheduledTime:HH:mm}?",
                 "Sí",
@@ -940,7 +983,7 @@ namespace TrackingApp.ViewModels
 
         private async void DeleteMedicationHistory(MedicationHistory history)
         {
-            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+            bool confirm = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert(
                 "Confirmar",
                 $"¿Eliminar registro de {history.MedicationName}?",
                 "Sí",
@@ -991,9 +1034,9 @@ namespace TrackingApp.ViewModels
                     .FirstOrDefault();
 
                 // Marcar la siguiente dosis
-                foreach (var dose in list)
+                for (int i = 0; i < list.Count; i++)
                 {
-                    dose.IsNextDose = (nextDose != null && dose.Id == nextDose.Id);
+                    list[i].IsNextDose = (nextDose != null && list[i].Id == nextDose.Id);
                 }
 
                 // Ordenar: siguiente dosis primero, luego por hora ascendente
@@ -1055,7 +1098,7 @@ namespace TrackingApp.ViewModels
                 if (ev.IsHistory)
                 {
                     System.Diagnostics.Debug.WriteLine("⚠️ Event is already history");
-                    await Application.Current?.MainPage?.DisplayAlert("Información", "Este medicamento ya fue administrado", "OK")!;
+                    await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Información", "Este medicamento ya fue administrado", "OK")!;
                     return;
                 }
 
@@ -1066,7 +1109,7 @@ namespace TrackingApp.ViewModels
                 if (dose == null)
                 {
                     System.Diagnostics.Debug.WriteLine($"❌ Dose NOT found for SourceId={ev.SourceId}");
-                    await Application.Current?.MainPage?.DisplayAlert("Error", "No se encontró la dosis programada", "OK")!;
+                    await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Error", "No se encontró la dosis programada", "OK")!;
                     return;
                 }
 
@@ -1075,7 +1118,7 @@ namespace TrackingApp.ViewModels
                 if (dose.IsConfirmed)
                 {
                     System.Diagnostics.Debug.WriteLine($"⚠️ Dosis ya confirmada, ignorando...");
-                    await Application.Current?.MainPage?.DisplayAlert("Información", "Esta dosis ya fue confirmada", "OK")!;
+                    await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Información", "Esta dosis ya fue confirmada", "OK")!;
                     return;
                 }
                 
@@ -1117,13 +1160,13 @@ namespace TrackingApp.ViewModels
                 OnPropertyChanged(nameof(GroupedDoses));
                 
                 System.Diagnostics.Debug.WriteLine("=== ConfirmEvent SUCCESS ===");
-                await Application.Current?.MainPage?.DisplayAlert("✅", $"Dosis de {ev.MedicationName} confirmada", "OK")!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("✅", $"Dosis de {ev.MedicationName} confirmada", "OK")!;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"❌ Exception: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Stack: {ex.StackTrace}");
-                await Application.Current?.MainPage?.DisplayAlert("Error", $"Error al confirmar: {ex.Message}", "OK")!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Error", $"Error al confirmar: {ex.Message}", "OK")!;
             }
         }
 
@@ -1131,7 +1174,7 @@ namespace TrackingApp.ViewModels
         {
             if (ev == null) return;
 
-            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+            bool confirm = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert(
                 "Confirmar",
                 ev.IsHistory ? $"¿Eliminar registro de {ev.MedicationName}?" : $"¿Eliminar dosis programada de {ev.MedicationName} para {ev.EventTime:HH:mm}?",
                 "Sí",
@@ -1290,7 +1333,7 @@ namespace TrackingApp.ViewModels
         {
             if (string.IsNullOrWhiteSpace(AppointmentTitle))
             {
-                await Application.Current?.MainPage?.DisplayAlert("Error", "Por favor ingrese un título para la cita", "OK")!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Error", "Por favor ingrese un título para la cita", "OK")!;
                 return;
             }
 
@@ -1316,7 +1359,7 @@ namespace TrackingApp.ViewModels
             OnPropertyChanged(nameof(FilteredAppointments));
             OnPropertyChanged(nameof(PendingAppointments));
             OnPropertyChanged(nameof(ConfirmedAppointments));
-            await Application.Current?.MainPage?.DisplayAlert("✅ Cita agregada", "La cita médica ha sido registrada", "OK")!;
+            await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("✅ Cita agregada", "La cita médica ha sido registrada", "OK")!;
         }
 
         private async void EditAppointment(MedicalAppointment appointment)
@@ -1324,24 +1367,24 @@ namespace TrackingApp.ViewModels
             // 🆕 Simplificado: Solo editar título, doctor y ubicación
             // Para cambiar fecha/hora, el usuario debe eliminar y crear nueva cita
             
-            var newTitle = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var newTitle = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                 "Editar Cita",
                 "Título:",
                 initialValue: appointment.Title)!;
 
             if (string.IsNullOrWhiteSpace(newTitle)) return;
 
-            var newDoctor = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var newDoctor = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                 "Editar Doctor",
                 "Nombre del doctor:",
                 initialValue: appointment.Doctor)!;
 
-            var newLocation = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var newLocation = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                 "Editar Ubicación",
                 "Ubicación:",
                 initialValue: appointment.Location)!;
 
-            var newDescription = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var newDescription = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayPromptAsync(
                 "Editar Descripción",
                 "Descripción (opcional):",
                 initialValue: appointment.Description)!;
@@ -1356,7 +1399,7 @@ namespace TrackingApp.ViewModels
             OnPropertyChanged(nameof(PendingAppointments));
             OnPropertyChanged(nameof(ConfirmedAppointments));
             
-            await Application.Current?.MainPage?.DisplayAlert(
+            await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert(
                 "✅ Actualizada", 
                 "Cita actualizada correctamente.", 
                 "OK")!;
@@ -1437,9 +1480,9 @@ namespace TrackingApp.ViewModels
                     await _dataService.UpdateAppointmentAsync(appointment);
                     
                     // Cerrar modal primero
-                    if (Application.Current?.MainPage?.Navigation != null)
+                    if (Application.Current?.Windows?.FirstOrDefault()?.Page?.Navigation != null)
                     {
-                        await Application.Current.MainPage.Navigation.PopModalAsync();
+                        await Application.Current?.Windows?.FirstOrDefault()?.Page.Navigation.PopModalAsync();
                     }
                     
                     // Actualizar UI
@@ -1448,9 +1491,9 @@ namespace TrackingApp.ViewModels
                     OnPropertyChanged(nameof(ConfirmedAppointments));
                     
                     // Mostrar confirmación
-                    if (Application.Current?.MainPage != null)
+                    if (Application.Current?.Windows?.FirstOrDefault()?.Page != null)
                     {
-                        await Application.Current.MainPage.DisplayAlert(
+                        await Application.Current?.Windows?.FirstOrDefault()?.Page.DisplayAlert(
                             "✅ Fecha Actualizada",
                             $"La cita se ha movido a:\n{newDateTime:dd/MM/yyyy HH:mm}",
                             "OK");
@@ -1458,18 +1501,18 @@ namespace TrackingApp.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    if (Application.Current?.MainPage != null)
+                    if (Application.Current?.Windows?.FirstOrDefault()?.Page != null)
                     {
-                        await Application.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+                        await Application.Current?.Windows?.FirstOrDefault()?.Page.DisplayAlert("Error", ex.Message, "OK");
                     }
                 }
             };
 
             cancelButton.Clicked += async (s, e) =>
             {
-                if (Application.Current?.MainPage?.Navigation != null)
+                if (Application.Current?.Windows?.FirstOrDefault()?.Page?.Navigation != null)
                 {
-                    await Application.Current.MainPage.Navigation.PopModalAsync();
+                    await Application.Current?.Windows?.FirstOrDefault()?.Page.Navigation.PopModalAsync();
                 }
             };
 
@@ -1481,11 +1524,11 @@ namespace TrackingApp.ViewModels
                         Spacing = 15,
                         Children =
                         {
-                            new Frame
+                            new Border
                             {
                                 BackgroundColor = Color.FromArgb("#E3F2FD"),
-                                BorderColor = Color.FromArgb("#2196F3"),
-                                CornerRadius = 10,
+                                Stroke = Color.FromArgb("#2196F3"),
+                                StrokeShape = new RoundRectangle { CornerRadius = 10 },
                                 Padding = 15,
                                 Margin = new Thickness(0, 10, 0, 20),
                                 Content = new StackLayout
@@ -1540,9 +1583,9 @@ namespace TrackingApp.ViewModels
                 
                 System.Diagnostics.Debug.WriteLine("🔵 Intentando mostrar modal...");
                 
-                if (Application.Current?.MainPage?.Navigation != null)
+                if (Application.Current?.Windows?.FirstOrDefault()?.Page?.Navigation != null)
                 {
-                    await Application.Current.MainPage.Navigation.PushModalAsync(navigationPage);
+                    await Application.Current?.Windows?.FirstOrDefault()?.Page.Navigation.PushModalAsync(navigationPage);
                     System.Diagnostics.Debug.WriteLine("✅ Modal mostrado correctamente");
                 }
                 else
@@ -1555,9 +1598,9 @@ namespace TrackingApp.ViewModels
                 System.Diagnostics.Debug.WriteLine($"❌ Error en ChangeAppointmentDateTime: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"   Stack: {ex.StackTrace}");
                 
-                if (Application.Current?.MainPage != null)
+                if (Application.Current?.Windows?.FirstOrDefault()?.Page != null)
                 {
-                    await Application.Current.MainPage.DisplayAlert("Error", 
+                    await Application.Current?.Windows?.FirstOrDefault()?.Page.DisplayAlert("Error", 
                         $"No se pudo abrir el editor de fecha: {ex.Message}", "OK");
                 }
             }
@@ -1565,7 +1608,7 @@ namespace TrackingApp.ViewModels
 
         private async void DeleteAppointment(MedicalAppointment appointment)
         {
-            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+            bool confirm = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert(
                 "Confirmar",
                 $"¿Eliminar cita '{appointment.Title}'?",
                 "Sí", "No")!;
@@ -1576,7 +1619,7 @@ namespace TrackingApp.ViewModels
                 OnPropertyChanged(nameof(FilteredAppointments));
                 OnPropertyChanged(nameof(PendingAppointments));
                 OnPropertyChanged(nameof(ConfirmedAppointments));
-                await Application.Current?.MainPage?.DisplayAlert("Eliminada", "Cita eliminada", "OK")!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Eliminada", "Cita eliminada", "OK")!;
             }
         }
 
@@ -1584,11 +1627,11 @@ namespace TrackingApp.ViewModels
         {
             if (appointment.IsConfirmed)
             {
-                await Application.Current?.MainPage?.DisplayAlert("Información", "Esta cita ya fue confirmada", "OK")!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("Información", "Esta cita ya fue confirmada", "OK")!;
                 return;
             }
 
-            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+            bool confirm = await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert(
                 "Confirmar Cita",
                 $"¿Confirmar la cita '{appointment.Title}'?",
                 "Sí", "No")!;
@@ -1599,7 +1642,7 @@ namespace TrackingApp.ViewModels
                 OnPropertyChanged(nameof(FilteredAppointments));
                 OnPropertyChanged(nameof(PendingAppointments));
                 OnPropertyChanged(nameof(ConfirmedAppointments));
-                await Application.Current?.MainPage?.DisplayAlert("✅ Confirmada", $"Cita '{appointment.Title}' confirmada", "OK")!;
+                await Application.Current?.Windows?.FirstOrDefault()?.Page?.DisplayAlert("✅ Confirmada", $"Cita '{appointment.Title}' confirmada", "OK")!;
             }
         }
 
@@ -1630,5 +1673,8 @@ namespace TrackingApp.ViewModels
                 _ => Unit.Gram
             };
         }
+
+        public string DisplayText { get; set; }
+        public bool IsNextDose { get; set; }
     }
 }
