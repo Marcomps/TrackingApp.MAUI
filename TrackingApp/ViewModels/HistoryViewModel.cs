@@ -12,8 +12,8 @@ namespace TrackingApp.ViewModels
         private readonly DataService _dataService;
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        private ObservableCollection<MedicationHistory> _allMedicationHistory;
-        private ObservableCollection<FoodEntry> _allFoodHistory;
+        private ObservableCollection<MedicationHistory> _allMedicationHistory = null!;
+        private ObservableCollection<FoodEntry> _allFoodHistory = null!;
         
         private string _selectedMedicationFilter = "Todos";
         private string _selectedFoodTypeFilter = "Todos";
