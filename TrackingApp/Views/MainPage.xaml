@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
+             xmlns:converters="clr-namespace:TrackingApp.Converters"
              x:Class="TrackingApp.MainPage"
              Title="Tracking de Alimentos y Medicamentos"
              x:DataType="viewmodels:MainViewModel">
@@ -9,6 +10,15 @@
     <ContentPage.BindingContext>
         <viewmodels:MainViewModel />
     </ContentPage.BindingContext>
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:BoolToNextDoseColorConverter x:Key="BoolToNextDoseColorConverter"/>
+            <converters:BoolToNextDoseBackgroundConverter x:Key="BoolToNextDoseBackgroundConverter"/>
+            <converters:BoolToNextDoseTextConverter x:Key="BoolToNextDoseTextConverter"/>
+            <converters:BoolToConfirmButtonColorConverter x:Key="BoolToConfirmButtonColorConverter"/>
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="20">
@@ -284,19 +294,23 @@
                                             </SwipeItems>
                                         </SwipeView.RightItems>
                                         <!-- Destacar la SIGUIENTE dosis -->
-                                        <Frame Padding="12" 
-                                               Margin="0,5" 
-                                               CornerRadius="8" 
+                                        <Frame Padding="15" 
+                                               Margin="0,8,0,0" 
+                                               CornerRadius="12" 
+                                               HasShadow="True"
                                                BorderColor="{Binding IsNextDose, Converter={StaticResource BoolToNextDoseColorConverter}}"
                                                BackgroundColor="{Binding IsNextDose, Converter={StaticResource BoolToNextDoseBackgroundConverter}}">
-                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" RowSpacing="4">
+                                                <!-- Hora -->
                                                 <Label Grid.Column="0" 
                                                        Text="{Binding DisplayTime}" 
                                                        FontAttributes="Bold"
-                                                       FontSize="18"
+                                                       FontSize="22"
                                                        TextColor="{Binding IsNextDose, Converter={StaticResource BoolToNextDoseTextConverter}}"
                                                        VerticalOptions="Center"/>
-                                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                                
+                                                <!-- Info del medicamento -->
+                                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
                                                     <HorizontalStackLayout Spacing="8">
                                                         <Label Text="⏰ SIGUIENTE" 
                                                                FontSize="14"
@@ -305,20 +319,25 @@
                                                                IsVisible="{Binding IsNextDose}"/>
                                                         <Label Text="{Binding MedicationName}" 
                                                                FontAttributes="Bold"
+                                                               FontSize="16"
                                                                TextColor="Black"/>
                                                     </HorizontalStackLayout>
                                                     <Label Text="{Binding Dose}" 
-                                                           FontSize="12"
-                                                           TextColor="#666"/>
+                                                           FontSize="14"
+                                                           TextColor="#666"
+                                                           Opacity="0.9"/>
                                                 </VerticalStackLayout>
+                                                
+                                                <!-- Botón confirmar -->
                                                 <Button Grid.Column="2" 
-                                                        Text="Confirmar"
+                                                        Text="✓ Confirmar"
                                                         CommandParameter="{Binding .}"
                                                         BackgroundColor="{Binding IsNextDose, Converter={StaticResource BoolToConfirmButtonColorConverter}}"
                                                         TextColor="White"
                                                         FontAttributes="Bold"
-                                                        FontSize="12"
-                                                        Padding="10,8"
+                                                        FontSize="14"
+                                                        Padding="15,10"
+                                                        CornerRadius="8"
                                                         Clicked="OnConfirmButtonClicked"/>
                                             </Grid>
                                         </Frame>
