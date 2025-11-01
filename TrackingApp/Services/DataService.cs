@@ -3,7 +3,7 @@ using TrackingApp.Models;
 
 namespace TrackingApp.Services
 {
-    public class DataService
+    public class DataService : IDataService
     {
         private static DataService? _instance;
         public static DataService Instance => _instance ??= new DataService();
@@ -490,6 +490,16 @@ namespace TrackingApp.Services
         public async Task<List<MedicationHistory>> GetAllMedicationHistoryAsync()
         {
             return await _databaseService.GetAllMedicationHistoryAsync();
+        }
+
+        public async Task<MedicationDose?> GetLastConfirmedDoseAsync(int medicationId)
+        {
+            var confirmedDoses = MedicationDoses
+                .Where(d => d.MedicationId == medicationId && d.IsConfirmed)
+                .OrderByDescending(d => d.ActualTime ?? d.ScheduledTime)
+                .ToList();
+
+            return confirmedDoses.FirstOrDefault();
         }
     }
 }

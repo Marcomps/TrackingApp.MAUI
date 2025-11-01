@@ -1,4 +1,6 @@
 using SQLite;
+using Microsoft.Maui.Graphics;
+using TrackingApp.Services;
 
 namespace TrackingApp.Models
 {
@@ -53,5 +55,39 @@ namespace TrackingApp.Models
         
         [Ignore]
         public string DisplayText => $"{DisplayTime} - {Medication?.Name} ({Medication?.Dose})";
+
+        public IEnumerable<DateTime> GetNextDoses(int frequencyInHours, int days)
+        {
+            var nextDoses = new List<DateTime>();
+            var currentTime = ScheduledTime.AddHours(frequencyInHours);
+            var endTime = ScheduledTime.AddDays(days);
+
+            while (currentTime <= endTime)
+            {
+                nextDoses.Add(currentTime);
+                currentTime = currentTime.AddHours(frequencyInHours);
+            }
+
+            return nextDoses;
+        }
+
+        public async Task<IEnumerable<DateTime>> GetNextDosesFromDatabaseAsync(IDataService dataService, int medicationId, int frequency, int days)
+        {
+            var lastConfirmedDose = await dataService.GetLastConfirmedDoseAsync(medicationId);
+            if (lastConfirmedDose == null)
+                return Enumerable.Empty<DateTime>();
+
+            var nextDoses = new List<DateTime>();
+            var currentTime = lastConfirmedDose.ScheduledTime.AddHours(frequency);
+            var endTime = lastConfirmedDose.ScheduledTime.AddDays(days);
+
+            while (currentTime <= endTime)
+            {
+                nextDoses.Add(currentTime);
+                currentTime = currentTime.AddHours(frequency);
+            }
+
+            return nextDoses;
+        }
     }
 }

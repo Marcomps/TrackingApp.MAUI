@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using TrackingApp.Models;
@@ -25,6 +26,7 @@ namespace TrackingApp.ViewModels
 
         public ObservableCollection<MedicationHistory> FilteredMedicationHistory { get; set; }
         public ObservableCollection<FoodEntry> FilteredFoodHistory { get; set; }
+        public ObservableCollection<MedicalAppointment> FilteredAppointments { get; set; }
         public ObservableCollection<string> MedicationNames { get; set; }
         public ObservableCollection<string> FoodTypes { get; set; }
         public ObservableCollection<string> Units { get; set; }
@@ -32,6 +34,7 @@ namespace TrackingApp.ViewModels
         public ObservableCollection<string> DateRangeOptions { get; set; }
 
         public int TotalConfirmedDoses => FilteredMedicationHistory?.Count ?? 0;
+        public int TotalConfirmedAppointments => FilteredAppointments?.Count ?? 0;
         public int TotalFoodEntries => FilteredFoodHistory?.Count ?? 0;
         public double TotalFoodAmount => FilteredFoodHistory?.Sum(f => f.Amount) ?? 0;
         public string MostFrequentFoodType 
@@ -117,6 +120,7 @@ namespace TrackingApp.ViewModels
             _allFoodHistory = new ObservableCollection<FoodEntry>();
             FilteredMedicationHistory = new ObservableCollection<MedicationHistory>();
             FilteredFoodHistory = new ObservableCollection<FoodEntry>();
+            FilteredAppointments = new ObservableCollection<MedicalAppointment>();
             
             MedicationNames = new ObservableCollection<string> { "Todos" };
             FoodTypes = new ObservableCollection<string> { "Todos" };
@@ -157,6 +161,17 @@ namespace TrackingApp.ViewModels
             foreach (var item in foodHistory)
             {
                 _allFoodHistory.Add(item);
+            }
+
+            // Cargar citas médicas confirmadas
+            var confirmedAppointments = _dataService.Appointments
+                .Where(a => a.IsConfirmed)
+                .OrderByDescending(a => a.ConfirmedDate ?? a.AppointmentDate)
+                .ToList();
+            FilteredAppointments.Clear();
+            foreach (var appointment in confirmedAppointments)
+            {
+                FilteredAppointments.Add(appointment);
             }
 
             // Actualizar filtros disponibles
@@ -229,7 +244,7 @@ namespace TrackingApp.ViewModels
             // Filtro por unidad
             if (SelectedUnitFilter != "Todos")
             {
-                filteredFoods = filteredFoods.Where(f => f.Unit == SelectedUnitFilter);
+                filteredFoods = filteredFoods.Where(f => f.Unit.GetDisplayText() == SelectedUnitFilter);
             }
 
             // Filtro por perfil
@@ -247,9 +262,32 @@ namespace TrackingApp.ViewModels
                 FilteredFoodHistory.Add(item);
             }
 
+            // Filtrar citas médicas confirmadas
+            var filteredAppointments = _dataService.Appointments
+                .Where(a => a.IsConfirmed)
+                .AsEnumerable();
+
+            // Filtro por perfil
+            if (SelectedProfileFilter != "Todos")
+            {
+                filteredAppointments = filteredAppointments.Where(a => a.UserType == SelectedProfileFilter);
+            }
+
+            // Filtro por rango de fechas
+            filteredAppointments = filteredAppointments.Where(a => a.AppointmentDate >= startDate && a.AppointmentDate <= endDate);
+
+            FilteredAppointments.Clear();
+            foreach (var appointment in filteredAppointments.OrderByDescending(a => a.ConfirmedDate ?? a.AppointmentDate))
+            {
+                FilteredAppointments.Add(appointment);
+            }
+
             // Actualizar estadísticas
             OnPropertyChanged(nameof(TotalConfirmedDoses));
+            OnPropertyChanged(nameof(TotalConfirmedAppointments));
             OnPropertyChanged(nameof(TotalFoodEntries));
+            OnPropertyChanged(nameof(TotalFoodAmount));
+            OnPropertyChanged(nameof(MostFrequentFoodType));
             OnPropertyChanged(nameof(TotalFoodAmount));
             OnPropertyChanged(nameof(MostFrequentFoodType));
         }
@@ -377,7 +415,7 @@ namespace TrackingApp.ViewModels
 
             if (string.IsNullOrWhiteSpace(newTimeStr)) return;
 
-            if (double.TryParse(newAmountStr, out double newAmount))
+            if (double.TryParse(newAmountStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double newAmount))
             {
                 // Intentar parsear la hora
                 DateTime newTime;

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using TrackingApp.Models;
@@ -332,9 +333,9 @@ namespace TrackingApp.ViewModels
                 return;
             }
 
-            if (!double.TryParse(FoodAmount, out double amount))
+            if (!double.TryParse(FoodAmount, NumberStyles.Float, CultureInfo.InvariantCulture, out double amount))
             {
-                await Application.Current?.MainPage?.DisplayAlert("Error", "La cantidad debe ser un número", "OK")!;
+                await Application.Current?.MainPage?.DisplayAlert("Error", "La cantidad debe ser un número válido (use punto como separador decimal)", "OK")!;
                 return;
             }
 
@@ -342,7 +343,7 @@ namespace TrackingApp.ViewModels
             {
                 FoodType = FoodType,
                 Amount = amount,
-                Unit = FoodUnit,
+                Unit = Enum.Parse<Unit>(FoodUnit),
                 Time = DateTime.Today.Add(FoodTime)
             };
 
@@ -461,7 +462,7 @@ namespace TrackingApp.ViewModels
 
             if (string.IsNullOrWhiteSpace(newTimeStr)) return;
 
-            if (double.TryParse(newAmountStr, out double newAmount))
+            if (double.TryParse(newAmountStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double newAmount))
             {
                 // Intentar parsear la hora
                 DateTime newTime;

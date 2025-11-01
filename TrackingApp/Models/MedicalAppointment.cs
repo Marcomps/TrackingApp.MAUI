@@ -33,6 +33,12 @@ namespace TrackingApp.Models
         public string FormattedDateTime => AppointmentDate.ToString("dd/MM/yyyy HH:mm");
 
         [Ignore]
+        public string FormattedAppointmentDate => AppointmentDate.ToString("dd/MM/yyyy HH:mm");
+
+        [Ignore]
+        public string FormattedConfirmedDate => ConfirmedDate?.ToString("dd/MM/yyyy HH:mm") ?? "N/A";
+
+        [Ignore]
         public bool IsPast => AppointmentDate < DateTime.Now;
 
         [Ignore]
