@@ -326,64 +326,6 @@
                             </CollectionView.ItemTemplate>
                         </CollectionView>
                     </ScrollView>
-
-                    <!-- 📜 HISTORIAL DE DOSIS CONFIRMADAS -->
-                    <Label Text="✅ Dosis Confirmadas (Historial)" 
-                           FontAttributes="Bold" 
-                           FontSize="16"
-                           TextColor="#666"
-                           Margin="0,20,0,5"/>
-                    
-                    <ScrollView MaximumHeightRequest="300">
-                        <CollectionView ItemsSource="{Binding ConfirmedDoses}"
-                                        x:Name="ConfirmedDosesCollectionView">
-                            <CollectionView.EmptyView>
-                                <StackLayout Padding="20" VerticalOptions="Center">
-                                    <Label Text="📭" 
-                                           FontSize="36"
-                                           HorizontalOptions="Center"
-                                           Margin="0,10,0,5"/>
-                                    <Label Text="No hay dosis confirmadas"
-                                           TextColor="#999"
-                                           FontSize="14"
-                                           HorizontalOptions="Center"/>
-                                </StackLayout>
-                            </CollectionView.EmptyView>
-                            <CollectionView.ItemTemplate>
-                                <DataTemplate>
-                                    <Frame Padding="10" 
-                                           Margin="0,3" 
-                                           CornerRadius="5" 
-                                           BorderColor="#e0e0e0"
-                                           BackgroundColor="#f5f5f5">
-                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                            <Label Grid.Column="0" 
-                                                   Text="{Binding DisplayTime}" 
-                                                   FontAttributes="Bold"
-                                                   FontSize="14"
-                                                   TextColor="#666"
-                                                   VerticalOptions="Center"/>
-                                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
-                                                <HorizontalStackLayout Spacing="8">
-                                                    <Label Text="✓" 
-                                                           FontSize="14"
-                                                           TextColor="#4CAF50"
-                                                           FontAttributes="Bold"/>
-                                                    <Label Text="{Binding MedicationName}" 
-                                                           FontAttributes="Bold"
-                                                           TextColor="#333"
-                                                           FontSize="14"/>
-                                                    <Label Text="{Binding Dose}" 
-                                                           FontSize="12"
-                                                           TextColor="#888"/>
-                                                </HorizontalStackLayout>
-                                            </VerticalStackLayout>
-                                        </Grid>
-                                    </Frame>
-                                </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
-                    </ScrollView>
                 </VerticalStackLayout>
             </Frame>
 
