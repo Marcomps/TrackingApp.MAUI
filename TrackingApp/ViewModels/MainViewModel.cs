@@ -327,35 +327,63 @@ namespace TrackingApp.ViewModels
 
         private async void AddFood()
         {
-            if (string.IsNullOrWhiteSpace(FoodType) || string.IsNullOrWhiteSpace(FoodAmount))
+            try
             {
-                await Application.Current?.MainPage?.DisplayAlert("Error", "Por favor complete todos los campos", "OK")!;
-                return;
-            }
+                if (string.IsNullOrWhiteSpace(FoodType) || string.IsNullOrWhiteSpace(FoodAmount))
+                {
+                    await Application.Current?.MainPage?.DisplayAlert("Error", "Por favor complete todos los campos", "OK")!;
+                    return;
+                }
 
-            if (!double.TryParse(FoodAmount, NumberStyles.Float, CultureInfo.InvariantCulture, out double amount))
-            {
-                await Application.Current?.MainPage?.DisplayAlert("Error", "La cantidad debe ser un número válido (use punto como separador decimal)", "OK")!;
-                return;
-            }
+                if (!double.TryParse(FoodAmount, NumberStyles.Float, CultureInfo.InvariantCulture, out double amount))
+                {
+                    await Application.Current?.MainPage?.DisplayAlert("Error", "La cantidad debe ser un número válido (use punto como separador decimal)", "OK")!;
+                    return;
+                }
 
-            var entry = new FoodEntry
+                // Convertir el texto de la unidad al enum Unit
+                Unit selectedUnit = ConvertDisplayTextToUnit(FoodUnit);
+
+                var entry = new FoodEntry
+                {
+                    FoodType = FoodType,
+                    Amount = amount,
+                    Unit = selectedUnit,
+                    Time = DateTime.Today.Add(FoodTime)
+                };
+
+                await _dataService.AddFoodEntryAsync(entry);
+
+                // Clear fields
+                FoodType = string.Empty;
+                FoodAmount = string.Empty;
+                FoodTime = DateTime.Now.TimeOfDay;
+
+                OnPropertyChanged(nameof(FilteredFoodEntries));
+                await Application.Current?.MainPage?.DisplayAlert("Éxito", "Alimento agregado", "OK")!;
+            }
+            catch (Exception ex)
             {
-                FoodType = FoodType,
-                Amount = amount,
-                Unit = Enum.Parse<Unit>(FoodUnit),
-                Time = DateTime.Today.Add(FoodTime)
+                System.Diagnostics.Debug.WriteLine($"❌ Error en AddFood: {ex.Message}");
+                await Application.Current?.MainPage?.DisplayAlert("Error", $"Error al agregar alimento: {ex.Message}", "OK")!;
+            }
+        }
+
+        /// <summary>
+        /// Convierte el texto de visualización (oz, g, kg, etc.) al enum Unit correspondiente
+        /// </summary>
+        private Unit ConvertDisplayTextToUnit(string displayText)
+        {
+            return displayText?.ToLower() switch
+            {
+                "oz" => Unit.Ounce,
+                "g" => Unit.Gram,
+                "kg" => Unit.Kilogram,
+                "lb" => Unit.Pound,
+                "m" => Unit.Meter,
+                "unidad" => Unit.Unit,
+                _ => Unit.Ounce // Por defecto
             };
-
-            await _dataService.AddFoodEntryAsync(entry);
-
-            // Clear fields
-            FoodType = string.Empty;
-            FoodAmount = string.Empty;
-            FoodTime = DateTime.Now.TimeOfDay;
-
-            OnPropertyChanged(nameof(FilteredFoodEntries));
-            await Application.Current?.MainPage?.DisplayAlert("Éxito", "Alimento agregado", "OK")!;
         }
 
         private async void AddMedication()
