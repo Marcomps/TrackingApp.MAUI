@@ -74,6 +74,38 @@ Copia el APK a un lugar fácil:
 Copy-Item "bin\Debug\net9.0-android\*-Signed.apk" "$env:USERPROFILE\Desktop\TrackingApp.apk"
 ```
 
+#### 📝 Renombrar APK con Versión Personalizada
+
+Para crear APKs con nombres versionados como `TrackingApp-v1.9.1.apk`:
+
+```powershell
+# Definir la versión
+$version = "v1.9.1"
+
+# Copiar con nombre personalizado
+Copy-Item "bin\Debug\net9.0-android\*-Signed.apk" "$env:USERPROFILE\Desktop\TrackingApp-$version.apk"
+```
+
+O directamente:
+
+```powershell
+# Copiar y renombrar en un solo comando
+Copy-Item "bin\Debug\net9.0-android\*-Signed.apk" "$env:USERPROFILE\Desktop\TrackingApp-v1.9.1.apk"
+```
+
+**Ventajas:**
+- ✅ Fácil identificar qué versión tienes instalada
+- ✅ Útil para comparar versiones antiguas con nuevas
+- ✅ Mejor para control de versiones y testing
+
+**Ejemplos de nombres:**
+```
+TrackingApp-v1.9.1.apk
+TrackingApp-v1.9.2-beta.apk
+TrackingApp-v2.0.0-release.apk
+TrackingApp-v1.9.1-2024-11-01.apk
+```
+
 ### Paso 4: Transferir a tu Celular
 
 **Opción A: USB**
