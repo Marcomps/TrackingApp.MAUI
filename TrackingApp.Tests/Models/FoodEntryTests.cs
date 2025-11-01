@@ -16,7 +16,7 @@ public class FoodEntryTests
         entry.Id.Should().Be(0);
         entry.FoodType.Should().Be(string.Empty);
         entry.Amount.Should().Be(0);
-        entry.Unit.Should().Be(Unit.Gram);
+        entry.Unit.Should().Be(Unit.Ounce); // Onza es el valor por defecto
         entry.UserType.Should().Be(string.Empty);
         entry.StartTime.Should().BeNull();
         entry.EndTime.Should().BeNull();
@@ -31,7 +31,7 @@ public class FoodEntryTests
             Id = 1,
             FoodType = "Leche materna",
             Amount = 120,
-            Unit = Unit.Milliliter,
+            Unit = Unit.Ounce,
             Time = new DateTime(2024, 1, 1, 10, 0, 0),
             UserType = "Bebé"
         };
@@ -40,7 +40,7 @@ public class FoodEntryTests
         entry.Id.Should().Be(1);
         entry.FoodType.Should().Be("Leche materna");
         entry.Amount.Should().Be(120);
-        entry.Unit.Should().Be(Unit.Milliliter);
+        entry.Unit.Should().Be(Unit.Ounce);
         entry.UserType.Should().Be("Bebé");
     }
 
@@ -51,14 +51,14 @@ public class FoodEntryTests
         var entry = new FoodEntry
         {
             Amount = 150,
-            Unit = Unit.Milliliter
+            Unit = Unit.Ounce
         };
 
         // Act
         var displayAmount = entry.DisplayAmount;
 
         // Assert
-        displayAmount.Should().Be("150 ml");
+        displayAmount.Should().Be("150 oz");
     }
 
     [Fact]
@@ -151,7 +151,7 @@ public class FoodEntryTests
         var entry = new FoodEntry
         {
             Amount = 100,
-            Unit = Unit.Milliliter,
+            Unit = Unit.Ounce,
             FoodType = "Leche",
             StartTime = new DateTime(2024, 1, 1, 10, 0, 0),
             EndTime = new DateTime(2024, 1, 1, 10, 20, 0)
@@ -161,6 +161,6 @@ public class FoodEntryTests
         var displayText = entry.DisplayText;
 
         // Assert
-        displayText.Should().Contain("100 ml").And.Contain("Leche").And.Contain("20 min");
+        displayText.Should().Contain("100 oz").And.Contain("Leche").And.Contain("20 min");
     }
 }

@@ -2,32 +2,19 @@ namespace TrackingApp.Models
 {
     public enum Unit
     {
+        // Unidad por defecto
+        Ounce,      // oz - Onza (por defecto)
+        
         // Weight units
-        Gram,
-        Kilogram,
-        Pound,
-        Ounce,
-
-        // Volume units
-        Milliliter,
-        Liter,
-        Teaspoon,
-        Tablespoon,
-        Cup,
-
-        // Length units
-        Millimeter,
-        Centimeter,
-        Meter,
-        Inch,
-        Foot,
-
-        // Other units
-        Piece,
-        Slice,
-        Tablet,
-        Capsule,
-        Unit // Unidad genérica
+        Gram,       // g - Gramo
+        Kilogram,   // kg - Kilogramo
+        Pound,      // lb - Libra
+        
+        // Length unit
+        Meter,      // m - Metro
+        
+        // Generic unit
+        Unit        // unidad - Unidad genérica (ej: 3 unidades de capsulas)
     }
 
     public static class UnitExtensions
@@ -36,32 +23,27 @@ namespace TrackingApp.Models
         {
             return unit switch
             {
+                Unit.Ounce => "oz",
                 Unit.Gram => "g",
                 Unit.Kilogram => "kg",
                 Unit.Pound => "lb",
-                Unit.Ounce => "oz",
-                Unit.Milliliter => "ml",
-                Unit.Liter => "L",
-                Unit.Teaspoon => "tsp",
-                Unit.Tablespoon => "tbsp",
-                Unit.Cup => "cup",
-                Unit.Millimeter => "mm",
-                Unit.Centimeter => "cm",
                 Unit.Meter => "m",
-                Unit.Inch => "in",
-                Unit.Foot => "ft",
-                Unit.Piece => "pieza",
-                Unit.Slice => "rebanada",
-                Unit.Tablet => "tableta",
-                Unit.Capsule => "cápsula",
                 Unit.Unit => "unidad",
                 _ => unit.ToString()
             };
         }
 
-        public static Unit[] GetWeightUnits() => new[] { Unit.Gram, Unit.Kilogram, Unit.Pound, Unit.Ounce };
-        public static Unit[] GetVolumeUnits() => new[] { Unit.Milliliter, Unit.Liter, Unit.Teaspoon, Unit.Tablespoon, Unit.Cup };
-        public static Unit[] GetLengthUnits() => new[] { Unit.Millimeter, Unit.Centimeter, Unit.Meter, Unit.Inch, Unit.Foot };
-        public static Unit[] GetCommonUnits() => new[] { Unit.Gram, Unit.Kilogram, Unit.Milliliter, Unit.Liter, Unit.Piece };
+        /// <summary>
+        /// Obtiene todas las unidades disponibles en la aplicación
+        /// </summary>
+        public static Unit[] GetAllUnits() => new[] 
+        { 
+            Unit.Ounce,     // Por defecto
+            Unit.Gram, 
+            Unit.Kilogram, 
+            Unit.Pound, 
+            Unit.Meter, 
+            Unit.Unit 
+        };
     }
 }

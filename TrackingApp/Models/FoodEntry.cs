@@ -9,7 +9,7 @@ namespace TrackingApp.Models
         
         public string FoodType { get; set; } = string.Empty;
         public double Amount { get; set; }
-        public Unit Unit { get; set; } = Unit.Gram;
+        public Unit Unit { get; set; } = Unit.Ounce; // Onza por defecto
         public DateTime Time { get; set; }
         public string UserType { get; set; } = string.Empty; // "Bebé", "Adulto", "Animal"
         
