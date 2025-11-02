@@ -1,7 +1,7 @@
 # Script para generar APK - TrackingApp
 
 # VERSION - Cambia este valor para personalizar el nombre del APK
-$VERSION = "v2.0"
+$VERSION = "v2.0.1"
 
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host "  Generador de APK - TrackingApp" -ForegroundColor Green
