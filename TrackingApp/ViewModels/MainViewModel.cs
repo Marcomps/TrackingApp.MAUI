@@ -378,9 +378,9 @@ namespace TrackingApp.ViewModels
             {
                 "oz" => Unit.Ounce,
                 "g" => Unit.Gram,
-                "kg" => Unit.Kilogram,
-                "lb" => Unit.Pound,
-                "m" => Unit.Meter,
+                "ml" => Unit.Milliliter,
+                "kilo" => Unit.Kilogram,
+                "libra" => Unit.Pound,
                 "unidad" => Unit.Unit,
                 _ => Unit.Ounce // Por defecto
             };
@@ -424,13 +424,22 @@ namespace TrackingApp.ViewModels
                 return;
             }
 
+            // Calcular FirstDoseTime: si la hora especificada ya pasó hoy, usar esa hora mañana
+            // Si la hora es futura hoy, usarla hoy
+            var medicationDateTime = DateTime.Today.Add(MedicationTime);
+            if (medicationDateTime < DateTime.Now)
+            {
+                // La hora ya pasó hoy, programar para mañana
+                medicationDateTime = medicationDateTime.AddDays(1);
+            }
+            
             var medication = new Medication
             {
                 Name = MedicationName,
                 Dose = MedicationDose,
                 FrequencyHours = hours,
                 FrequencyMinutes = minutes,
-                FirstDoseTime = DateTime.Today.Add(MedicationTime)
+                FirstDoseTime = medicationDateTime
             };
 
             await _dataService.AddMedicationAsync(medication, SelectedDays);

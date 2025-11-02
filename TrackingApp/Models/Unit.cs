@@ -7,11 +7,11 @@ namespace TrackingApp.Models
         
         // Weight units
         Gram,       // g - Gramo
-        Kilogram,   // kg - Kilogramo
-        Pound,      // lb - Libra
+        Kilogram,   // kilo - Kilogramo
+        Pound,      // libra - Libra
         
-        // Length unit
-        Meter,      // m - Metro
+        // Volume unit
+        Milliliter, // ml - Mililitro
         
         // Generic unit
         Unit        // unidad - Unidad genérica (ej: 3 unidades de capsulas)
@@ -25,9 +25,9 @@ namespace TrackingApp.Models
             {
                 Unit.Ounce => "oz",
                 Unit.Gram => "g",
-                Unit.Kilogram => "kg",
-                Unit.Pound => "lb",
-                Unit.Meter => "m",
+                Unit.Kilogram => "kilo",
+                Unit.Pound => "libra",
+                Unit.Milliliter => "ml",
                 Unit.Unit => "unidad",
                 _ => unit.ToString()
             };
@@ -40,9 +40,9 @@ namespace TrackingApp.Models
         { 
             Unit.Ounce,     // Por defecto
             Unit.Gram, 
+            Unit.Milliliter,
             Unit.Kilogram, 
             Unit.Pound, 
-            Unit.Meter, 
             Unit.Unit 
         };
     }

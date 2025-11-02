@@ -102,20 +102,8 @@ namespace TrackingApp.Services
             }
             System.Diagnostics.Debug.WriteLine($"🔵 Cleared old doses. Generating doses for {days} days...");
 
-            var now = DateTime.Now;
+            // Usar directamente FirstDoseTime - el ajuste ya se hizo al crear el medicamento
             var firstDose = medication.FirstDoseTime;
-
-            // Si la primera dosis ya pasó, usar la hora de hoy
-            if (firstDose < now)
-            {
-                firstDose = DateTime.Today.Add(medication.FirstDoseTime.TimeOfDay);
-                if (firstDose < now)
-                {
-                    // Si ya pasó la hora hoy, empezar mañana
-                    firstDose = firstDose.AddDays(1);
-                }
-            }
-
             System.Diagnostics.Debug.WriteLine($"🔵 First dose: {firstDose:yyyy-MM-dd HH:mm}");
 
             // Generar dosis según frecuencia durante N días
@@ -197,15 +185,8 @@ namespace TrackingApp.Services
             else
             {
                 // Si no hay confirmadas, usar la primera dosis programada original
+                // El ajuste ya se hizo al crear el medicamento
                 nextDoseTime = medication.FirstDoseTime;
-                if (nextDoseTime < DateTime.Now)
-                {
-                    nextDoseTime = DateTime.Now.Date.Add(medication.FirstDoseTime.TimeOfDay);
-                    if (nextDoseTime < DateTime.Now)
-                    {
-                        nextDoseTime = nextDoseTime.AddDays(1);
-                    }
-                }
                 System.Diagnostics.Debug.WriteLine($"  ℹ️ No hay confirmadas, usar FirstDoseTime: {nextDoseTime:HH:mm}");
             }
 
@@ -452,7 +433,8 @@ namespace TrackingApp.Services
             {
                 var appointments = await _databaseService.GetAllAppointmentsAsync();
                 Appointments.Clear();
-                foreach (var appointment in appointments)
+                // Solo cargar citas NO confirmadas
+                foreach (var appointment in appointments.Where(a => !a.IsConfirmed))
                 {
                     Appointments.Add(appointment);
                 }
@@ -485,7 +467,14 @@ namespace TrackingApp.Services
         {
             appointment.IsConfirmed = true;
             appointment.ConfirmedDate = DateTime.Now;
+            
+            // Guardar en base de datos antes de eliminar (para mantener registro histórico)
             await _databaseService.SaveAppointmentAsync(appointment);
+            
+            // Eliminar la cita de la colección activa para que no se muestre más en la lista
+            Appointments.Remove(appointment);
+            
+            System.Diagnostics.Debug.WriteLine($"✅ Cita confirmada y eliminada: {appointment.Title} - {appointment.AppointmentDate:dd/MM/yyyy HH:mm}");
         }
 
         // Historial
