@@ -223,13 +223,15 @@ namespace TrackingApp.Services
             }
 
             // 3. Regenerar dosis desde nextDoseTime hasta días de cobertura
-            var endDate = DateTime.Now.AddDays(days);
+            // Calcular endDate desde la última dosis confirmada (o FirstDoseTime) para consistencia con GetNextDoses
+            DateTime referenceTime = lastConfirmedDose?.ActualTime ?? medication.FirstDoseTime;
+            var endDate = referenceTime.AddDays(days);
             var currentDose = nextDoseTime;
             int count = 0;
 
             System.Diagnostics.Debug.WriteLine($"  ➕ Generando nuevas dosis hasta {endDate:yyyy-MM-dd HH:mm}...");
 
-            while (currentDose < endDate)
+            while (currentDose <= endDate)
             {
                 var newDose = new MedicationDose
                 {
