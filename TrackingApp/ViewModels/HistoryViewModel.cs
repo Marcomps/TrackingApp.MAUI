@@ -118,6 +118,8 @@ namespace TrackingApp.ViewModels
         public ICommand DeleteFoodHistoryCommand { get; }
         public ICommand EditMedicationHistoryCommand { get; }
         public ICommand EditFoodCommand { get; }
+        public ICommand DeleteAppointmentHistoryCommand { get; }
+        public ICommand EditAppointmentCommand { get; }
         public ICommand RefreshCommand { get; }
 
         public HistoryViewModel()
@@ -151,6 +153,8 @@ namespace TrackingApp.ViewModels
             DeleteFoodHistoryCommand = new Command<FoodEntry>(DeleteFoodHistory);
             EditMedicationHistoryCommand = new Command<MedicationHistory>(EditMedicationHistory);
             EditFoodCommand = new Command<FoodEntry>(EditFood);
+            DeleteAppointmentHistoryCommand = new Command<MedicalAppointment>(DeleteAppointmentHistory);
+            EditAppointmentCommand = new Command<MedicalAppointment>(EditAppointment);
             RefreshCommand = new Command(async () => await LoadHistoryAsync());
 
             LoadHistoryAsync();
@@ -511,6 +515,86 @@ namespace TrackingApp.ViewModels
                 
                 await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Alimento actualizado (incluye nueva hora)", "OK")!;
             }
+        }
+
+        private async void DeleteAppointmentHistory(MedicalAppointment appointment)
+        {
+            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+                "Confirmar",
+                $"¿Eliminar la cita '{appointment.Title}' del historial?",
+                "Sí", "No")!;
+
+            if (confirm)
+            {
+                await _dataService.DeleteAppointmentAsync(appointment);
+                _allAppointments.Remove(appointment);
+                ApplyFilters();
+                await Application.Current?.MainPage?.DisplayAlert("Eliminado", "Cita eliminada del historial", "OK")!;
+            }
+        }
+
+        private async void EditAppointment(MedicalAppointment appointment)
+        {
+            // Prompt para editar título
+            var newTitle = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Título",
+                "Título de la cita:",
+                initialValue: appointment.Title)!;
+
+            if (string.IsNullOrWhiteSpace(newTitle)) return;
+
+            // Prompt para editar notas
+            var newNotes = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Notas",
+                "Notas adicionales:",
+                initialValue: appointment.Notes ?? "")!;
+
+            // Prompt para editar fecha de la cita
+            var newDateStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Fecha de Cita",
+                "Fecha de la cita (formato dd/MM/yyyy, ej: 25/12/2024):",
+                initialValue: appointment.AppointmentDate.ToString("dd/MM/yyyy"))!;
+
+            if (string.IsNullOrWhiteSpace(newDateStr)) return;
+
+            // Prompt para editar hora de la cita
+            var newTimeStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Hora de Cita",
+                "Hora de la cita (formato 12h, ej: 09:30 AM o 02:45 PM):",
+                initialValue: appointment.AppointmentDate.ToString("hh:mm tt"))!;
+
+            if (string.IsNullOrWhiteSpace(newTimeStr)) return;
+
+            // Parsear fecha
+            if (!DateTime.TryParseExact(newDateStr, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime newDate))
+            {
+                await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de fecha inválido. Use dd/MM/yyyy", "OK")!;
+                return;
+            }
+
+            // Parsear hora
+            if (!DateTime.TryParse(newTimeStr, out var parsedTime))
+            {
+                await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK")!;
+                return;
+            }
+
+            // Combinar fecha y hora
+            DateTime newAppointmentDate = newDate.Date + parsedTime.TimeOfDay;
+
+            appointment.Title = newTitle;
+            appointment.Notes = newNotes;
+            appointment.AppointmentDate = newAppointmentDate;
+            
+            await _dataService.UpdateAppointmentAsync(appointment);
+            
+            // Recargar la lista desde la base de datos para reflejar cambios
+            var allAppointments = await _dataService.GetAllAppointmentsAsync();
+            _allAppointments = allAppointments.Where(a => a.IsConfirmed).ToList();
+            
+            ApplyFilters();
+            
+            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Cita médica actualizada correctamente", "OK")!;
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)

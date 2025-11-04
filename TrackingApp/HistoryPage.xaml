@@ -371,39 +371,53 @@
                             </CollectionView.EmptyView>
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
-                                    <Frame BackgroundColor="#e8f5e9" 
-                                           Padding="12" 
-                                           Margin="0,5" 
-                                           CornerRadius="8" 
-                                           BorderColor="#4CAF50"
-                                           HasShadow="False">
-                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-                                            <Label Grid.Column="0" 
-                                                   Text="{Binding FormattedAppointmentDate}" 
-                                                   FontAttributes="Bold"
-                                                   FontSize="16"
-                                                   TextColor="#4CAF50"
-                                                   VerticalOptions="Center"/>
-                                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
-                                                <Label Text="{Binding Title}" 
+                                    <SwipeView>
+                                        <SwipeView.RightItems>
+                                            <SwipeItems>
+                                                <SwipeItem Text="Editar"
+                                                           BackgroundColor="#2196F3"
+                                                           Command="{Binding Source={x:Reference AppointmentsHistoryCollectionView}, Path=BindingContext.EditAppointmentCommand}"
+                                                           CommandParameter="{Binding}"/>
+                                                <SwipeItem Text="Eliminar"
+                                                           BackgroundColor="#f44336"
+                                                           Command="{Binding Source={x:Reference AppointmentsHistoryCollectionView}, Path=BindingContext.DeleteAppointmentHistoryCommand}"
+                                                           CommandParameter="{Binding}"/>
+                                            </SwipeItems>
+                                        </SwipeView.RightItems>
+                                        <Frame BackgroundColor="#e8f5e9" 
+                                               Padding="12" 
+                                               Margin="0,5" 
+                                               CornerRadius="8" 
+                                               BorderColor="#4CAF50"
+                                               HasShadow="False">
+                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                                <Label Grid.Column="0" 
+                                                       Text="{Binding FormattedAppointmentDate}" 
                                                        FontAttributes="Bold"
                                                        FontSize="16"
-                                                       TextColor="Black"/>
-                                                <Label Text="{Binding Notes}" 
-                                                       FontSize="13"
-                                                       TextColor="#666"/>
-                                                <Label Text="{Binding FormattedConfirmedDate, StringFormat='Confirmada: {0}'}" 
-                                                       FontSize="12" 
-                                                       TextColor="#888"/>
-                                            </VerticalStackLayout>
-                                            <Label Grid.Column="2" 
-                                                   Text="✓"
-                                                   FontSize="18"
-                                                   FontAttributes="Bold"
-                                                   TextColor="#4CAF50"
-                                                   VerticalOptions="Center"/>
-                                        </Grid>
-                                    </Frame>
+                                                       TextColor="#4CAF50"
+                                                       VerticalOptions="Center"/>
+                                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                                    <Label Text="{Binding Title}" 
+                                                           FontAttributes="Bold"
+                                                           FontSize="16"
+                                                           TextColor="Black"/>
+                                                    <Label Text="{Binding Notes}" 
+                                                           FontSize="13"
+                                                           TextColor="#666"/>
+                                                    <Label Text="{Binding FormattedConfirmedDate, StringFormat='Confirmada: {0}'}" 
+                                                           FontSize="12" 
+                                                           TextColor="#888"/>
+                                                </VerticalStackLayout>
+                                                <Label Grid.Column="2" 
+                                                       Text="✓"
+                                                       FontSize="18"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#4CAF50"
+                                                       VerticalOptions="Center"/>
+                                            </Grid>
+                                        </Frame>
+                                    </SwipeView>
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>
                         </CollectionView>
