@@ -47,7 +47,11 @@ namespace TrackingApp.ViewModels
             ConfirmAppointmentCommand = new Command<MedicalAppointment>(ConfirmAppointment);
 
             // Subscribe to collection changes
-            _dataService.Medications.CollectionChanged += (s, e) => UpdateSelectedMedication();
+            _dataService.Medications.CollectionChanged += (s, e) => 
+            {
+                UpdateSelectedMedication();
+                OnPropertyChanged(nameof(FilteredMedications));
+            };
             _dataService.FoodEntries.CollectionChanged += (s, e) => OnPropertyChanged(nameof(FilteredFoodEntries));
             _dataService.MedicationHistory.CollectionChanged += (s, e) => 
             {
