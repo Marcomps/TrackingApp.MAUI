@@ -338,6 +338,21 @@
                            TextColor="#2a3d66"
                            HorizontalOptions="Center"/>
                     
+                    <!-- Filtro de rango de fecha -->
+                    <Frame BackgroundColor="#f0f0f0" Padding="10" CornerRadius="5" HasShadow="False" Margin="0,5">
+                        <HorizontalStackLayout Spacing="10">
+                            <Label Text="📅 Filtrar por:" 
+                                   VerticalOptions="Center"
+                                   TextColor="#666"
+                                   FontSize="14"/>
+                            <Picker ItemsSource="{Binding DateRangeOptions}"
+                                    SelectedItem="{Binding SelectedDateRangeFilter}"
+                                    TextColor="Black"
+                                    BackgroundColor="White"
+                                    HorizontalOptions="FillAndExpand"/>
+                        </HorizontalStackLayout>
+                    </Frame>
+                    
                     <ScrollView MaximumHeightRequest="400">
                         <CollectionView ItemsSource="{Binding FilteredAppointments}"
                                         x:Name="AppointmentsHistoryCollectionView">

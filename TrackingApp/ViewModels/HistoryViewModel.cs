@@ -102,7 +102,14 @@ namespace TrackingApp.ViewModels
             {
                 _selectedDateRangeFilter = value;
                 OnPropertyChanged();
-                ApplyFilters();
+                if (value == "Rango personalizado")
+                {
+                    _ = ShowCustomDateRangePicker();
+                }
+                else
+                {
+                    ApplyFilters();
+                }
             }
         }
 
@@ -133,7 +140,8 @@ namespace TrackingApp.ViewModels
                 "Últimos 7 días", 
                 "Últimos 30 días",
                 "Este mes",
-                "Mes anterior"
+                "Mes anterior",
+                "Rango personalizado"
             };
 
             DeleteMedicationHistoryCommand = new Command<MedicationHistory>(DeleteMedicationHistory);
@@ -307,6 +315,60 @@ namespace TrackingApp.ViewModels
                 "Rango personalizado" when _customStartDate.HasValue && _customEndDate.HasValue => (_customStartDate.Value, _customEndDate.Value.AddHours(23).AddMinutes(59)),
                 _ => (DateTime.MinValue, DateTime.MaxValue) // Todo el historial
             };
+        }
+
+        private async Task ShowCustomDateRangePicker()
+        {
+            // Solicitar fecha de inicio
+            var startDateStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Fecha de inicio",
+                "Ingrese fecha de inicio (dd/MM/yyyy):",
+                placeholder: DateTime.Today.AddDays(-7).ToString("dd/MM/yyyy"))!;
+
+            if (string.IsNullOrEmpty(startDateStr))
+            {
+                // Usuario canceló - volver a la opción anterior
+                _selectedDateRangeFilter = "Todo el historial";
+                OnPropertyChanged(nameof(SelectedDateRangeFilter));
+                return;
+            }
+
+            // Solicitar fecha de fin
+            var endDateStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Fecha de fin",
+                "Ingrese fecha de fin (dd/MM/yyyy):",
+                placeholder: DateTime.Today.ToString("dd/MM/yyyy"))!;
+
+            if (string.IsNullOrEmpty(endDateStr))
+            {
+                // Usuario canceló - volver a la opción anterior
+                _selectedDateRangeFilter = "Todo el historial";
+                OnPropertyChanged(nameof(SelectedDateRangeFilter));
+                return;
+            }
+
+            // Validar y parsear las fechas
+            if (DateTime.TryParseExact(startDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime start) &&
+                DateTime.TryParseExact(endDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime end))
+            {
+                if (end < start)
+                {
+                    await Application.Current?.MainPage?.DisplayAlert("Error", "La fecha de fin no puede ser anterior a la fecha de inicio", "OK")!;
+                    _selectedDateRangeFilter = "Todo el historial";
+                    OnPropertyChanged(nameof(SelectedDateRangeFilter));
+                    return;
+                }
+
+                _customStartDate = start;
+                _customEndDate = end;
+                ApplyFilters();
+            }
+            else
+            {
+                await Application.Current?.MainPage?.DisplayAlert("Error", "Formato de fecha inválido. Use dd/MM/yyyy", "OK")!;
+                _selectedDateRangeFilter = "Todo el historial";
+                OnPropertyChanged(nameof(SelectedDateRangeFilter));
+            }
         }
 
         private async void DeleteMedicationHistory(MedicationHistory history)

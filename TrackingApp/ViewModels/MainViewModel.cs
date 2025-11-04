@@ -16,6 +16,9 @@ namespace TrackingApp.ViewModels
         private int? _selectedMedicationId;
         private Medication? _selectedMedication;
         private string _selectedHistoryRange = "Esta semana";
+        private string _selectedDateRangeFilter = "Hoy";
+        private DateTime _customAppointmentStartDate = DateTime.Today;
+        private DateTime _customAppointmentEndDate = DateTime.Today;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -138,6 +141,26 @@ namespace TrackingApp.ViewModels
         // Filtro de historial por rango de fechas
         public List<string> HistoryRanges => new() { "Hoy", "Semana", "Mes", "Trimestre", "Semestre", "Año", "Personalizado" };
 
+        // Filtro de fechas para el historial de citas médicas
+        public List<string> DateRangeOptions => new() { "Hoy", "Últimos 7 días", "Últimos 30 días", "Este mes", "Mes anterior", "Rango personalizado" };
+
+        public string SelectedDateRangeFilter
+        {
+            get => _selectedDateRangeFilter;
+            set
+            {
+                _selectedDateRangeFilter = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ConfirmedAppointmentsHistory));
+                OnPropertyChanged(nameof(TotalConfirmedAppointmentsInRange));
+                
+                if (value == "Rango personalizado")
+                {
+                    _ = ShowCustomAppointmentDateRangePicker();
+                }
+            }
+        }
+
         public string SelectedHistoryRange
         {
             get => _selectedHistoryRange;
@@ -172,9 +195,9 @@ namespace TrackingApp.ViewModels
         {
             get
             {
-                var (startDate, endDate) = GetDateRange();
-                var filtered = Medications.Where(m => m.FirstDoseTime >= startDate && m.FirstDoseTime <= endDate).ToList();
-                return new ObservableCollection<Medication>(filtered);
+                // Para medicamentos activos, mostrar todos sin filtro de fechas
+                // El filtro de fechas solo aplica al historial
+                return new ObservableCollection<Medication>(Medications);
             }
         }
 
@@ -1050,7 +1073,7 @@ namespace TrackingApp.ViewModels
             }
         }
 
-        // Citas confirmadas (historial)
+        // Citas confirmadas (historial) - con filtro de GetDateRange()
         public ObservableCollection<MedicalAppointment> ConfirmedAppointments
         {
             get
@@ -1063,6 +1086,82 @@ namespace TrackingApp.ViewModels
                     .ToList();
                 
                 return new ObservableCollection<MedicalAppointment>(confirmed);
+            }
+        }
+
+        // Citas confirmadas para el historial con filtro de fechas específico
+        public ObservableCollection<MedicalAppointment> ConfirmedAppointmentsHistory
+        {
+            get
+            {
+                var (startDate, endDate) = GetAppointmentDateRange();
+                var confirmed = Appointments
+                    .Where(a => a.IsConfirmed)
+                    .Where(a => (a.ConfirmedDate ?? a.AppointmentDate) >= startDate && (a.ConfirmedDate ?? a.AppointmentDate) <= endDate)
+                    .OrderByDescending(a => a.ConfirmedDate ?? a.AppointmentDate)
+                    .ToList();
+                
+                return new ObservableCollection<MedicalAppointment>(confirmed);
+            }
+        }
+
+        public int TotalConfirmedAppointmentsInRange => ConfirmedAppointmentsHistory?.Count ?? 0;
+
+        private (DateTime startDate, DateTime endDate) GetAppointmentDateRange()
+        {
+            var now = DateTime.Now;
+            var today = DateTime.Today;
+
+            return _selectedDateRangeFilter switch
+            {
+                "Hoy" => (today, today.AddDays(1).AddSeconds(-1)),
+                "Últimos 7 días" => (today.AddDays(-7), now),
+                "Últimos 30 días" => (today.AddDays(-30), now),
+                "Este mes" => (new DateTime(today.Year, today.Month, 1), new DateTime(today.Year, today.Month, 1).AddMonths(1).AddSeconds(-1)),
+                "Mes anterior" => (new DateTime(today.Year, today.Month, 1).AddMonths(-1), new DateTime(today.Year, today.Month, 1).AddSeconds(-1)),
+                "Rango personalizado" => (_customAppointmentStartDate, _customAppointmentEndDate.AddDays(1).AddSeconds(-1)),
+                _ => (DateTime.MinValue, DateTime.MaxValue)
+            };
+        }
+
+        private async Task ShowCustomAppointmentDateRangePicker()
+        {
+            try
+            {
+                var startDateStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                    "Fecha de inicio",
+                    "Ingrese fecha de inicio (dd/MM/yyyy):",
+                    placeholder: DateTime.Today.AddDays(-7).ToString("dd/MM/yyyy")
+                )!;
+
+                if (string.IsNullOrEmpty(startDateStr))
+                    return;
+
+                var endDateStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                    "Fecha de fin",
+                    "Ingrese fecha de fin (dd/MM/yyyy):",
+                    placeholder: DateTime.Today.ToString("dd/MM/yyyy")
+                )!;
+
+                if (string.IsNullOrEmpty(endDateStr))
+                    return;
+
+                if (DateTime.TryParseExact(startDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime start) &&
+                    DateTime.TryParseExact(endDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime end))
+                {
+                    _customAppointmentStartDate = start;
+                    _customAppointmentEndDate = end;
+                    OnPropertyChanged(nameof(ConfirmedAppointmentsHistory));
+                    OnPropertyChanged(nameof(TotalConfirmedAppointmentsInRange));
+                }
+                else
+                {
+                    await Application.Current?.MainPage?.DisplayAlert("Error", "Formato de fecha inválido", "OK")!;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error al mostrar selector de fechas: {ex.Message}");
             }
         }
 
