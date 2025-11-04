@@ -15,12 +15,13 @@ namespace TrackingApp.ViewModels
 
         private ObservableCollection<MedicationHistory> _allMedicationHistory;
         private ObservableCollection<FoodEntry> _allFoodHistory;
+        private List<MedicalAppointment> _allAppointments;
         
         private string _selectedMedicationFilter = "Todos";
         private string _selectedFoodTypeFilter = "Todos";
         private string _selectedUnitFilter = "Todos";
         private string _selectedProfileFilter = "Todos";
-        private string _selectedDateRangeFilter = "Todo el historial";
+        private string _selectedDateRangeFilter = "Seleccionar período...";
         private DateTime? _customStartDate;
         private DateTime? _customEndDate;
 
@@ -117,6 +118,8 @@ namespace TrackingApp.ViewModels
         public ICommand DeleteFoodHistoryCommand { get; }
         public ICommand EditMedicationHistoryCommand { get; }
         public ICommand EditFoodCommand { get; }
+        public ICommand DeleteAppointmentHistoryCommand { get; }
+        public ICommand EditAppointmentCommand { get; }
         public ICommand RefreshCommand { get; }
 
         public HistoryViewModel()
@@ -125,6 +128,7 @@ namespace TrackingApp.ViewModels
             
             _allMedicationHistory = new ObservableCollection<MedicationHistory>();
             _allFoodHistory = new ObservableCollection<FoodEntry>();
+            _allAppointments = new List<MedicalAppointment>();
             FilteredMedicationHistory = new ObservableCollection<MedicationHistory>();
             FilteredFoodHistory = new ObservableCollection<FoodEntry>();
             FilteredAppointments = new ObservableCollection<MedicalAppointment>();
@@ -135,6 +139,7 @@ namespace TrackingApp.ViewModels
             Profiles = new ObservableCollection<string> { "Todos", "Adulto", "Niño" };
             DateRangeOptions = new ObservableCollection<string> 
             { 
+                "Seleccionar período...",  // Opción por defecto (no carga nada)
                 "Todo el historial",
                 "Hoy", 
                 "Últimos 7 días", 
@@ -148,6 +153,8 @@ namespace TrackingApp.ViewModels
             DeleteFoodHistoryCommand = new Command<FoodEntry>(DeleteFoodHistory);
             EditMedicationHistoryCommand = new Command<MedicationHistory>(EditMedicationHistory);
             EditFoodCommand = new Command<FoodEntry>(EditFood);
+            DeleteAppointmentHistoryCommand = new Command<MedicalAppointment>(DeleteAppointmentHistory);
+            EditAppointmentCommand = new Command<MedicalAppointment>(EditAppointment);
             RefreshCommand = new Command(async () => await LoadHistoryAsync());
 
             LoadHistoryAsync();
@@ -171,16 +178,12 @@ namespace TrackingApp.ViewModels
                 _allFoodHistory.Add(item);
             }
 
-            // Cargar citas médicas confirmadas
-            var confirmedAppointments = _dataService.Appointments
-                .Where(a => a.IsConfirmed)
-                .OrderByDescending(a => a.ConfirmedDate ?? a.AppointmentDate)
-                .ToList();
+            // Cargar citas médicas confirmadas desde la base de datos (solo en memoria, no mostrar)
+            var allAppointments = await _dataService.GetAllAppointmentsAsync();
+            _allAppointments = allAppointments.Where(a => a.IsConfirmed).ToList();
+            
+            // NO cargar las citas en FilteredAppointments al inicio - solo cuando se seleccione un filtro
             FilteredAppointments.Clear();
-            foreach (var appointment in confirmedAppointments)
-            {
-                FilteredAppointments.Add(appointment);
-            }
 
             // Actualizar filtros disponibles
             UpdateAvailableFilters();
@@ -270,24 +273,34 @@ namespace TrackingApp.ViewModels
                 FilteredFoodHistory.Add(item);
             }
 
-            // Filtrar citas médicas confirmadas
-            var filteredAppointments = _dataService.Appointments
-                .Where(a => a.IsConfirmed)
-                .AsEnumerable();
-
-            // Filtro por perfil
-            if (SelectedProfileFilter != "Todos")
-            {
-                filteredAppointments = filteredAppointments.Where(a => a.UserType == SelectedProfileFilter);
-            }
-
-            // Filtro por rango de fechas
-            filteredAppointments = filteredAppointments.Where(a => a.AppointmentDate >= startDate && a.AppointmentDate <= endDate);
-
+            // Filtrar citas médicas confirmadas (desde _allAppointments que tiene las citas de la BD)
             FilteredAppointments.Clear();
-            foreach (var appointment in filteredAppointments.OrderByDescending(a => a.ConfirmedDate ?? a.AppointmentDate))
+            
+            // Si se seleccionó "Seleccionar período...", no mostrar nada
+            if (SelectedDateRangeFilter == "Seleccionar período...")
             {
-                FilteredAppointments.Add(appointment);
+                // Dejar la lista vacía
+            }
+            else
+            {
+                var filteredAppointments = _allAppointments.AsEnumerable();
+
+                // Filtro por perfil
+                if (SelectedProfileFilter != "Todos")
+                {
+                    filteredAppointments = filteredAppointments.Where(a => a.UserType == SelectedProfileFilter);
+                }
+
+                // Filtro por rango de fechas - usar AppointmentDate (fecha de la cita)
+                filteredAppointments = filteredAppointments.Where(a => 
+                {
+                    return a.AppointmentDate >= startDate && a.AppointmentDate <= endDate;
+                });
+
+                foreach (var appointment in filteredAppointments.OrderByDescending(a => a.AppointmentDate))
+                {
+                    FilteredAppointments.Add(appointment);
+                }
             }
 
             // Actualizar estadísticas
@@ -502,6 +515,86 @@ namespace TrackingApp.ViewModels
                 
                 await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Alimento actualizado (incluye nueva hora)", "OK")!;
             }
+        }
+
+        private async void DeleteAppointmentHistory(MedicalAppointment appointment)
+        {
+            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+                "Confirmar",
+                $"¿Eliminar la cita '{appointment.Title}' del historial?",
+                "Sí", "No")!;
+
+            if (confirm)
+            {
+                await _dataService.DeleteAppointmentAsync(appointment);
+                _allAppointments.Remove(appointment);
+                ApplyFilters();
+                await Application.Current?.MainPage?.DisplayAlert("Eliminado", "Cita eliminada del historial", "OK")!;
+            }
+        }
+
+        private async void EditAppointment(MedicalAppointment appointment)
+        {
+            // Prompt para editar título
+            var newTitle = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Título",
+                "Título de la cita:",
+                initialValue: appointment.Title)!;
+
+            if (string.IsNullOrWhiteSpace(newTitle)) return;
+
+            // Prompt para editar notas
+            var newNotes = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Notas",
+                "Notas adicionales:",
+                initialValue: appointment.Notes ?? "")!;
+
+            // Prompt para editar fecha de la cita
+            var newDateStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Fecha de Cita",
+                "Fecha de la cita (formato dd/MM/yyyy, ej: 25/12/2024):",
+                initialValue: appointment.AppointmentDate.ToString("dd/MM/yyyy"))!;
+
+            if (string.IsNullOrWhiteSpace(newDateStr)) return;
+
+            // Prompt para editar hora de la cita
+            var newTimeStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+                "Editar Hora de Cita",
+                "Hora de la cita (formato 12h, ej: 09:30 AM o 02:45 PM):",
+                initialValue: appointment.AppointmentDate.ToString("hh:mm tt"))!;
+
+            if (string.IsNullOrWhiteSpace(newTimeStr)) return;
+
+            // Parsear fecha
+            if (!DateTime.TryParseExact(newDateStr, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime newDate))
+            {
+                await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de fecha inválido. Use dd/MM/yyyy", "OK")!;
+                return;
+            }
+
+            // Parsear hora
+            if (!DateTime.TryParse(newTimeStr, out var parsedTime))
+            {
+                await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK")!;
+                return;
+            }
+
+            // Combinar fecha y hora
+            DateTime newAppointmentDate = newDate.Date + parsedTime.TimeOfDay;
+
+            appointment.Title = newTitle;
+            appointment.Notes = newNotes;
+            appointment.AppointmentDate = newAppointmentDate;
+            
+            await _dataService.UpdateAppointmentAsync(appointment);
+            
+            // Recargar la lista desde la base de datos para reflejar cambios
+            var allAppointments = await _dataService.GetAllAppointmentsAsync();
+            _allAppointments = allAppointments.Where(a => a.IsConfirmed).ToList();
+            
+            ApplyFilters();
+            
+            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Cita médica actualizada correctamente", "OK")!;
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)

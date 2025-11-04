@@ -483,6 +483,11 @@ namespace TrackingApp.Services
             return await _databaseService.GetAllMedicationHistoryAsync();
         }
 
+        public async Task<List<MedicalAppointment>> GetAllAppointmentsAsync()
+        {
+            return await _databaseService.GetAllAppointmentsAsync();
+        }
+
         public async Task<MedicationDose?> GetLastConfirmedDoseAsync(int medicationId)
         {
             var confirmedDoses = MedicationDoses
