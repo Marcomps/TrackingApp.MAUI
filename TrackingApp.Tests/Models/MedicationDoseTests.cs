@@ -14,7 +14,7 @@ public class MedicationDoseTests
     {
         // Arrange & Act
         var dose = new MedicationDose();
-        
+
         // Assert
         dose.Id.Should().Be(0);
         dose.MedicationId.Should().Be(0);
@@ -23,7 +23,7 @@ public class MedicationDoseTests
         dose.ActualTime.Should().BeNull();
         dose.Medication.Should().BeNull();
     }
-    
+
     [Fact]
     public void MedicationDose_PropertiesSetCorrectly()
     {
@@ -37,7 +37,7 @@ public class MedicationDoseTests
             IsConfirmed = true,
             IsEdited = false
         };
-        
+
         // Assert
         dose.Id.Should().Be(1);
         dose.MedicationId.Should().Be(5);
@@ -45,7 +45,7 @@ public class MedicationDoseTests
         dose.IsEdited.Should().BeFalse();
         dose.ActualTime.HasValue.Should().BeTrue();
     }
-    
+
     [Fact]
     public void Status_ReturnsConfirmed_WhenIsConfirmedTrue()
     {
@@ -55,14 +55,14 @@ public class MedicationDoseTests
             ScheduledTime = DateTime.Now,
             IsConfirmed = true
         };
-        
+
         // Act
         var status = dose.Status;
-        
+
         // Assert
         status.Should().Be("Confirmado");
     }
-    
+
     [Fact]
     public void Status_ReturnsAtrasado_WhenMoreThan30MinutesLate()
     {
@@ -72,14 +72,14 @@ public class MedicationDoseTests
             ScheduledTime = DateTime.Now.AddMinutes(-60),
             IsConfirmed = false
         };
-        
+
         // Act
         var status = dose.Status;
-        
+
         // Assert
         status.Should().Be("Atrasado");
     }
-    
+
     [Fact]
     public void Status_ReturnsProximo_WhenLessThan30MinutesAway()
     {
@@ -89,14 +89,14 @@ public class MedicationDoseTests
             ScheduledTime = DateTime.Now.AddMinutes(15),
             IsConfirmed = false
         };
-        
+
         // Act
         var status = dose.Status;
-        
+
         // Assert
         status.Should().Be("Próximo");
     }
-    
+
     [Fact]
     public void Status_ReturnsProgramado_WhenMoreThan30MinutesAway()
     {
@@ -106,14 +106,14 @@ public class MedicationDoseTests
             ScheduledTime = DateTime.Now.AddMinutes(90),
             IsConfirmed = false
         };
-        
+
         // Act
         var status = dose.Status;
-        
+
         // Assert
         status.Should().Be("Programado");
     }
-    
+
     [Fact]
     public void DisplayTime_UsesActualTime_WhenAvailable()
     {
@@ -124,14 +124,14 @@ public class MedicationDoseTests
             ScheduledTime = new DateTime(2024, 1, 1, 15, 0, 0),
             ActualTime = actualTime
         };
-        
+
         // Act
         var displayTime = dose.DisplayTime;
-        
+
         // Assert
         displayTime.Should().Contain("03:30");
     }
-    
+
     [Fact]
     public void DisplayTime_UsesScheduledTime_WhenActualTimeNotAvailable()
     {
@@ -142,14 +142,14 @@ public class MedicationDoseTests
             ScheduledTime = scheduledTime,
             ActualTime = null
         };
-        
+
         // Act
         var displayTime = dose.DisplayTime;
-        
+
         // Assert
         displayTime.Should().Contain("02:00");
     }
-    
+
     [Fact]
     public void DisplayText_IncludesMedicationInfo_WhenMedicationSet()
     {
@@ -159,16 +159,16 @@ public class MedicationDoseTests
             Name = "Ibuprofeno",
             Dose = "200mg"
         };
-        
+
         var dose = new MedicationDose
         {
             ScheduledTime = new DateTime(2024, 1, 1, 10, 0, 0),
             Medication = medication
         };
-        
+
         // Act
         var displayText = dose.DisplayText;
-        
+
         // Assert
         displayText.Should().Contain("Ibuprofeno").And.Contain("200mg");
     }
@@ -192,6 +192,7 @@ public class MedicationDoseTests
         // Assert
         nextDoses.Should().NotBeEmpty();
         nextDoses.Should().HaveCount(4); // 4 doses in 24 hours: 9 AM, 3 PM, 9 PM, 3 AM (next day)
+
         nextDoses[0].Should().Be(new DateTime(2025, 10, 24, 9, 0, 0));
         nextDoses[1].Should().Be(new DateTime(2025, 10, 24, 15, 0, 0));
         nextDoses[2].Should().Be(new DateTime(2025, 10, 24, 21, 0, 0));
@@ -221,16 +222,10 @@ public class MedicationDoseTests
         // Act
         var nextDoses = (await medicationDose.GetNextDosesFromDatabaseAsync(mockDataService.Object, medicationId, frequencyInHours, days)).ToList();
 
-
-        //var nextDoses = (await medicationDose.GetNextDosesFromDatabaseAsync(
-        //    mockDataService.Object,
-        //    medicationId,
-        //    frequencyInHours,
-        //    days)).ToList();
-
         // Assert
         nextDoses.Should().NotBeEmpty();
         nextDoses.Should().HaveCount(4); // 4 doses in 24 hours: 9 AM, 3 PM, 9 PM, 3 AM (next day)
+
         nextDoses[0].Should().Be(new DateTime(2025, 10, 24, 9, 0, 0));
         nextDoses[1].Should().Be(new DateTime(2025, 10, 24, 15, 0, 0));
         nextDoses[2].Should().Be(new DateTime(2025, 10, 24, 21, 0, 0));
@@ -244,7 +239,7 @@ public class MedicationDoseTests
         var mockDataService = new Mock<IDataService>();
 
         mockDataService.Setup(ds => ds.GetLastConfirmedDoseAsync(It.IsAny<int>()))
-            .ReturnsAsync((MedicationDose)null); // No confirmed doses
+            .ReturnsAsync(() => null);
 
         var medicationDose = new MedicationDose();
         int medicationId = 1;

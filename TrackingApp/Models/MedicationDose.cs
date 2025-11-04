@@ -89,6 +89,5 @@ namespace TrackingApp.Models
 
             return nextDoses;
         }
-
     }
 }

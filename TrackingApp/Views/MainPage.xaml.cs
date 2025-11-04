@@ -58,4 +58,44 @@ public partial class MainPage : ContentPage
 			System.Diagnostics.Debug.WriteLine("Sender is NOT a Button");
 		}
 	}
+
+	private async void OnConfirmAppointmentButtonClicked(object sender, EventArgs e)
+	{
+		System.Diagnostics.Debug.WriteLine("=== OnConfirmAppointmentButtonClicked FIRED ===");
+		
+		if (sender is Button button)
+		{
+			System.Diagnostics.Debug.WriteLine($"Button found. CommandParameter type: {button.CommandParameter?.GetType().Name ?? "null"}");
+			
+			if (button.CommandParameter is MedicalAppointment appointment)
+			{
+				System.Diagnostics.Debug.WriteLine($"MedicalAppointment: Id={appointment.Id}, Title={appointment.Title}");
+				
+				if (BindingContext is MainViewModel viewModel)
+				{
+					System.Diagnostics.Debug.WriteLine("ViewModel found, confirming appointment...");
+					
+					// Confirmar la cita usando el servicio
+					await DataService.Instance.ConfirmAppointmentAsync(appointment);
+					
+					// Recargar las citas para actualizar la UI
+					await DataService.Instance.LoadAppointmentsAsync();
+					
+					System.Diagnostics.Debug.WriteLine("Appointment confirmed successfully");
+				}
+				else
+				{
+					System.Diagnostics.Debug.WriteLine("ViewModel NOT found");
+				}
+			}
+			else
+			{
+				System.Diagnostics.Debug.WriteLine("CommandParameter is NOT a MedicalAppointment");
+			}
+		}
+		else
+		{
+			System.Diagnostics.Debug.WriteLine("Sender is NOT a Button");
+		}
+	}
 }

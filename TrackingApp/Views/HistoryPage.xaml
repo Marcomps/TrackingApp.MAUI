@@ -3,8 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
              x:Class="TrackingApp.HistoryPage"
-             Title="Historial"
-             x:DataType="viewmodels:HistoryViewModel">
+             Title="Historial">
 
     <ContentPage.BindingContext>
         <viewmodels:HistoryViewModel />
@@ -331,7 +330,7 @@
             </Frame>
 
             <!-- HISTORIAL DE CITAS MÉDICAS -->
-            <Frame BackgroundColor="#e8f5e8" Padding="15" CornerRadius="8" HasShadow="True">
+            <Frame BackgroundColor="White" Padding="15" CornerRadius="8" HasShadow="True">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="📅 Historial de Citas Médicas" 
                            FontSize="22" 
@@ -339,78 +338,93 @@
                            TextColor="#2a3d66"
                            HorizontalOptions="Center"/>
                     
-                    <Label Text="Citas Registradas:" 
-                           FontAttributes="Bold" 
-                           FontSize="16"
-                           TextColor="#2a3d66"
-                           Margin="0,10,0,5"/>
+                    <!-- Filtro de rango de fecha -->
+                    <Frame BackgroundColor="#f0f0f0" Padding="10" CornerRadius="5" HasShadow="False" Margin="0,5">
+                        <HorizontalStackLayout Spacing="10">
+                            <Label Text="📅 Filtrar por:" 
+                                   VerticalOptions="Center"
+                                   TextColor="#666"
+                                   FontSize="14"/>
+                            <Picker ItemsSource="{Binding DateRangeOptions}"
+                                    SelectedItem="{Binding SelectedDateRangeFilter}"
+                                    TextColor="Black"
+                                    BackgroundColor="White"
+                                    HorizontalOptions="FillAndExpand"/>
+                        </HorizontalStackLayout>
+                    </Frame>
                     
-                    <CollectionView ItemsSource="{Binding FilteredAppointments}" MaximumHeightRequest="300">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate>
-                                <SwipeView>
-                                    <SwipeView.LeftItems>
-                                        <SwipeItems>
-                                            <SwipeItem Text="Confirmar"
-                                                       BackgroundColor="#4CAF50"
-                                                       Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HistoryViewModel}}, Path=ConfirmAppointmentCommand}"
-                                                       CommandParameter="{Binding .}"
-                                                       IsVisible="{Binding IsConfirmed, Converter={StaticResource InverseBoolConverter}}"/>
-                                            <SwipeItem Text="Editar"
-                                                       BackgroundColor="#2196F3"
-                                                       Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HistoryViewModel}}, Path=EditAppointmentCommand}"
-                                                       CommandParameter="{Binding .}"/>
-                                        </SwipeItems>
-                                    </SwipeView.LeftItems>
-                                    <SwipeView.RightItems>
-                                        <SwipeItems>
-                                            <SwipeItem Text="Eliminar"
-                                                       BackgroundColor="#f44336"
-                                                       Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HistoryViewModel}}, Path=DeleteAppointmentCommand}"
-                                                       CommandParameter="{Binding .}"/>
-                                        </SwipeItems>
-                                    </SwipeView.RightItems>
-                                    <Frame BackgroundColor="#f3e5f5" 
-                                           Padding="10" 
+                    <ScrollView MaximumHeightRequest="400">
+                        <CollectionView ItemsSource="{Binding FilteredAppointments}"
+                                        x:Name="AppointmentsHistoryCollectionView">
+                            <CollectionView.EmptyView>
+                                <StackLayout Padding="20" VerticalOptions="Center">
+                                    <Label Text="📅" 
+                                           FontSize="48"
+                                           HorizontalOptions="Center"
+                                           Margin="0,20,0,10"/>
+                                    <Label Text="No hay citas confirmadas"
+                                           TextColor="#999"
+                                           FontAttributes="Italic"
+                                           FontSize="16"
+                                           HorizontalOptions="Center"/>
+                                </StackLayout>
+                            </CollectionView.EmptyView>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Frame BackgroundColor="#e8f5e9" 
+                                           Padding="12" 
                                            Margin="0,5" 
-                                           CornerRadius="5"
-                                           BorderColor="#9C27B0">
-                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                                           CornerRadius="8" 
+                                           BorderColor="#4CAF50"
+                                           HasShadow="False">
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
                                             <Label Grid.Column="0" 
-                                                   Text="{Binding FormattedTime}" 
+                                                   Text="{Binding FormattedAppointmentDate}" 
                                                    FontAttributes="Bold"
                                                    FontSize="16"
-                                                   TextColor="#9C27B0"
+                                                   TextColor="#4CAF50"
                                                    VerticalOptions="Center"/>
                                             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                                                 <Label Text="{Binding Title}" 
                                                        FontAttributes="Bold"
+                                                       FontSize="16"
                                                        TextColor="Black"/>
-                                                <Label Text="{Binding Doctor}" 
-                                                       FontSize="12"
-                                                       TextColor="#666"
-                                                       IsVisible="{Binding Doctor, Converter={StaticResource StringIsNotNullOrEmptyConverter}}"/>
-                                                <Label Text="{Binding Location}" 
-                                                       FontSize="12"
-                                                       TextColor="#666"
-                                                       IsVisible="{Binding Location, Converter={StaticResource StringIsNotNullOrEmptyConverter}}"/>
+                                                <Label Text="{Binding Notes}" 
+                                                       FontSize="13"
+                                                       TextColor="#666"/>
+                                                <Label Text="{Binding FormattedConfirmedDate, StringFormat='Confirmada: {0}'}" 
+                                                       FontSize="12" 
+                                                       TextColor="#888"/>
                                             </VerticalStackLayout>
                                             <Label Grid.Column="2" 
-                                                   Text="✅"
-                                                   FontSize="20"
-                                                   IsVisible="{Binding IsConfirmed}"
-                                                   VerticalOptions="Center"/>
-                                            <Label Grid.Column="3" 
-                                                   Text="{Binding FormattedDate}" 
-                                                   FontSize="12"
-                                                   TextColor="#666"
+                                                   Text="✓"
+                                                   FontSize="18"
+                                                   FontAttributes="Bold"
+                                                   TextColor="#4CAF50"
                                                    VerticalOptions="Center"/>
                                         </Grid>
                                     </Frame>
-                                </SwipeView>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </ScrollView>
+
+                    <!-- Estadísticas de citas médicas -->
+                    <Frame BackgroundColor="#f0f0f0" 
+                           Padding="15" 
+                           CornerRadius="8" 
+                           Margin="0,10,0,0"
+                           HasShadow="False">
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="📊 Estadísticas de Citas Médicas" 
+                                   FontAttributes="Bold"
+                                   FontSize="14"
+                                   TextColor="#2a3d66"/>
+                            <Label Text="{Binding TotalConfirmedAppointments, StringFormat='Total de citas confirmadas: {0}'}"
+                                   FontSize="12"
+                                   TextColor="#666"/>
+                        </VerticalStackLayout>
+                    </Frame>
                 </VerticalStackLayout>
             </Frame>
 

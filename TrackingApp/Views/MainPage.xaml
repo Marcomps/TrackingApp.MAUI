@@ -2,23 +2,12 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
-             xmlns:converters="clr-namespace:TrackingApp.Converters"
              x:Class="TrackingApp.MainPage"
-             Title="Tracking de Alimentos y Medicamentos"
-             x:DataType="viewmodels:MainViewModel">
+             Title="Tracking de Alimentos y Medicamentos">
 
     <ContentPage.BindingContext>
         <viewmodels:MainViewModel />
     </ContentPage.BindingContext>
-
-    <ContentPage.Resources>
-        <ResourceDictionary>
-            <converters:BoolToNextDoseColorConverter x:Key="BoolToNextDoseColorConverter"/>
-            <converters:BoolToNextDoseBackgroundConverter x:Key="BoolToNextDoseBackgroundConverter"/>
-            <converters:BoolToNextDoseTextConverter x:Key="BoolToNextDoseTextConverter"/>
-            <converters:BoolToConfirmButtonColorConverter x:Key="BoolToConfirmButtonColorConverter"/>
-        </ResourceDictionary>
-    </ContentPage.Resources>
 
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="20">
@@ -294,23 +283,19 @@
                                             </SwipeItems>
                                         </SwipeView.RightItems>
                                         <!-- Destacar la SIGUIENTE dosis -->
-                                        <Frame Padding="15" 
-                                               Margin="0,8,0,0" 
-                                               CornerRadius="12" 
-                                               HasShadow="True"
+                                        <Frame Padding="12" 
+                                               Margin="0,5" 
+                                               CornerRadius="8" 
                                                BorderColor="{Binding IsNextDose, Converter={StaticResource BoolToNextDoseColorConverter}}"
                                                BackgroundColor="{Binding IsNextDose, Converter={StaticResource BoolToNextDoseBackgroundConverter}}">
-                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" RowSpacing="4">
-                                                <!-- Hora -->
+                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
                                                 <Label Grid.Column="0" 
                                                        Text="{Binding DisplayTime}" 
                                                        FontAttributes="Bold"
-                                                       FontSize="22"
+                                                       FontSize="18"
                                                        TextColor="{Binding IsNextDose, Converter={StaticResource BoolToNextDoseTextConverter}}"
                                                        VerticalOptions="Center"/>
-                                                
-                                                <!-- Info del medicamento -->
-                                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                                                     <HorizontalStackLayout Spacing="8">
                                                         <Label Text="⏰ SIGUIENTE" 
                                                                FontSize="14"
@@ -319,25 +304,20 @@
                                                                IsVisible="{Binding IsNextDose}"/>
                                                         <Label Text="{Binding MedicationName}" 
                                                                FontAttributes="Bold"
-                                                               FontSize="16"
                                                                TextColor="Black"/>
                                                     </HorizontalStackLayout>
                                                     <Label Text="{Binding Dose}" 
-                                                           FontSize="14"
-                                                           TextColor="#666"
-                                                           Opacity="0.9"/>
+                                                           FontSize="12"
+                                                           TextColor="#666"/>
                                                 </VerticalStackLayout>
-                                                
-                                                <!-- Botón confirmar -->
                                                 <Button Grid.Column="2" 
-                                                        Text="✓ Confirmar"
+                                                        Text="Confirmar"
                                                         CommandParameter="{Binding .}"
                                                         BackgroundColor="{Binding IsNextDose, Converter={StaticResource BoolToConfirmButtonColorConverter}}"
                                                         TextColor="White"
                                                         FontAttributes="Bold"
-                                                        FontSize="14"
-                                                        Padding="15,10"
-                                                        CornerRadius="8"
+                                                        FontSize="12"
+                                                        Padding="10,8"
                                                         Clicked="OnConfirmButtonClicked"/>
                                             </Grid>
                                         </Frame>
@@ -346,12 +326,129 @@
                             </CollectionView.ItemTemplate>
                         </CollectionView>
                     </ScrollView>
-
-                    <!-- 💡 Historial movido a la pestaña "Historial" para evitar duplicación -->
                 </VerticalStackLayout>
             </Frame>
 
-            <!-- � Historial de citas médicas movido a la pestaña "Historial" -->
+            <!-- Sección de Citas Médicas -->
+            <Frame BackgroundColor="White" Padding="15" CornerRadius="8" HasShadow="True">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="📅 Citas Médicas" FontSize="20" FontAttributes="Bold" TextColor="#2a3d66"/>
+                    
+                    <Entry Placeholder="Título de la cita" 
+                           Text="{Binding AppointmentTitle}"
+                           TextColor="Black"
+                           PlaceholderColor="Gray"
+                           BackgroundColor="#f5f5f5"/>
+                    
+                    <Entry Placeholder="Descripción (opcional)" 
+                           Text="{Binding AppointmentDescription}"
+                           TextColor="Black"
+                           PlaceholderColor="Gray"
+                           BackgroundColor="#f5f5f5"/>
+                    
+                    <Label Text="Fecha:" FontSize="12" TextColor="Gray"/>
+                    <DatePicker Date="{Binding AppointmentDate}" 
+                                TextColor="Black"
+                                BackgroundColor="#f5f5f5"/>
+                    
+                    <Label Text="Hora:" FontSize="12" TextColor="Gray"/>
+                    <TimePicker Time="{Binding AppointmentTime}" 
+                                Format="hh:mm tt"
+                                TextColor="Black"
+                                BackgroundColor="#f5f5f5"/>
+                    
+                    <Entry Placeholder="Ubicación (opcional)" 
+                           Text="{Binding AppointmentLocation}"
+                           TextColor="Black"
+                           PlaceholderColor="Gray"
+                           BackgroundColor="#f5f5f5"/>
+                    
+                    <Entry Placeholder="Doctor (opcional)" 
+                           Text="{Binding AppointmentDoctor}"
+                           TextColor="Black"
+                           PlaceholderColor="Gray"
+                           BackgroundColor="#f5f5f5"/>
+                    
+                    <Button Text="Agregar Cita" 
+                            Command="{Binding AddAppointmentCommand}"
+                            BackgroundColor="#9C27B0"
+                            TextColor="White"
+                            FontAttributes="Bold"/>
+                    
+                    <Label Text="Citas Registradas:" 
+                           FontAttributes="Bold" 
+                           FontSize="16"
+                           TextColor="#2a3d66"
+                           Margin="0,10,0,5"/>
+                    
+                    <CollectionView ItemsSource="{Binding FilteredAppointments}" MaximumHeightRequest="250">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <SwipeView>
+                                    <SwipeView.LeftItems>
+                                        <SwipeItems>
+                                            <SwipeItem Text="Editar"
+                                                       BackgroundColor="#2196F3"
+                                                       Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=EditAppointmentCommand}"
+                                                       CommandParameter="{Binding .}"/>
+                                        </SwipeItems>
+                                    </SwipeView.LeftItems>
+                                    <SwipeView.RightItems>
+                                        <SwipeItems>
+                                            <SwipeItem Text="Eliminar"
+                                                       BackgroundColor="#f44336"
+                                                       Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=DeleteAppointmentCommand}"
+                                                       CommandParameter="{Binding .}"/>
+                                        </SwipeItems>
+                                    </SwipeView.RightItems>
+                                    <Frame BackgroundColor="#f3e5f5" 
+                                           Padding="10" 
+                                           Margin="0,5" 
+                                           CornerRadius="5"
+                                           BorderColor="#9C27B0">
+                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                                            <Label Grid.Column="0" 
+                                                   Text="{Binding FormattedTime}" 
+                                                   FontAttributes="Bold"
+                                                   FontSize="16"
+                                                   TextColor="#9C27B0"
+                                                   VerticalOptions="Center"/>
+                                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                                <Label Text="{Binding Title}" 
+                                                       FontAttributes="Bold"
+                                                       TextColor="Black"/>
+                                                <Label Text="{Binding Doctor}" 
+                                                       FontSize="12"
+                                                       TextColor="#666"
+                                                       IsVisible="{Binding Doctor, Converter={StaticResource StringIsNotNullOrEmptyConverter}}"/>
+                                                <Label Text="{Binding Location}" 
+                                                       FontSize="12"
+                                                       TextColor="#666"
+                                                       IsVisible="{Binding Location, Converter={StaticResource StringIsNotNullOrEmptyConverter}}"/>
+                                            </VerticalStackLayout>
+                                            <Label Grid.Column="2" 
+                                                   Text="{Binding FormattedDate}" 
+                                                   FontSize="12"
+                                                   TextColor="#666"
+                                                   VerticalOptions="Center"/>
+                                            <Button Grid.Column="3" 
+                                                    Text="Confirmar"
+                                                    CommandParameter="{Binding .}"
+                                                    BackgroundColor="{Binding IsConfirmed, Converter={StaticResource BoolToConfirmButtonColorConverter}}"
+                                                    TextColor="White"
+                                                    FontAttributes="Bold"
+                                                    FontSize="12"
+                                                    Padding="10,8"
+                                                    Clicked="OnConfirmAppointmentButtonClicked"
+                                                    IsEnabled="{Binding IsConfirmed, Converter={StaticResource InverseBoolConverter}}"/>
+                                        </Grid>
+                                    </Frame>
+                                </SwipeView>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Frame>
 
             <!-- Botón de Restablecer Todo -->
             <Frame BackgroundColor="White" Padding="15" CornerRadius="8" HasShadow="True" Margin="0,10,0,0">
@@ -373,20 +470,6 @@
                             FontAttributes="Bold"
                             HorizontalOptions="Center"
                             WidthRequest="250"/>
-                </VerticalStackLayout>
-            </Frame>
-
-            <!-- Próximas dosis -->
-            <Frame BackgroundColor="#e3f2fd" Padding="15" CornerRadius="8" HasShadow="True">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="Próximas Dosis" FontSize="20" FontAttributes="Bold" TextColor="#1e88e5"/>
-                    <CollectionView ItemsSource="{Binding NextDoses}">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate>
-                                <Label Text="{Binding .}" TextColor="Black" FontSize="16"/>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
                 </VerticalStackLayout>
             </Frame>
 

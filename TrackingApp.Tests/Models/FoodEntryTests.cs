@@ -11,17 +11,17 @@ public class FoodEntryTests
     {
         // Arrange & Act
         var entry = new FoodEntry();
-        
+
         // Assert
         entry.Id.Should().Be(0);
         entry.FoodType.Should().Be(string.Empty);
         entry.Amount.Should().Be(0);
-        entry.Unit.Should().Be(Unit.Gram);
+        entry.Unit.Should().Be(Unit.Ounce); // Onza es el valor por defecto
         entry.UserType.Should().Be(string.Empty);
         entry.StartTime.Should().BeNull();
         entry.EndTime.Should().BeNull();
     }
-    
+
     [Fact]
     public void FoodEntry_PropertiesSetCorrectly()
     {
@@ -31,19 +31,19 @@ public class FoodEntryTests
             Id = 1,
             FoodType = "Leche materna",
             Amount = 120,
-            Unit = Unit.Milliliter,
+            Unit = Unit.Ounce,
             Time = new DateTime(2024, 1, 1, 10, 0, 0),
             UserType = "Bebé"
         };
-        
+
         // Assert
         entry.Id.Should().Be(1);
         entry.FoodType.Should().Be("Leche materna");
         entry.Amount.Should().Be(120);
-        entry.Unit.Should().Be(Unit.Milliliter);
+        entry.Unit.Should().Be(Unit.Ounce);
         entry.UserType.Should().Be("Bebé");
     }
-    
+
     [Fact]
     public void DisplayAmount_FormatsCorrectly()
     {
@@ -51,16 +51,16 @@ public class FoodEntryTests
         var entry = new FoodEntry
         {
             Amount = 150,
-            Unit = Unit.Milliliter
+            Unit = Unit.Ounce
         };
-        
+
         // Act
         var displayAmount = entry.DisplayAmount;
-        
+
         // Assert
-        displayAmount.Should().Be("150 ml");
+        displayAmount.Should().Be("150 oz");
     }
-    
+
     [Fact]
     public void FormattedTime_FormatsCorrectly()
     {
@@ -69,14 +69,14 @@ public class FoodEntryTests
         {
             Time = new DateTime(2024, 1, 1, 14, 30, 0)
         };
-        
+
         // Act
         var formattedTime = entry.FormattedTime;
-        
+
         // Assert
         formattedTime.Should().Contain("02:30");
     }
-    
+
     [Fact]
     public void FormattedDate_FormatsCorrectly()
     {
@@ -85,14 +85,14 @@ public class FoodEntryTests
         {
             Time = new DateTime(2024, 3, 15, 10, 0, 0)
         };
-        
+
         // Act
         var formattedDate = entry.FormattedDate;
-        
+
         // Assert
         formattedDate.Should().Be("15/03/2024");
     }
-    
+
     [Fact]
     public void DurationText_ReturnsEmptyWhenNoStartEndTime()
     {
@@ -101,14 +101,14 @@ public class FoodEntryTests
         {
             Time = DateTime.Now
         };
-        
+
         // Act
         var durationText = entry.DurationText;
-        
+
         // Assert
         durationText.Should().Be(string.Empty);
     }
-    
+
     [Fact]
     public void DurationText_CalculatesCorrectly_WhenStartAndEndTimeSet()
     {
@@ -118,14 +118,14 @@ public class FoodEntryTests
             StartTime = new DateTime(2024, 1, 1, 10, 0, 0),
             EndTime = new DateTime(2024, 1, 1, 10, 25, 0)
         };
-        
+
         // Act
         var durationText = entry.DurationText;
-        
+
         // Assert
         durationText.Should().Be("25 min");
     }
-    
+
     [Fact]
     public void TimeRangeText_ShowsTimeRange_WhenStartAndEndTimeSet()
     {
@@ -136,14 +136,14 @@ public class FoodEntryTests
             EndTime = new DateTime(2024, 1, 1, 10, 30, 0),
             Time = new DateTime(2024, 1, 1, 10, 0, 0)
         };
-        
+
         // Act
         var timeRangeText = entry.TimeRangeText;
-        
+
         // Assert
         timeRangeText.Should().Contain("10:00").And.Contain("10:30");
     }
-    
+
     [Fact]
     public void DisplayText_IncludesDuration_WhenStartAndEndTimeSet()
     {
@@ -151,16 +151,16 @@ public class FoodEntryTests
         var entry = new FoodEntry
         {
             Amount = 100,
-            Unit = Unit.Milliliter,
+            Unit = Unit.Ounce,
             FoodType = "Leche",
             StartTime = new DateTime(2024, 1, 1, 10, 0, 0),
             EndTime = new DateTime(2024, 1, 1, 10, 20, 0)
         };
-        
+
         // Act
         var displayText = entry.DisplayText;
-        
+
         // Assert
-        displayText.Should().Contain("100 ml").And.Contain("Leche").And.Contain("20 min");
+        displayText.Should().Contain("100 oz").And.Contain("Leche").And.Contain("20 min");
     }
 }

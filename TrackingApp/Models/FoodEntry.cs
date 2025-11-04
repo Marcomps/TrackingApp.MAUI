@@ -9,31 +9,30 @@ namespace TrackingApp.Models
         
         public string FoodType { get; set; } = string.Empty;
         public double Amount { get; set; }
-        public Unit Unit { get; set; } = Unit.Gram;
+        public Unit Unit { get; set; } = Unit.Ounce; // Onza por defecto
         public DateTime Time { get; set; }
+        public string UserType { get; set; } = string.Empty; // "Bebé", "Adulto", "Animal"
         
-        // Nuevos campos para duración
+        // Para alimentación con duración (como lactancia)
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }
-        
-        public string UserType { get; set; } = string.Empty; // "Bebé", "Adulto", "Animal"
 
         [Ignore]
         public string DisplayText
         {
             get
             {
+                var baseText = $"{DisplayAmount} de {FoodType}";
                 if (StartTime.HasValue && EndTime.HasValue)
                 {
-                    var duration = EndTime.Value - StartTime.Value;
-                    return $"{Amount} {Unit.GetDisplayName()} de {FoodType}\n⏱️ {duration.TotalMinutes:F0} min ({StartTime:hh:mm tt} - {EndTime:hh:mm tt})";
+                    return $"{baseText} ({DurationText})";
                 }
-                return $"{Amount} {Unit.GetDisplayName()} de {FoodType}\n🕐 {Time:hh:mm tt}";
+                return $"{baseText} a las {FormattedTime}";
             }
         }
         
         [Ignore]
-        public string DisplayAmount => $"{Amount} {Unit.GetDisplayName()}";
+        public string DisplayAmount => $"{Amount} {Unit.GetDisplayText()}";
         
         [Ignore]
         public string FormattedTime => Time.ToString("hh:mm tt");
@@ -46,12 +45,12 @@ namespace TrackingApp.Models
         {
             get
             {
-                if (StartTime.HasValue && EndTime.HasValue)
-                {
-                    var duration = EndTime.Value - StartTime.Value;
-                    return $"{duration.TotalMinutes:F0} min";
-                }
-                return string.Empty;
+                if (!StartTime.HasValue || !EndTime.HasValue)
+                    return string.Empty;
+                
+                var duration = EndTime.Value - StartTime.Value;
+                var minutes = (int)duration.TotalMinutes;
+                return $"{minutes} min";
             }
         }
         
@@ -60,11 +59,10 @@ namespace TrackingApp.Models
         {
             get
             {
-                if (StartTime.HasValue && EndTime.HasValue)
-                {
-                    return $"{StartTime:hh:mm tt} - {EndTime:hh:mm tt}";
-                }
-                return FormattedTime;
+                if (!StartTime.HasValue || !EndTime.HasValue)
+                    return FormattedTime;
+                
+                return $"{StartTime.Value:hh:mm tt} - {EndTime.Value:hh:mm tt}";
             }
         }
     }
