@@ -281,8 +281,12 @@ namespace TrackingApp.ViewModels
                 filteredAppointments = filteredAppointments.Where(a => a.UserType == SelectedProfileFilter);
             }
 
-            // Filtro por rango de fechas
-            filteredAppointments = filteredAppointments.Where(a => a.AppointmentDate >= startDate && a.AppointmentDate <= endDate);
+            // Filtro por rango de fechas - usar ConfirmedDate en lugar de AppointmentDate
+            filteredAppointments = filteredAppointments.Where(a => 
+            {
+                var dateToCompare = a.ConfirmedDate ?? a.AppointmentDate;
+                return dateToCompare >= startDate && dateToCompare <= endDate;
+            });
 
             FilteredAppointments.Clear();
             foreach (var appointment in filteredAppointments.OrderByDescending(a => a.ConfirmedDate ?? a.AppointmentDate))
