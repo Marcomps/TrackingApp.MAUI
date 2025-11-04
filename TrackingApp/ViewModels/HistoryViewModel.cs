@@ -21,7 +21,7 @@ namespace TrackingApp.ViewModels
         private string _selectedFoodTypeFilter = "Todos";
         private string _selectedUnitFilter = "Todos";
         private string _selectedProfileFilter = "Todos";
-        private string _selectedDateRangeFilter = "Todo el historial";
+        private string _selectedDateRangeFilter = "Seleccionar período...";
         private DateTime? _customStartDate;
         private DateTime? _customEndDate;
 
@@ -137,6 +137,7 @@ namespace TrackingApp.ViewModels
             Profiles = new ObservableCollection<string> { "Todos", "Adulto", "Niño" };
             DateRangeOptions = new ObservableCollection<string> 
             { 
+                "Seleccionar período...",  // Opción por defecto (no carga nada)
                 "Todo el historial",
                 "Hoy", 
                 "Últimos 7 días", 
@@ -173,15 +174,12 @@ namespace TrackingApp.ViewModels
                 _allFoodHistory.Add(item);
             }
 
-            // Cargar citas médicas confirmadas desde la base de datos
+            // Cargar citas médicas confirmadas desde la base de datos (solo en memoria, no mostrar)
             var allAppointments = await _dataService.GetAllAppointmentsAsync();
             _allAppointments = allAppointments.Where(a => a.IsConfirmed).ToList();
             
+            // NO cargar las citas en FilteredAppointments al inicio - solo cuando se seleccione un filtro
             FilteredAppointments.Clear();
-            foreach (var appointment in _allAppointments.OrderByDescending(a => a.ConfirmedDate ?? a.AppointmentDate))
-            {
-                FilteredAppointments.Add(appointment);
-            }
 
             // Actualizar filtros disponibles
             UpdateAvailableFilters();
@@ -272,24 +270,33 @@ namespace TrackingApp.ViewModels
             }
 
             // Filtrar citas médicas confirmadas (desde _allAppointments que tiene las citas de la BD)
-            var filteredAppointments = _allAppointments.AsEnumerable();
-
-            // Filtro por perfil
-            if (SelectedProfileFilter != "Todos")
-            {
-                filteredAppointments = filteredAppointments.Where(a => a.UserType == SelectedProfileFilter);
-            }
-
-            // Filtro por rango de fechas - usar AppointmentDate (fecha de la cita)
-            filteredAppointments = filteredAppointments.Where(a => 
-            {
-                return a.AppointmentDate >= startDate && a.AppointmentDate <= endDate;
-            });
-
             FilteredAppointments.Clear();
-            foreach (var appointment in filteredAppointments.OrderByDescending(a => a.AppointmentDate))
+            
+            // Si se seleccionó "Seleccionar período...", no mostrar nada
+            if (SelectedDateRangeFilter == "Seleccionar período...")
             {
-                FilteredAppointments.Add(appointment);
+                // Dejar la lista vacía
+            }
+            else
+            {
+                var filteredAppointments = _allAppointments.AsEnumerable();
+
+                // Filtro por perfil
+                if (SelectedProfileFilter != "Todos")
+                {
+                    filteredAppointments = filteredAppointments.Where(a => a.UserType == SelectedProfileFilter);
+                }
+
+                // Filtro por rango de fechas - usar AppointmentDate (fecha de la cita)
+                filteredAppointments = filteredAppointments.Where(a => 
+                {
+                    return a.AppointmentDate >= startDate && a.AppointmentDate <= endDate;
+                });
+
+                foreach (var appointment in filteredAppointments.OrderByDescending(a => a.AppointmentDate))
+                {
+                    FilteredAppointments.Add(appointment);
+                }
             }
 
             // Actualizar estadísticas
