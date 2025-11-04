@@ -15,6 +15,7 @@ namespace TrackingApp.ViewModels
 
         private ObservableCollection<MedicationHistory> _allMedicationHistory;
         private ObservableCollection<FoodEntry> _allFoodHistory;
+        private List<MedicalAppointment> _allAppointments;
         
         private string _selectedMedicationFilter = "Todos";
         private string _selectedFoodTypeFilter = "Todos";
@@ -125,6 +126,7 @@ namespace TrackingApp.ViewModels
             
             _allMedicationHistory = new ObservableCollection<MedicationHistory>();
             _allFoodHistory = new ObservableCollection<FoodEntry>();
+            _allAppointments = new List<MedicalAppointment>();
             FilteredMedicationHistory = new ObservableCollection<MedicationHistory>();
             FilteredFoodHistory = new ObservableCollection<FoodEntry>();
             FilteredAppointments = new ObservableCollection<MedicalAppointment>();
@@ -171,13 +173,12 @@ namespace TrackingApp.ViewModels
                 _allFoodHistory.Add(item);
             }
 
-            // Cargar citas médicas confirmadas
-            var confirmedAppointments = _dataService.Appointments
-                .Where(a => a.IsConfirmed)
-                .OrderByDescending(a => a.ConfirmedDate ?? a.AppointmentDate)
-                .ToList();
+            // Cargar citas médicas confirmadas desde la base de datos
+            var allAppointments = await _dataService.GetAllAppointmentsAsync();
+            _allAppointments = allAppointments.Where(a => a.IsConfirmed).ToList();
+            
             FilteredAppointments.Clear();
-            foreach (var appointment in confirmedAppointments)
+            foreach (var appointment in _allAppointments.OrderByDescending(a => a.ConfirmedDate ?? a.AppointmentDate))
             {
                 FilteredAppointments.Add(appointment);
             }
@@ -270,10 +271,8 @@ namespace TrackingApp.ViewModels
                 FilteredFoodHistory.Add(item);
             }
 
-            // Filtrar citas médicas confirmadas
-            var filteredAppointments = _dataService.Appointments
-                .Where(a => a.IsConfirmed)
-                .AsEnumerable();
+            // Filtrar citas médicas confirmadas (desde _allAppointments que tiene las citas de la BD)
+            var filteredAppointments = _allAppointments.AsEnumerable();
 
             // Filtro por perfil
             if (SelectedProfileFilter != "Todos")
