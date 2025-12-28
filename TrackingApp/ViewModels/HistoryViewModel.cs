@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using TrackingApp.Models;
 using TrackingApp.Services;
+using TrackingApp.Helpers;
 
 namespace TrackingApp.ViewModels
 {
@@ -377,9 +378,8 @@ namespace TrackingApp.ViewModels
 
             if (string.IsNullOrWhiteSpace(newTimeStr)) return;
 
-            // Normalizar separador decimal
-            string normalizedAmount = newAmountStr.Replace(',', '.');
-            if (double.TryParse(normalizedAmount, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double newAmount))
+            // Usar helper para parsear
+            if (NumericParser.TryParseDouble(newAmountStr, out double newAmount))
             {
                 // Intentar parsear la hora
                 DateTime newTime;

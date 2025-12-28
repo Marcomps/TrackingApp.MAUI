@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using TrackingApp.Models;
 using TrackingApp.Services;
+using TrackingApp.Helpers;
 
 namespace TrackingApp.ViewModels
 {
@@ -332,9 +333,8 @@ namespace TrackingApp.ViewModels
                 return;
             }
 
-            // Normalizar separador decimal (aceptar punto y coma)
-            string normalizedAmount = FoodAmount.Replace(',', '.');
-            if (!double.TryParse(normalizedAmount, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double amount))
+            // Usar helper para parsear (soporta coma y punto)
+            if (!NumericParser.TryParseDouble(FoodAmount, out double amount))
             {
                 await Application.Current?.MainPage?.DisplayAlert("Error", "La cantidad debe ser un número válido", "OK")!;
                 return;
@@ -463,9 +463,8 @@ namespace TrackingApp.ViewModels
 
             if (string.IsNullOrWhiteSpace(newTimeStr)) return;
 
-            // Normalizar separador decimal
-            string normalizedAmount = newAmountStr.Replace(',', '.');
-            if (double.TryParse(normalizedAmount, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double newAmount))
+            // Usar helper para parsear
+            if (NumericParser.TryParseDouble(newAmountStr, out double newAmount))
             {
                 // Intentar parsear la hora
                 DateTime newTime;
