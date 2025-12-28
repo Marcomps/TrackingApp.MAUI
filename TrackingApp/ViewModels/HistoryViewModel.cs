@@ -377,7 +377,9 @@ namespace TrackingApp.ViewModels
 
             if (string.IsNullOrWhiteSpace(newTimeStr)) return;
 
-            if (double.TryParse(newAmountStr, out double newAmount))
+            // Normalizar separador decimal
+            string normalizedAmount = newAmountStr.Replace(',', '.');
+            if (double.TryParse(normalizedAmount, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double newAmount))
             {
                 // Intentar parsear la hora
                 DateTime newTime;

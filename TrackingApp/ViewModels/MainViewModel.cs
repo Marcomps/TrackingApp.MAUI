@@ -332,9 +332,11 @@ namespace TrackingApp.ViewModels
                 return;
             }
 
-            if (!double.TryParse(FoodAmount, out double amount))
+            // Normalizar separador decimal (aceptar punto y coma)
+            string normalizedAmount = FoodAmount.Replace(',', '.');
+            if (!double.TryParse(normalizedAmount, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double amount))
             {
-                await Application.Current?.MainPage?.DisplayAlert("Error", "La cantidad debe ser un número", "OK")!;
+                await Application.Current?.MainPage?.DisplayAlert("Error", "La cantidad debe ser un número válido", "OK")!;
                 return;
             }
 
@@ -461,7 +463,9 @@ namespace TrackingApp.ViewModels
 
             if (string.IsNullOrWhiteSpace(newTimeStr)) return;
 
-            if (double.TryParse(newAmountStr, out double newAmount))
+            // Normalizar separador decimal
+            string normalizedAmount = newAmountStr.Replace(',', '.');
+            if (double.TryParse(normalizedAmount, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double newAmount))
             {
                 // Intentar parsear la hora
                 DateTime newTime;
