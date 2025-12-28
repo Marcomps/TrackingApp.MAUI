@@ -8,7 +8,7 @@ namespace TrackingApp.Services
         private static DataService? _instance;
         public static DataService Instance => _instance ??= new DataService();
 
-        private readonly DatabaseService _databaseService;
+        private readonly IDatabaseService _databaseService;
 
         public ObservableCollection<FoodEntry> FoodEntries { get; } = new();
         public ObservableCollection<Medication> Medications { get; } = new();
@@ -18,9 +18,13 @@ namespace TrackingApp.Services
 
         public string CurrentUserType { get; set; } = "Bebé";
 
-        private DataService()
+        private DataService() : this(DatabaseService.Instance)
         {
-            _databaseService = DatabaseService.Instance;
+        }
+
+        internal DataService(IDatabaseService databaseService)
+        {
+            _databaseService = databaseService;
             _ = LoadDataFromDatabaseAsync();
         }
 
@@ -165,6 +169,31 @@ namespace TrackingApp.Services
                 dose.ActualTime = DateTime.Now;
             }
             await _databaseService.SaveDoseAsync(dose);
+        }
+
+        public async Task ConfirmDoseAndRecalculateAsync(MedicationDose dose, int days)
+        {
+            // 1. Confirmar la dosis
+            await ConfirmDoseAsync(dose);
+
+            // 2. Si se confirmó (y no se des-confirmó), crear historial y recalcular
+            if (dose.IsConfirmed)
+            {
+                var history = new MedicationHistory
+                {
+                    MedicationId = dose.MedicationId,
+                    MedicationName = dose.Medication?.Name ?? "Desconocido",
+                    Dose = dose.Medication?.Dose ?? "",
+                    AdministeredTime = dose.ActualTime ?? DateTime.Now,
+                    UserType = CurrentUserType
+                };
+
+                await SaveMedicationHistoryAsync(history);
+                MedicationHistory.Insert(0, history);
+
+                // 3. Recalcular siguientes dosis
+                await RecalculateNextDosesFromLastConfirmedAsync(dose.MedicationId, days);
+            }
         }
 
         /// <summary>

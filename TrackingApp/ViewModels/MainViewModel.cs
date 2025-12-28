@@ -679,25 +679,10 @@ namespace TrackingApp.ViewModels
 
         private async void ConfirmDose(MedicationDose dose)
         {
-            // Confirmar la dosis y registrar en el historial
-            await _dataService.ConfirmDoseAsync(dose);
+            // Confirmar la dosis, registrar en historial y recalcular siguientes
+            await _dataService.ConfirmDoseAndRecalculateAsync(dose, SelectedDays);
             
-            // Agregar al historial de medicamentos
-            if (dose.Medication != null && dose.IsConfirmed)
-            {
-                var history = new MedicationHistory
-                {
-                    MedicationId = dose.MedicationId,
-                    MedicationName = dose.Medication.Name,
-                    Dose = dose.Medication.Dose,
-                    AdministeredTime = dose.ActualTime ?? DateTime.Now,
-                    UserType = _dataService.CurrentUserType
-                };
-                await _dataService.SaveMedicationHistoryAsync(history);
-                MedicationHistory.Insert(0, history);
-                OnPropertyChanged(nameof(FilteredMedicationHistory));
-            }
-            
+            OnPropertyChanged(nameof(FilteredMedicationHistory));
             OnPropertyChanged(nameof(GroupedDoses));
         }
 
@@ -899,25 +884,8 @@ namespace TrackingApp.ViewModels
                 }
 
                 System.Diagnostics.Debug.WriteLine($"✅ Found dose {dose.Id}, confirming...");
-                await _dataService.ConfirmDoseAsync(dose);
-
-                var history = new MedicationHistory
-                {
-                    MedicationId = dose.MedicationId,
-                    MedicationName = dose.Medication?.Name ?? string.Empty,
-                    Dose = dose.Medication?.Dose ?? string.Empty,
-                    AdministeredTime = dose.ActualTime ?? DateTime.Now,
-                    UserType = _dataService.CurrentUserType
-                };
-
-                System.Diagnostics.Debug.WriteLine($"📝 Creating history: {history.MedicationName} at {history.AdministeredTime:HH:mm}");
-                await _dataService.SaveMedicationHistoryAsync(history);
-                _dataService.MedicationHistory.Insert(0, history);
-                System.Diagnostics.Debug.WriteLine($"💾 History saved. Total={_dataService.MedicationHistory.Count}");
-                
-                // 🔄 IMPORTANTE: Recalcular las siguientes dosis desde la última confirmada
-                System.Diagnostics.Debug.WriteLine($"🔄 Recalculando siguientes dosis para {ev.MedicationName}...");
-                await _dataService.RecalculateNextDosesFromLastConfirmedAsync(dose.MedicationId, SelectedDays);
+                // Usar el nuevo método unificado que confirma, crea historial y recalcula
+                await _dataService.ConfirmDoseAndRecalculateAsync(dose, SelectedDays);
                 
                 _dataService.RebuildCombinedEvents();
                 NotifyDosesChanged();

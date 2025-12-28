@@ -3,7 +3,7 @@ using TrackingApp.Models;
 
 namespace TrackingApp.Services
 {
-    public class DatabaseService
+    public class DatabaseService : IDatabaseService
     {
         private SQLiteAsyncConnection? _database;
         private static DatabaseService? _instance;

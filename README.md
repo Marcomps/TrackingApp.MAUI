@@ -1,5 +1,12 @@
 # Tracking App - Aplicación MAUI para Android
 
+> [!IMPORTANT]
+> **🛑 PUNTO DE ESTABILIDAD (v1.16)**
+> Este código representa la versión estable y segura del proyecto.
+> **NO** mezclar con código de versiones posteriores inestables sin pasar por tests.
+> Si vas a crear una nueva rama, hazlo a partir del tag: `stable-v1.16-baseline`.
+> Ver detalles en: [ESTADO_ESTABLE.md](ESTADO_ESTABLE.md)
+
 ## Descripción
 Aplicación móvil para tracking de alimentos y medicamentos para bebés, adultos y animales.
 
