@@ -2,7 +2,7 @@ using SQLite;
 
 namespace TrackingApp.Models
 {
-    public class MedicationDose
+    public partial class MedicationDose
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
@@ -30,21 +30,6 @@ namespace TrackingApp.Models
                 if (diffMinutes < -30) return "Atrasado";
                 if (diffMinutes < 30) return "Próximo";
                 return "Programado";
-            }
-        }
-
-        [Ignore]
-        public Color StatusColor
-        {
-            get
-            {
-                return Status switch
-                {
-                    "Confirmado" => Colors.LightGreen,
-                    "Atrasado" => Color.FromRgb(255, 230, 230),
-                    "Próximo" => Color.FromRgb(255, 249, 230),
-                    _ => Color.FromRgb(240, 243, 250)
-                };
             }
         }
 

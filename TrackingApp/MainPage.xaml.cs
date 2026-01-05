@@ -16,7 +16,7 @@ public partial class MainPage : ContentPage
 		base.OnAppearing();
 		
 		// Cargar historial de medicamentos
-		await DataService.Instance.LoadMedicationHistoryAsync();
+		await AppServices.DataService.LoadMedicationHistoryAsync();
 	}
 
 	private void OnConfirmButtonClicked(object sender, EventArgs e)

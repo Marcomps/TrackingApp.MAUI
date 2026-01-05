@@ -21,7 +21,7 @@ namespace TrackingApp.ViewModels
 
         public MainViewModel()
         {
-            _dataService = DataService.Instance;
+            _dataService = AppServices.DataService;
 
             // Commands
             AddFoodCommand = new Command(AddFood);

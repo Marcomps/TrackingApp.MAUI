@@ -5,9 +5,6 @@ namespace TrackingApp.Services
 {
     public class DataService
     {
-        private static DataService? _instance;
-        public static DataService Instance => _instance ??= new DataService();
-
         private readonly IDatabaseService _databaseService;
 
         public ObservableCollection<FoodEntry> FoodEntries { get; } = new();
@@ -15,14 +12,11 @@ namespace TrackingApp.Services
         public ObservableCollection<MedicationDose> MedicationDoses { get; } = new();
         public ObservableCollection<MedicationEvent> CombinedMedicationEvents { get; } = new();
         public ObservableCollection<MedicalAppointment> Appointments { get; } = new();
+        public ObservableCollection<MedicationHistory> MedicationHistory { get; } = new();
 
         public string CurrentUserType { get; set; } = "Bebé";
 
-        private DataService() : this(DatabaseService.Instance)
-        {
-        }
-
-        internal DataService(IDatabaseService databaseService)
+        public DataService(IDatabaseService databaseService)
         {
             _databaseService = databaseService;
             _ = LoadDataFromDatabaseAsync();
@@ -361,8 +355,6 @@ namespace TrackingApp.Services
         }
 
         // ========== MEDICATION HISTORY ==========
-        
-        public ObservableCollection<MedicationHistory> MedicationHistory { get; } = new();
 
         public async Task SaveMedicationHistoryAsync(MedicationHistory history)
         {
