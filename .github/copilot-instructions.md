@@ -116,3 +116,8 @@ If you need more detail, ask:
    - Merge into `develop` or `dev` branch; if they do not exist, use `main`
    - Create a relevant title
    - Summarize commit messages as the description
+
+
+## Note
+- Always asure that the code builds and runs without errors after your changes.
+- Follow the existing code style and conventions as closely as possible.

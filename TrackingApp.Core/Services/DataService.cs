@@ -15,6 +15,15 @@ namespace TrackingApp.Services
         public ObservableCollection<MedicalAppointment> Appointments { get; } = new();
         public ObservableCollection<MedicationHistory> MedicationHistory { get; } = new();
 
+        // RF-001 / RF-002
+        public ObservableCollection<Perfil> Perfiles { get; } = new();
+        public ObservableCollection<RegistroCrecimiento> RegistrosCrecimiento { get; } = new();
+
+        /// <summary>
+        /// Perfil activo seleccionado por el usuario. Null hasta que el usuario lo asigne.
+        /// </summary>
+        public Perfil? PerfilActivo { get; private set; }
+
         public string CurrentUserType { get; set; } = "Bebé";
 
         public DataService(IDatabaseService databaseService)
@@ -62,6 +71,10 @@ namespace TrackingApp.Services
 
                 // Cargar citas médicas
                 await LoadAppointmentsAsync();
+
+                // RF-001 / RF-002: Cargar perfiles y registros de crecimiento
+                await LoadPerfilesAsync();
+                await LoadRegistrosCrecimientoAsync();
             }
             catch (Exception ex)
             {
@@ -117,6 +130,10 @@ namespace TrackingApp.Services
 
                 // Cargar citas médicas
                 await LoadAppointmentsAsync();
+
+                // RF-001 / RF-002: Cargar perfiles y registros de crecimiento
+                await LoadPerfilesAsync();
+                await LoadRegistrosCrecimientoAsync();
             }
             catch (Exception ex)
             {
@@ -666,6 +683,111 @@ namespace TrackingApp.Services
         public async Task<List<MedicationHistory>> GetAllMedicationHistoryAsync()
         {
             return await _databaseService.GetAllMedicationHistoryAsync();
+        }
+
+        // ========== RF-001: PERFILES ==========
+
+        public async Task LoadPerfilesAsync()
+        {
+            try
+            {
+                var perfiles = await _databaseService.GetAllPerfilesAsync();
+                Perfiles.Clear();
+                foreach (var perfil in perfiles)
+                    Perfiles.Add(perfil);
+
+                // Seleccionar el primero como activo si no hay ninguno seleccionado
+                if (PerfilActivo == null && Perfiles.Count > 0)
+                    PerfilActivo = Perfiles[0];
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading perfiles: {ex.Message}");
+            }
+        }
+
+        public async Task AddPerfilAsync(Perfil perfil)
+        {
+            perfil.FechaCreacion = DateTime.Now;
+            await _databaseService.SavePerfilAsync(perfil);
+            Perfiles.Add(perfil);
+
+            if (PerfilActivo == null)
+                PerfilActivo = perfil;
+        }
+
+        public async Task UpdatePerfilAsync(Perfil perfil)
+        {
+            await _databaseService.SavePerfilAsync(perfil);
+        }
+
+        /// <summary>
+        /// Elimina el perfil. Si era el activo, selecciona otro perfil automáticamente.
+        /// Lanza InvalidOperationException si es el único perfil existente.
+        /// </summary>
+        public async Task DeletePerfilAsync(Perfil perfil)
+        {
+            if (Perfiles.Count <= 1)
+                throw new InvalidOperationException("Debe existir al menos un perfil activo.");
+
+            await _databaseService.DeletePerfilAsync(perfil);
+            Perfiles.Remove(perfil);
+
+            if (PerfilActivo?.Id == perfil.Id)
+                PerfilActivo = Perfiles.FirstOrDefault();
+        }
+
+        public void SetPerfilActivo(Perfil perfil)
+        {
+            PerfilActivo = perfil;
+        }
+
+        // ========== RF-002: REGISTROS DE CRECIMIENTO ==========
+
+        public async Task LoadRegistrosCrecimientoAsync()
+        {
+            try
+            {
+                var registros = PerfilActivo != null
+                    ? await _databaseService.GetRegistrosCrecimientoByPerfilAsync(PerfilActivo.Id)
+                    : await _databaseService.GetAllRegistrosCrecimientoAsync();
+
+                RegistrosCrecimiento.Clear();
+                foreach (var r in registros)
+                {
+                    r.Perfil = Perfiles.FirstOrDefault(p => p.Id == r.PerfilId);
+                    RegistrosCrecimiento.Add(r);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading registros crecimiento: {ex.Message}");
+            }
+        }
+
+        public async Task AddRegistroCrecimientoAsync(RegistroCrecimiento registro)
+        {
+            if (PerfilActivo != null)
+                registro.PerfilId = PerfilActivo.Id;
+
+            registro.CalcularIMC();
+            registro.FechaCreacion = DateTime.Now;
+            await _databaseService.SaveRegistroCrecimientoAsync(registro);
+
+            registro.Perfil = Perfiles.FirstOrDefault(p => p.Id == registro.PerfilId);
+            RegistrosCrecimiento.Insert(0, registro);
+        }
+
+        public async Task UpdateRegistroCrecimientoAsync(RegistroCrecimiento registro)
+        {
+            registro.CalcularIMC();
+            await _databaseService.SaveRegistroCrecimientoAsync(registro);
+        }
+
+        public async Task DeleteRegistroCrecimientoAsync(RegistroCrecimiento registro)
+        {
+            await _databaseService.DeleteRegistroCrecimientoAsync(registro);
+            RegistrosCrecimiento.Remove(registro);
         }
     }
 }

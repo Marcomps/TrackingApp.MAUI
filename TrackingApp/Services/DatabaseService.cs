@@ -28,6 +28,9 @@ namespace TrackingApp.Services
             await _database.CreateTableAsync<MedicationDose>();
             await _database.CreateTableAsync<MedicationHistory>();
             await _database.CreateTableAsync<MedicalAppointment>();
+            // RF-001 / RF-002
+            await _database.CreateTableAsync<Perfil>();
+            await _database.CreateTableAsync<RegistroCrecimiento>();
         }
 
         // ========== FOOD ENTRIES ==========
@@ -206,6 +209,73 @@ namespace TrackingApp.Services
         {
             await InitializeAsync();
             return await _database!.DeleteAsync(appointment);
+        }
+
+        // ========== RF-001: PERFILES ==========
+
+        public async Task<List<Perfil>> GetAllPerfilesAsync()
+        {
+            await InitializeAsync();
+            return await _database!.Table<Perfil>()
+                .OrderBy(p => p.Nombre)
+                .ToListAsync();
+        }
+
+        public async Task<Perfil?> GetPerfilAsync(int id)
+        {
+            await InitializeAsync();
+            return await _database!.Table<Perfil>()
+                .Where(p => p.Id == id)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<int> SavePerfilAsync(Perfil perfil)
+        {
+            await InitializeAsync();
+            if (perfil.Id != 0)
+                return await _database!.UpdateAsync(perfil);
+            else
+                return await _database!.InsertAsync(perfil);
+        }
+
+        public async Task<int> DeletePerfilAsync(Perfil perfil)
+        {
+            await InitializeAsync();
+            return await _database!.DeleteAsync(perfil);
+        }
+
+        // ========== RF-002: REGISTROS DE CRECIMIENTO ==========
+
+        public async Task<List<RegistroCrecimiento>> GetAllRegistrosCrecimientoAsync()
+        {
+            await InitializeAsync();
+            return await _database!.Table<RegistroCrecimiento>()
+                .OrderByDescending(r => r.Fecha)
+                .ToListAsync();
+        }
+
+        public async Task<List<RegistroCrecimiento>> GetRegistrosCrecimientoByPerfilAsync(int perfilId)
+        {
+            await InitializeAsync();
+            return await _database!.Table<RegistroCrecimiento>()
+                .Where(r => r.PerfilId == perfilId)
+                .OrderByDescending(r => r.Fecha)
+                .ToListAsync();
+        }
+
+        public async Task<int> SaveRegistroCrecimientoAsync(RegistroCrecimiento registro)
+        {
+            await InitializeAsync();
+            if (registro.Id != 0)
+                return await _database!.UpdateAsync(registro);
+            else
+                return await _database!.InsertAsync(registro);
+        }
+
+        public async Task<int> DeleteRegistroCrecimientoAsync(RegistroCrecimiento registro)
+        {
+            await InitializeAsync();
+            return await _database!.DeleteAsync(registro);
         }
 
         // ========== DATABASE INFO ==========

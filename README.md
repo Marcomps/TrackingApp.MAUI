@@ -1,4 +1,4 @@
-﻿# Tracking App - Aplicación MAUI para Android
+﻿# TrackingApp — Aplicación MAUI de Salud y Nutrición
 
 > [!IMPORTANT]
 > **🛑 PUNTO DE ESTABILIDAD (v1.16)**
@@ -8,141 +8,216 @@
 > Ver detalles en: [ESTADO_ESTABLE.md](ESTADO_ESTABLE.md)
 
 ## Descripción
-Aplicación móvil para tracking de alimentos y medicamentos para bebés, adultos y animales.
 
-## Características
-- ✅ Registro de alimentos con cantidad, unidad y hora
-- ✅ Registro de medicamentos con dosis y frecuencia
-- ✅ Calendario de medicamentos organizado por día
-- ✅ Estados visuales (próximo, atrasado, confirmado)
-- ✅ Edición de horarios de dosis
-- ✅ Filtrado por tipo de usuario (Bebé, Adulto, Animal)
-- ✅ Soporte para múltiples medicamentos con filtro individual
-- ✅ Persistencia de datos con SQLite
-- ✅ Historial de registros con página dedicada
+Aplicación móvil .NET 10 MAUI para Android, iOS y Windows orientada al seguimiento de salud y nutrición de bebés, adultos y animales. Implementa el patrón **MVVM + Capa de Servicios** con persistencia local SQLite. La lógica de negocio reside en `TrackingApp.Core` (librería sin dependencias MAUI) para garantizar cobertura completa de tests.
 
-## Requisitos
-- .NET 10 SDK o superior
-- Visual Studio 2022 (v17.12+) con carga de trabajo de MAUI
-- Para Android: Android SDK (API 21 o superior)
+---
 
-## Estructura del Proyecto
+## Estado de funcionalidades
+
+| Módulo / Característica | Estado | Notas |
+|---|---|---|
+| Registro de alimentos (cantidad, unidad, hora) | ✅ Implementado | v1.16 estable |
+| Registro de medicamentos con dosis y frecuencia | ✅ Implementado | v1.16 estable |
+| Calendario de medicamentos con estados visuales | ✅ Implementado | v1.16 estable |
+| Confirmación de dosis + recálculo automático | ✅ Implementado | v1.16 estable |
+| Historial de registros con filtros | ✅ Implementado | v1.16 estable |
+| Citas médicas (crear, confirmar) | ✅ Implementado | v1.16 estable |
+| Persistencia SQLite | ✅ Implementado | v1.16 estable |
+| Perfiles completos (nombre, foto, datos) | 🔄 En desarrollo | v2.0 RF-001 |
+| Módulo Crecimiento (peso, talla, IMC) | 🔄 En desarrollo | v2.0 RF-002 |
+| Servicio centralizado de unidades | 🔄 En desarrollo | v2.0 RF-005 |
+| Mejoras módulo Alimento | 🔄 En desarrollo | v2.0 RF-003 |
+| Mejoras módulo Citas | 🔄 En desarrollo | v2.0 RF-004 |
+| Notificaciones locales | 🔲 Pendiente | v2.0 |
+| Gráficas de evolución | 🔲 Pendiente | v2.0 |
+| Exportar historial a PDF | 🔲 Pendiente | Fase siguiente |
+
+---
+
+## Arquitectura
+
 ```
 TrackingApp.MAUI/
-├── TrackingApp/              # Proyecto MAUI principal
-│   ├── ViewModels/           # MVVM ViewModels (ObservableObject)
-│   │   ├── MainViewModel.cs
-│   │   └── HistoryViewModel.cs
-│   ├── Services/             # Servicios de infraestructura MAUI
-│   │   ├── AppServices.cs
-│   │   └── DatabaseService.cs
-│   ├── Converters/           # Convertidores XAML
-│   ├── Platforms/            # Código específico por plataforma
-│   ├── Resources/            # Imágenes, fuentes, assets
-│   ├── MainPage.xaml         # Vista principal
-│   ├── HistoryPage.xaml      # Vista de historial
-│   └── AppShell.xaml         # Navegación Shell
-├── TrackingApp.Core/         # Lógica de negocio (sin deps MAUI)
-│   ├── Models/               # Entidades del dominio
+├── TrackingApp/                        # Proyecto MAUI principal (UI)
+│   ├── ViewModels/                     # MVVM — ObservableObject, comandos
+│   │   ├── MainViewModel.cs            # ~1500 líneas, lógica pantalla principal
+│   │   └── HistoryViewModel.cs         # ~500 líneas, filtros e historial
+│   ├── Services/                       # Servicios de infraestructura MAUI
+│   │   ├── AppServices.cs              # Singleton DataService accesible globalmente
+│   │   └── DatabaseService.cs          # Implementación SQLite de IDatabaseService
+│   ├── Converters/                     # 10 convertidores IValueConverter
+│   ├── Platforms/                      # Android / iOS / Windows / MacCatalyst
+│   ├── Resources/
+│   │   ├── Styles/                     # Colors.xaml, Styles.xaml
+│   │   ├── Fonts/                      # OpenSans Regular y Semibold
+│   │   └── Images/                     # Assets PNG
+│   ├── MainPage.xaml                   # Pantalla principal
+│   ├── HistoryPage.xaml                # Historial
+│   └── AppShell.xaml                   # Navegación Shell Tab-Bar
+│
+├── TrackingApp.Core/                   # Librería .NET 10 (sin dependencias MAUI)
+│   ├── Models/
+│   │   ├── AppEnums.cs                 # Todos los enums del dominio
 │   │   ├── FoodEntry.cs
 │   │   ├── Medication.cs
-│   │   └── MedicationDose.cs
-│   └── Services/             # Servicios de negocio (testeables)
-│       └── DataService.cs
-└── TrackingApp.Tests/        # Tests unitarios (xUnit)
+│   │   ├── MedicationDose.cs
+│   │   ├── MedicationHistory.cs
+│   │   ├── MedicationEvent.cs
+│   │   ├── MedicalAppointment.cs
+│   │   ├── Perfil.cs                   # [v2.0] Perfil de usuario completo
+│   │   └── RegistroCrecimiento.cs      # [v2.0] Registro de peso/talla
+│   ├── Services/
+│   │   ├── IDatabaseService.cs         # Contrato de acceso a datos
+│   │   ├── DataService.cs              # Lógica de negocio + ObservableCollections
+│   │   ├── IUnitService.cs             # [v2.0] Contrato de conversión de unidades
+│   │   └── UnitService.cs              # [v2.0] Conversiones métricas/imperiales
+│   └── Helpers/
+│       └── NumericParser.cs            # Parseo numérico (punto y coma como decimal)
+│
+└── TrackingApp.Tests/                  # Tests unitarios xUnit (net10.0)
     ├── Services/
-    │   └── DataServiceTests.cs
-    └── ViewModels/
+    │   └── DataServiceTests.cs         # 40+ tests de lógica de dosis
+    ├── Helpers/
+    │   └── NumericParserTests.cs
+    └── Mocks/
+        └── MockDatabaseService.cs      # IDatabaseService en memoria para tests
 ```
 
-## Instalación
+> **Regla clave**: `TrackingApp.Core` **nunca** debe referenciar ensamblados MAUI. Toda la lógica de negocio testeable vive ahí.
 
-### 1. Verificar instalación de .NET MAUI
+---
+
+## Requisitos
+
+| Herramienta | Versión |
+|-------------|---------|
+| .NET SDK | 10.0+ |
+| Visual Studio | 2022 v17.12+ con carga de trabajo MAUI |
+| Android SDK | API 21+ (Android 5.0+) |
+
+---
+
+## Instalación y compilación
+
 ```powershell
+# Instalar o reparar workload MAUI
 dotnet workload install maui
-```
+dotnet workload repair
 
-### 2. Compilar la solución completa
-```powershell
+# Compilar toda la solución
 dotnet build TrackingApp.MAUI.sln
+
+# Compilar solo Android (debug)
+dotnet build TrackingApp/TrackingApp.csproj -f net10.0-android
 ```
 
-### 3. Ejecutar en Android (Emulador o dispositivo)
+## Ejecutar en dispositivo / emulador
+
 ```powershell
-# Para emulador Android
+# Emulador Android
 dotnet build -t:Run -f net10.0-android
 
-# Para dispositivo físico conectado por USB
+# Dispositivo físico (deploy rápido)
 dotnet build -t:Run -f net10.0-android /p:AndroidDebugUseFastDeploy=true
 ```
 
-### 4. Ejecutar los tests
+## Tests
+
 ```powershell
+# Ejecutar todos los tests unitarios
 dotnet test TrackingApp.Tests/TrackingApp.Tests.csproj
+
+# Con cobertura de código
+dotnet test TrackingApp.Tests/TrackingApp.Tests.csproj --collect:"XPlat Code Coverage"
 ```
 
-## Compilar APK para distribución
+Los tests usan `MockDatabaseService` (en memoria) — no requieren emulador ni dispositivo.
+
+## Publicar APK
+
 ```powershell
-# Usando el script incluido
+# Script incluido (firma con keystore configurado)
 .\Build-APK.ps1
 
-# O manualmente
-dotnet publish -f net10.0-android -c Release
+# Publicación manual
+dotnet publish TrackingApp/TrackingApp.csproj -f net10.0-android -c Release
 ```
 
-El APK se generará en: `bin\Release\net10.0-android\publish\`
+El AAB firmado se genera en: `publish_output/com.trackingapp.nutrition-Signed.aab`
+
+---
 
 ## Uso de la Aplicación
 
 ### Registrar Alimentos
-1. Selecciona el tipo de usuario (Bebé/Adulto/Animal)
+1. Selecciona el perfil activo
 2. Ingresa el tipo de alimento (ej: "Leche")
 3. Ingresa la cantidad y selecciona la unidad (oz, ml, g, etc.)
-4. Selecciona la hora
-5. Presiona "Agregar Alimento"
+4. Selecciona la hora y presiona "Agregar Alimento"
 
 ### Registrar Medicamentos
-1. Ingresa el nombre del medicamento
-2. Ingresa la dosis (ej: "5ml")
-3. Ingresa la frecuencia en horas (ej: "6" para cada 6 horas)
-4. Selecciona la hora de la primera dosis
-5. Presiona "Agregar Medicamento"
+1. Ingresa el nombre y dosis del medicamento (ej: "5ml")
+2. Define la frecuencia en horas y/o minutos
+3. Selecciona la hora de la primera dosis
+4. Presiona "Agregar Medicamento"
 
 ### Calendario de Medicamentos
-- El calendario muestra las próximas dosis organizadas por día
-- Puedes filtrar por días (1, 2, 3, 5, 7 días)
-- Puedes filtrar por medicamento específico
-- Estados visuales:
+- Estados visuales de dosis:
   - **Verde**: Dosis confirmada
-  - **Amarillo**: Próxima dosis (menos de 30 min)
-  - **Rojo**: Dosis atrasada (más de 30 min)
-  - **Gris**: Dosis programada
+  - **Amarillo**: Próxima (menos de 30 min)
+  - **Rojo**: Atrasada (más de 30 min)
+  - **Gris**: Programada
+- Filtros: por días (1–7) y por medicamento específico
+- Confirmar → recalcula automáticamente las dosis futuras desde la hora real de administración
 
-### Confirmar/Editar Dosis
-- Presiona "Confirmar" para marcar una dosis como administrada
-- Presiona "Editar" para cambiar la hora de una dosis específica
+---
 
-## Problemas Comunes
+## Documentación técnica (base de conocimientos)
+
+Generada automáticamente en `.github/agent/knowledge/`:
+
+| Documento | Contenido |
+|-----------|-----------|
+| [README.md](.github/agent/knowledge/README.md) | Guía de uso del código, comandos |
+| [CODEBASE-OVERVIEW.md](.github/agent/knowledge/CODEBASE-OVERVIEW.md) | Estructura, servicios, modelos, ViewModels |
+| [DEPENDENCIES.md](.github/agent/knowledge/DEPENDENCIES.md) | Paquetes NuGet con versiones y propósito |
+| [ARCHITECTURE-MAP.md](.github/agent/knowledge/ARCHITECTURE-MAP.md) | Capas, flujos de trabajo, interfaces |
+| [MIDDLEWARE-PIPELINE.md](.github/agent/knowledge/MIDDLEWARE-PIPELINE.md) | Pipeline de arranque MAUI paso a paso |
+
+---
+
+## Solución de problemas comunes
 
 ### Error al compilar para Android
-Asegúrate de tener instalado Android SDK:
 ```powershell
 dotnet workload repair
 dotnet workload install android
 ```
 
 ### No se detecta el emulador
-Abre Android Studio y verifica que tengas un AVD (Android Virtual Device) creado.
+Abre Android Studio → AVD Manager → verifica que haya un Android Virtual Device creado y en ejecución.
 
 ### Error de permisos en dispositivo físico
-Habilita "Depuración USB" en las opciones de desarrollador de tu dispositivo Android.
+Habilita **Depuración USB** en las opciones de desarrollador del dispositivo.
 
-## Próximas Mejoras
-- [ ] Notificaciones push para recordatorios de dosis
-- [ ] Gráficos de consumo y estadísticas
-- [ ] Exportar historial a PDF
-- [ ] Soporte para múltiples perfiles (varios bebés/mascotas)
-- [ ] Integración con APIs de salud (Google Fit, Apple Health)
+---
+
+## Requerimientos v2.0 (en implementación)
+
+Ver documento completo: `TrackingApp_Requerimientos_v2.md`
+
+| # | RF | Prioridad | Descripción |
+|---|---|---|---|
+| 1 | RF-005 | 🔴 Alta | Servicio centralizado de unidades (IUnitService) |
+| 2 | RF-001 | 🔴 Alta | Sistema de perfiles completos (Perfil model + CRUD) |
+| 3 | RF-002 | 🔴 Alta | Módulo Crecimiento (peso, talla, IMC, gráficas) |
+| 4 | RF-003 | 🟡 Media | Mejoras módulo Alimento (tipos, unidades, vinculación a perfil) |
+| 5 | RF-004 | 🟡 Media | Mejoras módulo Citas (categorías, notificaciones, post-cita) |
+| 6 | — | 🟡 Media | Gráficas de evolución (Crecimiento + Alimento) |
+| 7 | — | 🟢 Baja | Notificaciones locales para citas y medicamentos |
+
+---
 
 ## Autor
-Aplicación creada para tracking de alimentos y medicamentos.
+Aplicación para seguimiento de salud, alimentación y medicamentos — bebés, adultos y animales.

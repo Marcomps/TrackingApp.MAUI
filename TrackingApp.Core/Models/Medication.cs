@@ -6,13 +6,18 @@ namespace TrackingApp.Models
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
-        
+
         public string Name { get; set; } = string.Empty;
         public string Dose { get; set; } = string.Empty;
-        public int FrequencyHours { get; set; } // Horas (ej: 0, 1, 2)
-        public int FrequencyMinutes { get; set; } // Minutos (ej: 0, 30, 45)
+        public int FrequencyHours { get; set; }
+        public int FrequencyMinutes { get; set; }
         public DateTime FirstDoseTime { get; set; }
-        public string UserType { get; set; } = string.Empty; // "Bebé", "Adulto", "Animal"
+
+        /// <summary>Mantenido por compatibilidad. Usar PerfilId para nuevos registros.</summary>
+        public string UserType { get; set; } = string.Empty;
+
+        /// <summary>FK a Perfil.Id. 0 = sin perfil asignado (registros legacy).</summary>
+        public int PerfilId { get; set; }
 
         [Ignore]
         public string DisplayText 

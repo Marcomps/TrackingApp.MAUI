@@ -10,6 +10,8 @@ namespace TrackingApp.Tests.Mocks
         public List<MedicationDose> Doses { get; } = new();
         public List<MedicationHistory> History { get; } = new();
         public List<MedicalAppointment> Appointments { get; } = new();
+        public List<Perfil> Perfiles { get; } = new();
+        public List<RegistroCrecimiento> RegistrosCrecimiento { get; } = new();
 
         public Task<List<FoodEntry>> GetAllFoodEntriesAsync() => Task.FromResult(FoodEntries);
         public Task<int> SaveFoodEntryAsync(FoodEntry entry)
@@ -95,5 +97,52 @@ namespace TrackingApp.Tests.Mocks
         public Task<int> DeleteAllDataAsync() => ClearAllDataAsync();
         public Task<string> GetDatabasePathAsync() => Task.FromResult("mock.db");
         public Task<long> GetDatabaseSizeAsync() => Task.FromResult(0L);
+
+        // ========== RF-001: PERFILES ==========
+
+        public Task<List<Perfil>> GetAllPerfilesAsync() => Task.FromResult(Perfiles);
+
+        public Task<Perfil?> GetPerfilAsync(int id) =>
+            Task.FromResult(Perfiles.FirstOrDefault(p => p.Id == id));
+
+        public Task<int> SavePerfilAsync(Perfil perfil)
+        {
+            if (perfil.Id == 0)
+            {
+                perfil.Id = Perfiles.Count + 1;
+                Perfiles.Add(perfil);
+            }
+            return Task.FromResult(1);
+        }
+
+        public Task<int> DeletePerfilAsync(Perfil perfil)
+        {
+            Perfiles.Remove(perfil);
+            return Task.FromResult(1);
+        }
+
+        // ========== RF-002: REGISTROS DE CRECIMIENTO ==========
+
+        public Task<List<RegistroCrecimiento>> GetAllRegistrosCrecimientoAsync() =>
+            Task.FromResult(RegistrosCrecimiento);
+
+        public Task<List<RegistroCrecimiento>> GetRegistrosCrecimientoByPerfilAsync(int perfilId) =>
+            Task.FromResult(RegistrosCrecimiento.Where(r => r.PerfilId == perfilId).ToList());
+
+        public Task<int> SaveRegistroCrecimientoAsync(RegistroCrecimiento registro)
+        {
+            if (registro.Id == 0)
+            {
+                registro.Id = RegistrosCrecimiento.Count + 1;
+                RegistrosCrecimiento.Add(registro);
+            }
+            return Task.FromResult(1);
+        }
+
+        public Task<int> DeleteRegistroCrecimientoAsync(RegistroCrecimiento registro)
+        {
+            RegistrosCrecimiento.Remove(registro);
+            return Task.FromResult(1);
+        }
     }
 }
