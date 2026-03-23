@@ -33,7 +33,8 @@ Aplicación móvil .NET 10 MAUI para Android, iOS y Windows orientada al seguimi
 | Módulo Crecimiento (UI: lista + formulario) | ✅ Implementado | v2.0 RF-002 |
 | Selectores de unidad (kg/lb/cm/in…) en formularios | ✅ Implementado | v2.0 RF-005 |
 | Página de preferencias (métrico / imperial) | ✅ Implementado | v2.0 RF-005 |
-| Sistema de perfiles (UI: lista + detalle) | 🔲 Pendiente | v2.0 RF-001 |
+| Sistema de perfiles (UI: lista + formulario + selección activo) | ✅ Implementado | v2.0 RF-001 |
+| Índices SQLite para gráficas personalizadas | ✅ Implementado | v2.0 Performance |
 | Notificaciones locales | 🔲 Pendiente | v2.0 |
 | Gráficas de crecimiento | 🔲 Pendiente | v2.0 RF-002 |
 | Exportar historial a PDF | 🔲 Pendiente | Fase siguiente |
@@ -51,6 +52,8 @@ TrackingApp.MAUI/
 │   │   ├── AlimentoGraficasViewModel.cs # [v2.0] Gráficas de tendencia de alimentos
 │   │   ├── CrecimientoViewModel.cs     # [v2.0] Lista de registros de crecimiento
 │   │   ├── CrecimientoFormViewModel.cs # [v2.0] Formulario add/edit con selectores de unidad
+│   │   ├── PerfilesViewModel.cs        # [v2.0] Lista de perfiles + cambio de perfil activo
+│   │   ├── PerfilFormViewModel.cs      # [v2.0] Formulario crear/editar perfil
 │   │   └── PreferenciasViewModel.cs    # [v2.0] Preferencia de sistema métrico/imperial
 │   ├── Services/                       # Servicios de infraestructura MAUI
 │   │   ├── AppServices.cs              # Singleton DataService accesible globalmente
@@ -66,6 +69,8 @@ TrackingApp.MAUI/
 │   ├── AlimentoGraficasPage.xaml       # [v2.0] Gráficas de alimentos (LiveCharts2)
 │   ├── CrecimientoPage.xaml            # [v2.0] Lista de registros de crecimiento
 │   ├── CrecimientoFormPage.xaml        # [v2.0] Formulario nuevo/editar registro
+│   ├── PerfilesPage.xaml               # [v2.0] Lista de perfiles y selector de perfil activo
+│   ├── PerfilFormPage.xaml             # [v2.0] Formulario crear/editar perfil
 │   ├── PreferenciasPage.xaml           # [v2.0] Configuración de unidades (métrico/imperial)
 │   └── AppShell.xaml                   # Navegación Shell Tab-Bar
 │
@@ -181,6 +186,13 @@ El AAB firmado se genera en: `publish_output/com.trackingapp.nutrition-Signed.aa
 4. El IMC se calcula automáticamente en tiempo real
 5. Pulsa **Guardar** — los valores se almacenan siempre en unidades base (g y cm)
 
+### Gestionar Perfiles
+1. En la pantalla principal, pulsa **👤 Ver y gestionar perfiles** (sección Perfiles)
+2. Los perfiles existentes se muestran en tarjetas. Toca uno para **marcarlo como activo** (borde azul)
+3. Desliza una tarjeta hacia la izquierda para **Editar** o hacia la derecha para **Eliminar**
+4. Pulsa **+** en la barra superior para crear un nuevo perfil
+5. En el formulario define: nombre, tipo (Bebé/Adulto), sexo, fecha de nacimiento, semanas de gestación (solo bebés), sistema de unidades y notas
+
 ### Configurar Unidades por Defecto
 1. En la pantalla principal, pulsa **⚖️ Unidades de medida** (sección Configuración)
 2. Elige **Métrico** o **Imperial**
@@ -240,15 +252,16 @@ Ver documento completo: `TrackingApp_Requerimientos_v2.md`
 | # | RF | Prioridad | Descripción |
 |---|---|---|---|
 | 1 | RF-005 | ✅ Listo | Servicio centralizado de unidades (IUnitService + UnitService) |
-| 2 | RF-001 | 🔴 Alta | Sistema de perfiles completos (Perfil model + CRUD) |
+| 2 | RF-001 | ✅ Listo | Sistema de perfiles completos (Perfil model + CRUD + UI) |
 | 3 | RF-002 | ✅ Listo | Módulo Crecimiento (peso, talla, IMC — data layer + UI) |
 | 4 | RF-005 | ✅ Listo | Selectores de unidad en formularios + PreferenciasPage |
 | 5 | RF-003 | 🟡 Media | Mejoras módulo Alimento (tipos, unidades, vinculación a perfil) |
 | 6 | RF-004 | 🟡 Media | Mejoras módulo Citas (categorías, notificaciones, post-cita) |
 | 7 | RF-003 | ✅ Listo | Gráficas de alimentos (LiveCharts2 — tendencia semanal) |
-| 8 | RF-001 | 🔲 Pendiente | UI Sistema de perfiles (lista + detalle + selector) |
-| 9 | RF-002 | 🔲 Pendiente | Gráficas de crecimiento (LiveCharts2) |
-| 10 | — | 🟢 Baja | Notificaciones locales para citas y medicamentos |
+| 8 | RF-001 | ✅ Listo | UI Sistema de perfiles (PerfilesPage + PerfilFormPage + activo) |
+| 9 | — | ✅ Listo | Índices SQLite para gráficas personalizadas (12 índices) |
+| 10 | RF-002 | 🔲 Pendiente | Gráficas de crecimiento (LiveCharts2) |
+| 11 | — | 🟢 Baja | Notificaciones locales para citas y medicamentos |
 
 ---
 

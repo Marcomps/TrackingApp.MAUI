@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
+             x:Class="TrackingApp.PerfilFormPage"
+             x:DataType="viewmodels:PerfilFormViewModel"
+             Title="{Binding Titulo}"
+             Background="#f5f7fa">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="0" Padding="16,12">
+
+            <!-- ── Sección: Información básica ─────────────────────────── -->
+            <Label Text="INFORMACIÓN BÁSICA" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,14">
+                <Grid RowDefinitions="Auto,1,Auto,1,Auto">
+
+                    <!-- Nombre -->
+                    <VerticalStackLayout Grid.Row="0" Spacing="2" Padding="0,10,0,6">
+                        <Label Text="👤  Nombre" TextColor="#333" FontSize="14" FontAttributes="Bold"/>
+                        <Entry Text="{Binding Nombre}"
+                               Placeholder="ej. María, Bebé López…"
+                               MaxLength="60"
+                               FontSize="15"
+                               TextColor="#1565C0"/>
+                        <Label Text="{Binding ErrorNombre}"
+                               IsVisible="{Binding TieneErrorNombre}"
+                               TextColor="#F44336" FontSize="12"
+                               Margin="0,0,0,4"/>
+                    </VerticalStackLayout>
+
+                    <BoxView Grid.Row="1" HeightRequest="1" Background="#f0f0f0"/>
+
+                    <!-- Tipo de perfil -->
+                    <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="0,10">
+                        <Label Text="🧸  Tipo" VerticalOptions="Center"
+                               TextColor="#333" FontSize="15" WidthRequest="110"/>
+                        <Picker Grid.Column="1"
+                                ItemsSource="{Binding OpcionesTipo}"
+                                SelectedIndex="{Binding TipoIndex}"
+                                HorizontalOptions="End"
+                                TextColor="#1565C0"
+                                FontSize="15"
+                                WidthRequest="200"/>
+                    </Grid>
+
+                    <BoxView Grid.Row="3" HeightRequest="1" Background="#f0f0f0"/>
+
+                    <!-- Sexo -->
+                    <Grid Grid.Row="4" ColumnDefinitions="Auto,*" Padding="0,10">
+                        <Label Text="⚥  Sexo" VerticalOptions="Center"
+                               TextColor="#333" FontSize="15" WidthRequest="110"/>
+                        <Picker Grid.Column="1"
+                                ItemsSource="{Binding OpcionesSexo}"
+                                SelectedIndex="{Binding SexoIndex}"
+                                HorizontalOptions="End"
+                                TextColor="#1565C0"
+                                FontSize="15"
+                                WidthRequest="200"/>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- ── Sección: Fechas ────────────────────────────────────── -->
+            <Label Text="FECHAS" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,14">
+                <Grid RowDefinitions="Auto,1,Auto,1,Auto">
+
+                    <!-- Toggle fecha de nacimiento -->
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="0,10">
+                        <Label Text="📅  Fecha de nacimiento"
+                               VerticalOptions="Center"
+                               TextColor="#333" FontSize="15"/>
+                        <Switch Grid.Column="1"
+                                IsToggled="{Binding TieneFecha}"
+                                OnColor="#1565C0"/>
+                    </Grid>
+
+                    <BoxView Grid.Row="1" HeightRequest="1" Background="#f0f0f0"/>
+
+                    <!-- DatePicker (visible si hay fecha) -->
+                    <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="0,10"
+                          IsVisible="{Binding TieneFecha}">
+                        <Label Text="   Nacimiento" VerticalOptions="Center"
+                               TextColor="#999" FontSize="14" WidthRequest="110"/>
+                        <DatePicker Grid.Column="1"
+                                    Date="{Binding FechaNacimiento}"
+                                    Format="dd/MM/yyyy"
+                                    HorizontalOptions="End"
+                                    TextColor="#1565C0" FontSize="15"/>
+                    </Grid>
+
+                    <BoxView Grid.Row="3" HeightRequest="1" Background="#f0f0f0"
+                             IsVisible="{Binding EsBebe}"/>
+
+                    <!-- Semanas de gestación (solo bebés) -->
+                    <Grid Grid.Row="4" ColumnDefinitions="Auto,*" Padding="0,10"
+                          IsVisible="{Binding EsBebe}">
+                        <Label Text="🍼  Semanas gest." VerticalOptions="Center"
+                               TextColor="#333" FontSize="14" WidthRequest="130"/>
+                        <Entry Grid.Column="1"
+                               Text="{Binding SemanasTexto}"
+                               Placeholder="ej. 40"
+                               Keyboard="Numeric"
+                               HorizontalOptions="End"
+                               WidthRequest="100"
+                               TextColor="#1565C0" FontSize="15"/>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- ── Sección: Configuración ─────────────────────────────── -->
+            <Label Text="CONFIGURACIÓN" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,14">
+                <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Padding="0,10">
+                    <Label Text="🌐  Sistema" VerticalOptions="Center"
+                           TextColor="#333" FontSize="15" WidthRequest="110"/>
+                    <Picker Grid.Column="1"
+                            ItemsSource="{Binding OpcionesSistema}"
+                            SelectedIndex="{Binding SistemaIndex}"
+                            HorizontalOptions="End"
+                            TextColor="#1565C0"
+                            FontSize="15"
+                            WidthRequest="220"/>
+                </Grid>
+            </Border>
+
+            <!-- ── Sección: Notas ─────────────────────────────────────── -->
+            <Label Text="NOTAS" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,8" Margin="0,0,0,20">
+                <Editor Text="{Binding Notas}"
+                        Placeholder="Observaciones opcionales…"
+                        AutoSize="TextChanges"
+                        MinimumHeightRequest="60"
+                        FontSize="14"
+                        TextColor="#333"/>
+            </Border>
+
+            <!-- ── Botones ─────────────────────────────────────────────── -->
+            <Button Text="💾 Guardar perfil"
+                    Command="{Binding GuardarCommand}"
+                    Background="#2a3d66"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    CornerRadius="10"
+                    HeightRequest="50"
+                    Margin="0,0,0,10"/>
+
+            <Button Text="Cancelar"
+                    Command="{Binding CancelarCommand}"
+                    Background="Transparent"
+                    TextColor="#888"
+                    FontSize="15"
+                    Margin="0,0,0,20"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

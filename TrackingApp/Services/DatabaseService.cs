@@ -31,6 +31,44 @@ namespace TrackingApp.Services
             // RF-001 / RF-002
             await _database.CreateTableAsync<Perfil>();
             await _database.CreateTableAsync<RegistroCrecimiento>();
+
+            // ── Índices para acelerar consultas de gráficas y filtros por perfil ─────
+
+            // FoodEntry: consultas de gráficas por perfil+período y por tipo
+            await _database.ExecuteAsync(
+                "CREATE INDEX IF NOT EXISTS idx_foodentry_perfil_time ON FoodEntry(PerfilId, Time)");
+            await _database.ExecuteAsync(
+                "CREATE INDEX IF NOT EXISTS idx_foodentry_time ON FoodEntry(Time)");
+            await _database.ExecuteAsync(
+                "CREATE INDEX IF NOT EXISTS idx_foodentry_tipo ON FoodEntry(TipoAlimentacion)");
+
+            // RegistroCrecimiento: gráficas de crecimiento por perfil+fecha
+            await _database.ExecuteAsync(
+                "CREATE INDEX IF NOT EXISTS idx_crecimiento_perfil_fecha ON RegistroCrecimiento(PerfilId, Fecha)");
+            await _database.ExecuteAsync(
+                "CREATE INDEX IF NOT EXISTS idx_crecimiento_fecha ON RegistroCrecimiento(Fecha)");
+
+            // MedicationDose: calendario de dosis por medicamento y por tiempo
+            await _database.ExecuteAsync(
+                "CREATE INDEX IF NOT EXISTS idx_dose_medid_scheduled ON MedicationDose(MedicationId, ScheduledTime)");
+            await _database.ExecuteAsync(
+                "CREATE INDEX IF NOT EXISTS idx_dose_scheduled ON MedicationDose(ScheduledTime)");
+
+            // MedicationHistory: historial por medicamento y tiempo de administración
+            await _database.ExecuteAsync(
+                "CREATE INDEX IF NOT EXISTS idx_medhistory_medid ON MedicationHistory(MedicationId)");
+            await _database.ExecuteAsync(
+                "CREATE INDEX IF NOT EXISTS idx_medhistory_time ON MedicationHistory(AdministeredTime)");
+
+            // Medication: filtrado por perfil
+            await _database.ExecuteAsync(
+                "CREATE INDEX IF NOT EXISTS idx_medication_perfil ON Medication(PerfilId)");
+
+            // MedicalAppointment: calendario por fecha y por perfil
+            await _database.ExecuteAsync(
+                "CREATE INDEX IF NOT EXISTS idx_appointment_perfil_date ON MedicalAppointment(PerfilId, AppointmentDate)");
+            await _database.ExecuteAsync(
+                "CREATE INDEX IF NOT EXISTS idx_appointment_date ON MedicalAppointment(AppointmentDate)");
         }
 
         // ========== FOOD ENTRIES ==========

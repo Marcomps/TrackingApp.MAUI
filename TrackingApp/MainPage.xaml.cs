@@ -38,4 +38,9 @@ public partial class MainPage : ContentPage
 	{
 		await Shell.Current.GoToAsync(nameof(PreferenciasPage));
 	}
+
+	private async void OnPerfilesClicked(object sender, EventArgs e)
+	{
+		await Shell.Current.GoToAsync(nameof(PerfilesPage));
+	}
 }

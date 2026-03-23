@@ -442,6 +442,21 @@
                 </VerticalStackLayout>
             </Frame>
 
+            <!-- Sección de Perfiles (RF-001) -->
+            <Frame BackgroundColor="White" Padding="15" CornerRadius="8" HasShadow="True">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="👤 Perfiles" FontSize="20" FontAttributes="Bold" TextColor="#2a3d66"/>
+                    <Label Text="Gestiona los perfiles de bebés, niños o adultos que deseas monitorear."
+                           FontSize="13" TextColor="#666"/>
+                    <Button Text="👤 Ver y gestionar perfiles"
+                            Clicked="OnPerfilesClicked"
+                            Background="#5C6BC0"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            CornerRadius="8"/>
+                </VerticalStackLayout>
+            </Frame>
+
             <!-- Sección de Crecimiento -->
             <Frame BackgroundColor="White" Padding="15" CornerRadius="8" HasShadow="True">
                 <VerticalStackLayout Spacing="10">
