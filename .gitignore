@@ -88,3 +88,18 @@ local.properties
 *.nupkg
 **/packages/*
 !**/packages/build/
+
+# Android signing keystore (never commit)
+*.keystore
+*.jks
+
+# Build publish output
+publish_output/
+
+
+# Android signing keystore (never commit)
+*.keystore
+*.jks
+
+# Build publish output
+publish_output/

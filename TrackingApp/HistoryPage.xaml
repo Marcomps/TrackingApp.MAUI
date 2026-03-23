@@ -31,7 +31,7 @@
                                 SelectedItem="{Binding SelectedProfileFilter}"
                                 TextColor="White"
                                 BackgroundColor="#1a2540"
-                                HorizontalOptions="FillAndExpand"/>
+                                HorizontalOptions="Fill"/>
                     </HorizontalStackLayout>
 
                     <!-- Filtro por rango de fechas -->
@@ -44,7 +44,7 @@
                                 SelectedItem="{Binding SelectedDateRangeFilter}"
                                 TextColor="White"
                                 BackgroundColor="#1a2540"
-                                HorizontalOptions="FillAndExpand"/>
+                                HorizontalOptions="Fill"/>
                     </HorizontalStackLayout>
 
                     <Button Text="🔄 Actualizar"
@@ -83,14 +83,14 @@
                                         SelectedItem="{Binding SelectedMedicationFilter}"
                                         TextColor="Black"
                                         BackgroundColor="White"
-                                        HorizontalOptions="FillAndExpand"/>
+                                        HorizontalOptions="Fill"/>
                             </HorizontalStackLayout>
                         </VerticalStackLayout>
                     </Frame>
                     
-                    <ScrollView MaximumHeightRequest="400">
-                        <CollectionView ItemsSource="{Binding FilteredMedicationHistory}"
-                                        x:Name="MedicationHistoryCollectionView">
+                    <CollectionView ItemsSource="{Binding FilteredMedicationHistory}"
+                                    x:Name="MedicationHistoryCollectionView"
+                                    MaximumHeightRequest="400">
                             <CollectionView.EmptyView>
                                 <StackLayout Padding="20" VerticalOptions="Center">
                                     <Label Text="📭" 
@@ -165,8 +165,7 @@
                                     </SwipeView>
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>
-                        </CollectionView>
-                    </ScrollView>
+                    </CollectionView>
 
                     <!-- Estadísticas de medicamentos -->
                     <Frame BackgroundColor="#f0f0f0" 
@@ -213,7 +212,7 @@
                                         SelectedItem="{Binding SelectedFoodTypeFilter}"
                                         TextColor="Black"
                                         BackgroundColor="White"
-                                        HorizontalOptions="FillAndExpand"/>
+                                        HorizontalOptions="Fill"/>
                             </HorizontalStackLayout>
 
                             <HorizontalStackLayout Spacing="10">
@@ -225,14 +224,14 @@
                                         SelectedItem="{Binding SelectedUnitFilter}"
                                         TextColor="Black"
                                         BackgroundColor="White"
-                                        HorizontalOptions="FillAndExpand"/>
+                                        HorizontalOptions="Fill"/>
                             </HorizontalStackLayout>
                         </VerticalStackLayout>
                     </Frame>
                     
-                    <ScrollView MaximumHeightRequest="400">
-                        <CollectionView ItemsSource="{Binding FilteredFoodHistory}"
-                                        x:Name="FoodHistoryCollectionView">
+                    <CollectionView ItemsSource="{Binding FilteredFoodHistory}"
+                                    x:Name="FoodHistoryCollectionView"
+                                    MaximumHeightRequest="400">
                             <CollectionView.EmptyView>
                                 <StackLayout Padding="20" VerticalOptions="Center">
                                     <Label Text="🍽️" 
@@ -301,8 +300,7 @@
                                     </SwipeView>
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>
-                        </CollectionView>
-                    </ScrollView>
+                    </CollectionView>
 
                     <!-- Estadísticas de alimentos -->
                     <Frame BackgroundColor="#f0f0f0" 
@@ -318,7 +316,7 @@
                             <Label Text="{Binding TotalFoodEntries, StringFormat='Total de registros: {0}'}"
                                    FontSize="12"
                                    TextColor="#666"/>
-                            <Label Text="{Binding TotalFoodAmount, StringFormat='Cantidad total: {0:F1}'}"
+                            <Label Text="{Binding TotalFoodAmount, StringFormat='Cantidad total: {0:N2}'}"
                                    FontSize="12"
                                    TextColor="#666"/>
                             <Label Text="{Binding MostFrequentFoodType, StringFormat='Tipo más frecuente: {0}'}"

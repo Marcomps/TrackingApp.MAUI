@@ -17,7 +17,7 @@ namespace TrackingApp.ViewModels
         private Medication? _selectedMedication;
         private string _selectedHistoryRange = "Esta semana";
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         public MainViewModel()
         {
@@ -44,7 +44,11 @@ namespace TrackingApp.ViewModels
             ConfirmAppointmentCommand = new Command<MedicalAppointment>(ConfirmAppointment);
 
             // Subscribe to collection changes
-            _dataService.Medications.CollectionChanged += (s, e) => UpdateSelectedMedication();
+            _dataService.Medications.CollectionChanged += (s, e) => 
+            {
+                UpdateSelectedMedication();
+                OnPropertyChanged(nameof(FilteredMedications));
+            };
             _dataService.FoodEntries.CollectionChanged += (s, e) => OnPropertyChanged(nameof(FilteredFoodEntries));
             _dataService.MedicationHistory.CollectionChanged += (s, e) => 
             {
@@ -172,9 +176,8 @@ namespace TrackingApp.ViewModels
         {
             get
             {
-                var (startDate, endDate) = GetDateRange();
-                var filtered = Medications.Where(m => m.FirstDoseTime >= startDate && m.FirstDoseTime <= endDate).ToList();
-                return new ObservableCollection<Medication>(filtered);
+                // Mostrar TODOS los medicamentos registrados (sin filtro de fecha)
+                return new ObservableCollection<Medication>(Medications);
             }
         }
 
@@ -785,12 +788,11 @@ namespace TrackingApp.ViewModels
             get
             {
                 var now = DateTime.Now;
-                var (startDate, endDate) = GetDateRange();
                 
-                // Filtrar solo eventos pendientes (no confirmados, no históricos)
+                // Filtrar solo eventos pendientes futuros (no confirmados, no históricos)
                 var pending = CombinedMedicationEvents
                     .Where(e => !e.IsHistory && !e.IsConfirmed)
-                    .Where(e => e.EventTime >= startDate && e.EventTime <= endDate);
+                    .Where(e => e.EventTime >= now);
 
                 // Aplicar filtro de medicamento si hay uno seleccionado
                 if (SelectedMedicationId.HasValue)
@@ -890,7 +892,6 @@ namespace TrackingApp.ViewModels
                 // Usar el nuevo método unificado que confirma, crea historial y recalcula
                 await _dataService.ConfirmDoseAndRecalculateAsync(dose, SelectedDays);
                 
-                _dataService.RebuildCombinedEvents();
                 NotifyDosesChanged();
                 OnPropertyChanged(nameof(FilteredMedicationHistory));
                 OnPropertyChanged(nameof(GroupedDoses));
@@ -1207,6 +1208,19 @@ namespace TrackingApp.ViewModels
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        /// <summary>
+        /// Notifica a la UI que todos los datos se han actualizado (llamado después de recargar desde DB).
+        /// </summary>
+        public void NotifyAllDataChanged()
+        {
+            OnPropertyChanged(nameof(FilteredMedications));
+            OnPropertyChanged(nameof(FilteredFoodEntries));
+            OnPropertyChanged(nameof(FilteredAppointments));
+            OnPropertyChanged(nameof(GroupedDoses));
+            NotifyDosesChanged();
+            UpdateSelectedMedication();
         }
 
         // Helper para notificar cambios en las listas de dosis
