@@ -1,4 +1,4 @@
-# User-specific files
+﻿# User-specific files
 *.rsuser
 *.suo
 *.user
@@ -61,7 +61,6 @@ $RECYCLE.BIN/
 .idea/
 *.sln.iml
 
-# User-specific files
 *.userprefs
 
 # SQLite database files (optional - keep if you want to version them)
@@ -72,34 +71,24 @@ $RECYCLE.BIN/
 .DS_Store
 
 # Android
-*.apk
 *.ap_
-*.aab
 *.dex
 *.class
 local.properties
 
 # iOS
-*.ipa
 *.dSYM.zip
-*.dSYM
 
 # NuGet Packages
 *.nupkg
 **/packages/*
 !**/packages/build/
 
-# Android signing keystore (never commit)
-*.keystore
-*.jks
-
 # Build publish output
 publish_output/
 
 
-# Android signing keystore (never commit)
+
+# Android signing keystore (keep local only)
 *.keystore
 *.jks
-
-# Build publish output
-publish_output/
