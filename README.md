@@ -1,4 +1,4 @@
-# Tracking App - Aplicación MAUI para Android
+﻿# Tracking App - Aplicación MAUI para Android
 
 > [!IMPORTANT]
 > **🛑 PUNTO DE ESTABILIDAD (v1.16)**
@@ -18,11 +18,42 @@ Aplicación móvil para tracking de alimentos y medicamentos para bebés, adulto
 - ✅ Edición de horarios de dosis
 - ✅ Filtrado por tipo de usuario (Bebé, Adulto, Animal)
 - ✅ Soporte para múltiples medicamentos con filtro individual
+- ✅ Persistencia de datos con SQLite
+- ✅ Historial de registros con página dedicada
 
 ## Requisitos
-- .NET 8 SDK o superior
-- Visual Studio 2022 con carga de trabajo de MAUI
+- .NET 10 SDK o superior
+- Visual Studio 2022 (v17.12+) con carga de trabajo de MAUI
 - Para Android: Android SDK (API 21 o superior)
+
+## Estructura del Proyecto
+```
+TrackingApp.MAUI/
+├── TrackingApp/              # Proyecto MAUI principal
+│   ├── ViewModels/           # MVVM ViewModels (ObservableObject)
+│   │   ├── MainViewModel.cs
+│   │   └── HistoryViewModel.cs
+│   ├── Services/             # Servicios de infraestructura MAUI
+│   │   ├── AppServices.cs
+│   │   └── DatabaseService.cs
+│   ├── Converters/           # Convertidores XAML
+│   ├── Platforms/            # Código específico por plataforma
+│   ├── Resources/            # Imágenes, fuentes, assets
+│   ├── MainPage.xaml         # Vista principal
+│   ├── HistoryPage.xaml      # Vista de historial
+│   └── AppShell.xaml         # Navegación Shell
+├── TrackingApp.Core/         # Lógica de negocio (sin deps MAUI)
+│   ├── Models/               # Entidades del dominio
+│   │   ├── FoodEntry.cs
+│   │   ├── Medication.cs
+│   │   └── MedicationDose.cs
+│   └── Services/             # Servicios de negocio (testeables)
+│       └── DataService.cs
+└── TrackingApp.Tests/        # Tests unitarios (xUnit)
+    ├── Services/
+    │   └── DataServiceTests.cs
+    └── ViewModels/
+```
 
 ## Instalación
 
@@ -31,44 +62,35 @@ Aplicación móvil para tracking de alimentos y medicamentos para bebés, adulto
 dotnet workload install maui
 ```
 
-### 2. Compilar el proyecto
+### 2. Compilar la solución completa
 ```powershell
-cd "c:\Users\PC\Desktop\Traking food\TrackingApp.MAUI\TrackingApp"
-dotnet build
+dotnet build TrackingApp.MAUI.sln
 ```
 
 ### 3. Ejecutar en Android (Emulador o dispositivo)
 ```powershell
 # Para emulador Android
-dotnet build -t:Run -f net8.0-android
+dotnet build -t:Run -f net10.0-android
 
 # Para dispositivo físico conectado por USB
-dotnet build -t:Run -f net8.0-android /p:AndroidDebugUseFastDeploy=true
+dotnet build -t:Run -f net10.0-android /p:AndroidDebugUseFastDeploy=true
+```
+
+### 4. Ejecutar los tests
+```powershell
+dotnet test TrackingApp.Tests/TrackingApp.Tests.csproj
 ```
 
 ## Compilar APK para distribución
 ```powershell
-dotnet publish -f net8.0-android -c Release
+# Usando el script incluido
+.\Build-APK.ps1
+
+# O manualmente
+dotnet publish -f net10.0-android -c Release
 ```
 
-El APK se generará en: `bin\Release\net8.0-android\publish\`
-
-## Estructura del Proyecto
-```
-TrackingApp/
-├── Models/              # Modelos de datos
-│   ├── FoodEntry.cs
-│   ├── Medication.cs
-│   └── MedicationDose.cs
-├── ViewModels/          # Lógica de presentación
-│   └── MainViewModel.cs
-├── Views/               # Vistas XAML
-│   └── MainPage.xaml
-├── Services/            # Servicios de datos
-│   └── DataService.cs
-└── Converters/          # Convertidores XAML
-    └── BoolToTextConverter.cs
-```
+El APK se generará en: `bin\Release\net10.0-android\publish\`
 
 ## Uso de la Aplicación
 
@@ -116,11 +138,11 @@ Abre Android Studio y verifica que tengas un AVD (Android Virtual Device) creado
 Habilita "Depuración USB" en las opciones de desarrollador de tu dispositivo Android.
 
 ## Próximas Mejoras
-- [ ] Persistencia de datos (SQLite)
-- [ ] Notificaciones push para recordatorios
-- [ ] Gráficos de consumo
+- [ ] Notificaciones push para recordatorios de dosis
+- [ ] Gráficos de consumo y estadísticas
 - [ ] Exportar historial a PDF
 - [ ] Soporte para múltiples perfiles (varios bebés/mascotas)
+- [ ] Integración con APIs de salud (Google Fit, Apple Health)
 
 ## Autor
 Aplicación creada para tracking de alimentos y medicamentos.

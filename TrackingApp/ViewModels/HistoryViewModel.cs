@@ -112,7 +112,7 @@ namespace TrackingApp.ViewModels
 
         public HistoryViewModel()
         {
-            _dataService = DataService.Instance;
+            _dataService = AppServices.DataService;
             
             _allMedicationHistory = new ObservableCollection<MedicationHistory>();
             _allFoodHistory = new ObservableCollection<FoodEntry>();

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net10.0-android;net10.0-ios;net10.0-maccatalyst;net10.0</TargetFrameworks>
+		<TargetFrameworks>net10.0-android;net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
 		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
 		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net10.0-tizen</TargetFrameworks> -->
@@ -13,8 +13,7 @@
 		either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
 		<!-- For example: <RuntimeIdentifiers>maccatalyst-x64;maccatalyst-arm64</RuntimeIdentifiers> -->
 
-		<OutputType Condition="'$(TargetFramework)' != 'net10.0'">Exe</OutputType>
-		<OutputType Condition="'$(TargetFramework)' == 'net10.0'">Library</OutputType>
+		<OutputType>Exe</OutputType>
 		<RootNamespace>TrackingApp</RootNamespace>
 		<UseMaui>true</UseMaui>
 		<SingleProject>true</SingleProject>
@@ -28,8 +27,8 @@
 		<ApplicationId>com.trackingapp.nutrition</ApplicationId>
 
 		<!-- Versions -->
-		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-		<ApplicationVersion>1</ApplicationVersion>
+		<ApplicationDisplayVersion>1.6</ApplicationDisplayVersion>
+		<ApplicationVersion>6</ApplicationVersion>
 
 		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
 		<WindowsPackageType>None</WindowsPackageType>
@@ -46,7 +45,16 @@
 	  <RunAOTCompilation>True</RunAOTCompilation>
 	</PropertyGroup>
 
-	<ItemGroup Condition="'$(TargetFramework)' != 'net10.0'">
+	<!-- Android Signing - Consistent key to avoid reinstalling -->
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<AndroidKeyStore>true</AndroidKeyStore>
+		<AndroidSigningKeyStore>trackingapp.keystore</AndroidSigningKeyStore>
+		<AndroidSigningKeyAlias>trackingapp</AndroidSigningKeyAlias>
+		<AndroidSigningKeyPass>TrackingApp2026</AndroidSigningKeyPass>
+		<AndroidSigningStorePass>TrackingApp2026</AndroidSigningStorePass>
+	</PropertyGroup>
+
+	<ItemGroup>
 		<!-- App Icon -->
 		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#4CAF50" />
 
@@ -69,6 +77,10 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0-preview.1.25080.5" />
 		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 		<PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.11" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\TrackingApp.Core\TrackingApp.Core.csproj" />
 	</ItemGroup>
 
 </Project>
