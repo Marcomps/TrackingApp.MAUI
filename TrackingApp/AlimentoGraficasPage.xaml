@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Maui;assembly=LiveChartsCore.SkiaSharpView.Maui"
+             x:Class="TrackingApp.AlimentoGraficasPage"
+             x:DataType="viewmodels:AlimentoGraficasViewModel"
+             Title="Gráficas de Alimentos"
+             Background="#f5f7fa">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="14">
+
+            <!-- ── Encabezado ─────────────────────────────────────────────── -->
+            <Border Background="#2a3d66"
+                    StrokeShape="RoundRectangle 12"
+                    StrokeThickness="0"
+                    Padding="16,14">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="📊 Tendencia de Alimentación"
+                           FontSize="20" FontAttributes="Bold"
+                           TextColor="White" />
+                    <Label Text="Totales diarios por tipo de alimentación"
+                           FontSize="12" TextColor="#90CAF9" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- ── Selector de período ────────────────────────────────────── -->
+            <Border Background="White"
+                    StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0"
+                    Padding="12,10">
+                <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+
+                    <Button Text="Hoy"
+                            Command="{Binding SeleccionarPeriodoCommand}"
+                            CommandParameter="1"
+                            Background="{Binding BotonHoyBg}"
+                            TextColor="{Binding TextoHoy}"
+                            CornerRadius="20"
+                            Padding="18,8"
+                            FontSize="13" />
+
+                    <Button Text="7 días"
+                            Command="{Binding SeleccionarPeriodoCommand}"
+                            CommandParameter="7"
+                            Background="{Binding Boton7DiasBg}"
+                            TextColor="{Binding Texto7Dias}"
+                            CornerRadius="20"
+                            Padding="18,8"
+                            FontSize="13" />
+
+                    <Button Text="30 días"
+                            Command="{Binding SeleccionarPeriodoCommand}"
+                            CommandParameter="30"
+                            Background="{Binding Boton30DiasBg}"
+                            TextColor="{Binding Texto30Dias}"
+                            CornerRadius="20"
+                            Padding="18,8"
+                            FontSize="13" />
+
+                </HorizontalStackLayout>
+            </Border>
+
+            <!-- ── Gráfica principal ──────────────────────────────────────── -->
+            <Border Background="White"
+                    StrokeShape="RoundRectangle 12"
+                    Stroke="#e0e0e0"
+                    Padding="8,10">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Cantidad diaria por tipo"
+                           FontSize="14" FontAttributes="Bold"
+                           TextColor="#2a3d66" Margin="8,0" />
+
+                    <!-- Gráfica de líneas LiveCharts2 -->
+                    <lvc:CartesianChart
+                        Series="{Binding Series}"
+                        XAxes="{Binding XAxes}"
+                        YAxes="{Binding YAxes}"
+                        HeightRequest="280"
+                        LegendPosition="Bottom" />
+
+                    <!-- Mensaje sin datos -->
+                    <Label Text="No hay registros de alimentos en este período."
+                           IsVisible="{Binding NoHayDatos}"
+                           TextColor="#999999"
+                           FontSize="13"
+                           HorizontalOptions="Center"
+                           Margin="0,8,0,4" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- ── Leyenda de colores ─────────────────────────────────────── -->
+            <HorizontalStackLayout Spacing="16" HorizontalOptions="Center">
+                <HorizontalStackLayout Spacing="6">
+                    <BoxView Color="#2196F3" WidthRequest="16" HeightRequest="4"
+                             VerticalOptions="Center" CornerRadius="2"/>
+                    <Label Text="Fórmula" FontSize="12" TextColor="#555" VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+                <HorizontalStackLayout Spacing="6">
+                    <BoxView Color="#9C27B0" WidthRequest="16" HeightRequest="4"
+                             VerticalOptions="Center" CornerRadius="2"/>
+                    <Label Text="Lactancia" FontSize="12" TextColor="#555" VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+                <HorizontalStackLayout Spacing="6">
+                    <BoxView Color="#FF9800" WidthRequest="16" HeightRequest="4"
+                             VerticalOptions="Center" CornerRadius="2"/>
+                    <Label Text="Sólidos" FontSize="12" TextColor="#555" VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+            </HorizontalStackLayout>
+
+            <!-- ── Resumen estadístico ────────────────────────────────────── -->
+            <Label Text="Resumen del período"
+                   FontSize="16" FontAttributes="Bold"
+                   TextColor="#2a3d66" Margin="4,4,4,0" />
+
+            <!-- Tarjeta Fórmula -->
+            <Border Background="#E3F2FD"
+                    StrokeShape="RoundRectangle 10"
+                    Stroke="#90CAF9"
+                    Padding="16,12">
+                <HorizontalStackLayout Spacing="14">
+                    <Label Text="🍼" FontSize="30" VerticalOptions="Center" />
+                    <VerticalStackLayout Spacing="3" VerticalOptions="Center">
+                        <Label Text="Fórmula / Biberón"
+                               FontAttributes="Bold" TextColor="#1565C0" FontSize="14" />
+                        <Label Text="{Binding ResumenFormula}"
+                               TextColor="#1976D2" FontSize="13" />
+                    </VerticalStackLayout>
+                </HorizontalStackLayout>
+            </Border>
+
+            <!-- Tarjeta Lactancia -->
+            <Border Background="#F3E5F5"
+                    StrokeShape="RoundRectangle 10"
+                    Stroke="#CE93D8"
+                    Padding="16,12">
+                <HorizontalStackLayout Spacing="14">
+                    <Label Text="🤱" FontSize="30" VerticalOptions="Center" />
+                    <VerticalStackLayout Spacing="3" VerticalOptions="Center">
+                        <Label Text="Lactancia materna"
+                               FontAttributes="Bold" TextColor="#6A1B9A" FontSize="14" />
+                        <Label Text="{Binding ResumenLactancia}"
+                               TextColor="#7B1FA2" FontSize="13" />
+                    </VerticalStackLayout>
+                </HorizontalStackLayout>
+            </Border>
+
+            <!-- Tarjeta Sólidos -->
+            <Border Background="#FFF3E0"
+                    StrokeShape="RoundRectangle 10"
+                    Stroke="#FFCC80"
+                    Padding="16,12">
+                <HorizontalStackLayout Spacing="14">
+                    <Label Text="🥣" FontSize="30" VerticalOptions="Center" />
+                    <VerticalStackLayout Spacing="3" VerticalOptions="Center">
+                        <Label Text="Alimentación sólida"
+                               FontAttributes="Bold" TextColor="#E65100" FontSize="14" />
+                        <Label Text="{Binding ResumenSolido}"
+                               TextColor="#F57C00" FontSize="13" />
+                    </VerticalStackLayout>
+                </HorizontalStackLayout>
+            </Border>
+
+            <!-- Botón Actualizar -->
+            <Button Text="🔄 Actualizar gráfica"
+                    Command="{Binding RefrescarCommand}"
+                    Background="#4CAF50"
+                    TextColor="White"
+                    CornerRadius="8"
+                    FontAttributes="Bold"
+                    Margin="0,4,0,8" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

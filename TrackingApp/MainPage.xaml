@@ -58,7 +58,14 @@
                             BackgroundColor="#4CAF50"
                             TextColor="White"
                             FontAttributes="Bold"/>
-                    
+
+                    <Button Text="📊 Ver Gráficas de Alimentos"
+                            Clicked="OnGraficasAlimentoClicked"
+                            Background="#1976D2"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            CornerRadius="8" />
+
                 </VerticalStackLayout>
             </Frame>
 
@@ -432,6 +439,21 @@
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Sección de Crecimiento -->
+            <Frame BackgroundColor="White" Padding="15" CornerRadius="8" HasShadow="True">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="📏 Crecimiento" FontSize="20" FontAttributes="Bold" TextColor="#2a3d66"/>
+                    <Label Text="Registra peso, talla, IMC y perímetro cefálico."
+                           FontSize="13" TextColor="#666"/>
+                    <Button Text="📈 Ver registros de crecimiento"
+                            Clicked="OnCrecimientoClicked"
+                            Background="#00897B"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            CornerRadius="8"/>
                 </VerticalStackLayout>
             </Frame>
 

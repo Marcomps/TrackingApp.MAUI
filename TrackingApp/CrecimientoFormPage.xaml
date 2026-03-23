@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
+             x:Class="TrackingApp.CrecimientoFormPage"
+             x:DataType="viewmodels:CrecimientoFormViewModel"
+             Title="{Binding Titulo}"
+             Background="#f5f7fa">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="0" Padding="16,12">
+
+            <!-- ── Sección: Fecha y hora ──────────────────────────────────── -->
+            <Label Text="FECHA Y HORA" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,14">
+                <Grid RowDefinitions="Auto,1,Auto">
+                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Padding="0,8">
+                        <Label Text="📅  Fecha" VerticalOptions="Center"
+                               TextColor="#333" FontSize="15" WidthRequest="100"/>
+                        <DatePicker Grid.Column="1" Date="{Binding Fecha}"
+                                    Format="dd/MM/yyyy" HorizontalOptions="End"
+                                    TextColor="#1565C0" FontSize="15"/>
+                    </Grid>
+                    <BoxView Grid.Row="1" HeightRequest="1" Background="#f0f0f0"/>
+                    <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="0,8">
+                        <Label Text="🕐  Hora" VerticalOptions="Center"
+                               TextColor="#333" FontSize="15" WidthRequest="100"/>
+                        <TimePicker Grid.Column="1" Time="{Binding Hora}"
+                                    Format="HH:mm" HorizontalOptions="End"
+                                    TextColor="#1565C0" FontSize="15"/>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- ── Sección: Medidas ───────────────────────────────────────── -->
+            <Label Text="MEDIDAS" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,4">
+                <Grid RowDefinitions="Auto,1,Auto">
+
+                    <!-- Peso -->
+                    <VerticalStackLayout Grid.Row="0" Spacing="2" Padding="0,10,0,6">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Label Text="⚖️  Peso (kg)" VerticalOptions="Center"
+                                   TextColor="#333" FontSize="15" WidthRequest="130"/>
+                            <Entry Grid.Column="1"
+                                   Text="{Binding PesoTexto}"
+                                   Placeholder="ej. 3.5"
+                                   Keyboard="Numeric"
+                                   HorizontalOptions="Fill"
+                                   HorizontalTextAlignment="End"
+                                   FontSize="15"
+                                   TextColor="#1565C0"/>
+                        </Grid>
+                        <Label Text="{Binding ErrorPeso}"
+                               IsVisible="{Binding TienePesoError}"
+                               TextColor="#F44336" FontSize="12"
+                               Margin="0,0,0,4"/>
+                    </VerticalStackLayout>
+
+                    <BoxView Grid.Row="1" HeightRequest="1" Background="#f0f0f0"/>
+
+                    <!-- Talla -->
+                    <VerticalStackLayout Grid.Row="2" Spacing="2" Padding="0,10,0,6">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Label Text="📏  Talla (cm)" VerticalOptions="Center"
+                                   TextColor="#333" FontSize="15" WidthRequest="130"/>
+                            <Entry Grid.Column="1"
+                                   Text="{Binding TallaTexto}"
+                                   Placeholder="ej. 52.0"
+                                   Keyboard="Numeric"
+                                   HorizontalOptions="Fill"
+                                   HorizontalTextAlignment="End"
+                                   FontSize="15"
+                                   TextColor="#1565C0"/>
+                        </Grid>
+                        <Label Text="{Binding ErrorTalla}"
+                               IsVisible="{Binding TieneTallaError}"
+                               TextColor="#F44336" FontSize="12"
+                               Margin="0,0,0,4"/>
+                    </VerticalStackLayout>
+
+                </Grid>
+            </Border>
+
+            <!-- IMC calculado en tiempo real -->
+            <Border Background="#E3F2FD" StrokeShape="RoundRectangle 8"
+                    Stroke="#90CAF9" Padding="14,10" Margin="0,0,0,14">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Text="IMC calculado" VerticalOptions="Center"
+                           TextColor="#1565C0" FontSize="14"/>
+                    <Label Grid.Column="1"
+                           Text="{Binding IMCDisplay}"
+                           FontAttributes="Bold" FontSize="16"
+                           TextColor="#1565C0" HorizontalOptions="End"/>
+                </Grid>
+            </Border>
+
+            <!-- ── Sección: Opcional ──────────────────────────────────────── -->
+            <Label Text="OPCIONAL" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,14">
+                <VerticalStackLayout Spacing="2" Padding="0,10,0,6">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Label Text="🧠  Perím. cefálico (cm)" VerticalOptions="Center"
+                               TextColor="#333" FontSize="14" WidthRequest="170"/>
+                        <Entry Grid.Column="1"
+                               Text="{Binding PerimCefTexto}"
+                               Placeholder="ej. 35.5 (opcional)"
+                               Keyboard="Numeric"
+                               HorizontalOptions="Fill"
+                               HorizontalTextAlignment="End"
+                               FontSize="15"
+                               TextColor="#1565C0"/>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- ── Notas ──────────────────────────────────────────────────── -->
+            <Label Text="NOTAS" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,8" Margin="0,0,0,28">
+                <Editor Text="{Binding Notas}"
+                        Placeholder="Observaciones del registro..."
+                        AutoSize="TextChanges"
+                        MinimumHeightRequest="60"
+                        FontSize="14"
+                        TextColor="#333"/>
+            </Border>
+
+            <!-- ── Botones ────────────────────────────────────────────────── -->
+            <Button Text="Guardar"
+                    Command="{Binding GuardarCommand}"
+                    Background="#2a3d66"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    FontSize="16"
+                    CornerRadius="10"
+                    HeightRequest="52"
+                    Margin="0,0,0,10"/>
+
+            <Button Text="Cancelar"
+                    Command="{Binding CancelarCommand}"
+                    Background="#e0e0e0"
+                    TextColor="#555"
+                    FontSize="15"
+                    CornerRadius="10"
+                    HeightRequest="48"
+                    Margin="0,0,0,20"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

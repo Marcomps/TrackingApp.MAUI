@@ -29,8 +29,11 @@ Aplicación móvil .NET 10 MAUI para Android, iOS y Windows orientada al seguimi
 | Servicio centralizado de unidades | 🔄 En desarrollo | v2.0 RF-005 |
 | Mejoras módulo Alimento | 🔄 En desarrollo | v2.0 RF-003 |
 | Mejoras módulo Citas | 🔄 En desarrollo | v2.0 RF-004 |
+| Gráficas de alimentos (tendencia semanal) | ✅ Implementado | v2.0 LiveCharts2 |
+| Módulo Crecimiento (UI: lista + formulario) | 🔄 En desarrollo | v2.0 RF-002 |
+| Sistema de perfiles (UI: lista + detalle) | 🔄 En desarrollo | v2.0 RF-001 |
 | Notificaciones locales | 🔲 Pendiente | v2.0 |
-| Gráficas de evolución | 🔲 Pendiente | v2.0 |
+| Gráficas de crecimiento | 🔲 Pendiente | v2.0 RF-002 |
 | Exportar historial a PDF | 🔲 Pendiente | Fase siguiente |
 
 ---
@@ -42,7 +45,9 @@ TrackingApp.MAUI/
 ├── TrackingApp/                        # Proyecto MAUI principal (UI)
 │   ├── ViewModels/                     # MVVM — ObservableObject, comandos
 │   │   ├── MainViewModel.cs            # ~1500 líneas, lógica pantalla principal
-│   │   └── HistoryViewModel.cs         # ~500 líneas, filtros e historial
+│   │   ├── HistoryViewModel.cs         # ~500 líneas, filtros e historial
+│   │   ├── AlimentoGraficasViewModel.cs # [v2.0] Gráficas de tendencia de alimentos
+│   │   └── CrecimientoViewModel.cs     # [v2.0] Lista + formulario de crecimiento
 │   ├── Services/                       # Servicios de infraestructura MAUI
 │   │   ├── AppServices.cs              # Singleton DataService accesible globalmente
 │   │   └── DatabaseService.cs          # Implementación SQLite de IDatabaseService
@@ -54,6 +59,9 @@ TrackingApp.MAUI/
 │   │   └── Images/                     # Assets PNG
 │   ├── MainPage.xaml                   # Pantalla principal
 │   ├── HistoryPage.xaml                # Historial
+│   ├── AlimentoGraficasPage.xaml       # [v2.0] Gráficas de alimentos (LiveCharts2)
+│   ├── CrecimientoPage.xaml            # [v2.0] Lista de registros de crecimiento
+│   ├── CrecimientoFormPage.xaml        # [v2.0] Formulario nuevo registro
 │   └── AppShell.xaml                   # Navegación Shell Tab-Bar
 │
 ├── TrackingApp.Core/                   # Librería .NET 10 (sin dependencias MAUI)
@@ -214,8 +222,10 @@ Ver documento completo: `TrackingApp_Requerimientos_v2.md`
 | 3 | RF-002 | 🔴 Alta | Módulo Crecimiento (peso, talla, IMC, gráficas) |
 | 4 | RF-003 | 🟡 Media | Mejoras módulo Alimento (tipos, unidades, vinculación a perfil) |
 | 5 | RF-004 | 🟡 Media | Mejoras módulo Citas (categorías, notificaciones, post-cita) |
-| 6 | — | 🟡 Media | Gráficas de evolución (Crecimiento + Alimento) |
-| 7 | — | 🟢 Baja | Notificaciones locales para citas y medicamentos |
+| 6 | RF-003 | ✅ Listo | Gráficas de alimentos (LiveCharts2 — tendencia semanal) |
+| 7 | RF-002 | 🔄 En curso | UI Módulo Crecimiento (lista + formulario + gráficas) |
+| 8 | RF-001 | 🔲 Pendiente | UI Sistema de perfiles (lista + detalle + selector) |
+| 9 | — | 🟢 Baja | Notificaciones locales para citas y medicamentos |
 
 ---
 

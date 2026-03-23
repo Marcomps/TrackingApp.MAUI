@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
+             xmlns:models="clr-namespace:TrackingApp.Models;assembly=TrackingApp.Core"
+             x:Class="TrackingApp.CrecimientoPage"
+             x:DataType="viewmodels:CrecimientoViewModel"
+             Title="Crecimiento"
+             Background="#f5f7fa">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="+" Command="{Binding AgregarCommand}" Priority="0" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,Auto,*">
+
+        <!-- ── Header / Último registro ────────────────────────────────── -->
+        <Border Grid.Row="0"
+                Background="#2a3d66"
+                StrokeThickness="0"
+                Padding="16,14"
+                Margin="0">
+            <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="Auto,Auto">
+                <Label Grid.ColumnSpan="4" Grid.Row="0"
+                       Text="📏 Último registro"
+                       FontSize="13" TextColor="#90CAF9" Margin="0,0,0,8" />
+
+                <!-- Peso -->
+                <VerticalStackLayout Grid.Column="0" Grid.Row="1" HorizontalOptions="Center" Spacing="2">
+                    <Label Text="Peso" FontSize="11" TextColor="#90CAF9" HorizontalOptions="Center"/>
+                    <Label Text="{Binding UltimoPesoDisplay}"
+                           FontSize="15" FontAttributes="Bold" TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+
+                <!-- Talla -->
+                <VerticalStackLayout Grid.Column="1" Grid.Row="1" HorizontalOptions="Center" Spacing="2">
+                    <Label Text="Talla" FontSize="11" TextColor="#90CAF9" HorizontalOptions="Center"/>
+                    <Label Text="{Binding UltimoTallaDisplay}"
+                           FontSize="15" FontAttributes="Bold" TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+
+                <!-- IMC -->
+                <VerticalStackLayout Grid.Column="2" Grid.Row="1" HorizontalOptions="Center" Spacing="2">
+                    <Label Text="IMC" FontSize="11" TextColor="#90CAF9" HorizontalOptions="Center"/>
+                    <Label Text="{Binding UltimoIMCDisplay}"
+                           FontSize="15" FontAttributes="Bold" TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+
+                <!-- Fecha -->
+                <VerticalStackLayout Grid.Column="3" Grid.Row="1" HorizontalOptions="Center" Spacing="2">
+                    <Label Text="Fecha" FontSize="11" TextColor="#90CAF9" HorizontalOptions="Center"/>
+                    <Label Text="{Binding UltimaFechaDisplay}"
+                           FontSize="13" TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <!-- ── Mensaje sin datos ────────────────────────────────────────── -->
+        <VerticalStackLayout Grid.Row="1"
+                             IsVisible="{Binding NoHayRegistros}"
+                             Spacing="12"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center"
+                             Margin="32,40">
+            <Label Text="📊" FontSize="48" HorizontalOptions="Center" />
+            <Label Text="Aún no hay registros de crecimiento."
+                   FontSize="15" TextColor="#888"
+                   HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+            <Button Text="+ Agregar primer registro"
+                    Command="{Binding AgregarCommand}"
+                    Background="#2a3d66"
+                    TextColor="White"
+                    CornerRadius="8"
+                    HorizontalOptions="Center"
+                    Padding="20,10"/>
+        </VerticalStackLayout>
+
+        <!-- ── Lista de registros ───────────────────────────────────────── -->
+        <CollectionView Grid.Row="2"
+                        ItemsSource="{Binding Registros}"
+                        IsVisible="{Binding HayRegistros}"
+                        Margin="0,4">
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:RegistroCrecimiento">
+                    <SwipeView Margin="12,4">
+                        <!-- Swipe eliminar -->
+                        <SwipeView.RightItems>
+                            <SwipeItems Mode="Execute">
+                                <SwipeItem Text="Eliminar"
+                                           BackgroundColor="#F44336"
+                                           CommandParameter="{Binding .}"
+                                           Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CrecimientoViewModel}}, Path=EliminarCommand}" />
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+
+                        <!-- Swipe editar -->
+                        <SwipeView.LeftItems>
+                            <SwipeItems Mode="Execute">
+                                <SwipeItem Text="Editar"
+                                           BackgroundColor="#1976D2"
+                                           CommandParameter="{Binding .}"
+                                           Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CrecimientoViewModel}}, Path=EditarCommand}" />
+                            </SwipeItems>
+                        </SwipeView.LeftItems>
+
+                        <!-- Tarjeta registro -->
+                        <Border Background="White"
+                                StrokeShape="RoundRectangle 10"
+                                Stroke="#e0e0e0"
+                                Padding="14,12">
+                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+
+                                <!-- Fecha -->
+                                <Label Grid.Column="0" Grid.Row="0"
+                                       Text="{Binding FormattedDate}"
+                                       FontAttributes="Bold" FontSize="14"
+                                       TextColor="#2a3d66"/>
+
+                                <!-- Peso y talla en una línea -->
+                                <Label Grid.Column="0" Grid.Row="1"
+                                       TextColor="#555" FontSize="13" Margin="0,4,0,0">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="⚖️ " />
+                                            <Span Text="{Binding PesoKg, StringFormat='{0:F2} kg'}" FontAttributes="Bold" />
+                                            <Span Text="  📏 " />
+                                            <Span Text="{Binding TallaCm, StringFormat='{0:F1} cm'}" FontAttributes="Bold" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+
+                                <!-- IMC badge -->
+                                <Border Grid.Column="1" Grid.RowSpan="2"
+                                        Background="#E3F2FD"
+                                        StrokeShape="RoundRectangle 8"
+                                        Stroke="#90CAF9"
+                                        Padding="10,6"
+                                        VerticalOptions="Center">
+                                    <VerticalStackLayout Spacing="1" HorizontalOptions="Center">
+                                        <Label Text="IMC" FontSize="10" TextColor="#1565C0" HorizontalOptions="Center"/>
+                                        <Label Text="{Binding IMC, StringFormat='{0:F1}'}"
+                                               FontSize="16" FontAttributes="Bold"
+                                               TextColor="#1565C0" HorizontalOptions="Center"/>
+                                    </VerticalStackLayout>
+                                </Border>
+
+                            </Grid>
+                        </Border>
+                    </SwipeView>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- ── FAB Agregar ──────────────────────────────────────────────── -->
+        <Button Grid.Row="2"
+                Text="+"
+                Command="{Binding AgregarCommand}"
+                Background="#2a3d66"
+                TextColor="White"
+                FontSize="28"
+                FontAttributes="Bold"
+                WidthRequest="56" HeightRequest="56"
+                CornerRadius="28"
+                HorizontalOptions="End"
+                VerticalOptions="End"
+                Margin="0,0,20,20"
+                IsVisible="{Binding HayRegistros}"/>
+
+    </Grid>
+</ContentPage>
