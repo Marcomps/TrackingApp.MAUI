@@ -25,13 +25,15 @@ Aplicación móvil .NET 10 MAUI para Android, iOS y Windows orientada al seguimi
 | Citas médicas (crear, confirmar) | ✅ Implementado | v1.16 estable |
 | Persistencia SQLite | ✅ Implementado | v1.16 estable |
 | Perfiles completos (nombre, foto, datos) | 🔄 En desarrollo | v2.0 RF-001 |
-| Módulo Crecimiento (peso, talla, IMC) | 🔄 En desarrollo | v2.0 RF-002 |
-| Servicio centralizado de unidades | 🔄 En desarrollo | v2.0 RF-005 |
+| Módulo Crecimiento (peso, talla, IMC) | ✅ Implementado | v2.0 RF-002 |
+| Servicio centralizado de unidades | ✅ Implementado | v2.0 RF-005 |
 | Mejoras módulo Alimento | 🔄 En desarrollo | v2.0 RF-003 |
 | Mejoras módulo Citas | 🔄 En desarrollo | v2.0 RF-004 |
 | Gráficas de alimentos (tendencia semanal) | ✅ Implementado | v2.0 LiveCharts2 |
-| Módulo Crecimiento (UI: lista + formulario) | 🔄 En desarrollo | v2.0 RF-002 |
-| Sistema de perfiles (UI: lista + detalle) | 🔄 En desarrollo | v2.0 RF-001 |
+| Módulo Crecimiento (UI: lista + formulario) | ✅ Implementado | v2.0 RF-002 |
+| Selectores de unidad (kg/lb/cm/in…) en formularios | ✅ Implementado | v2.0 RF-005 |
+| Página de preferencias (métrico / imperial) | ✅ Implementado | v2.0 RF-005 |
+| Sistema de perfiles (UI: lista + detalle) | 🔲 Pendiente | v2.0 RF-001 |
 | Notificaciones locales | 🔲 Pendiente | v2.0 |
 | Gráficas de crecimiento | 🔲 Pendiente | v2.0 RF-002 |
 | Exportar historial a PDF | 🔲 Pendiente | Fase siguiente |
@@ -47,7 +49,9 @@ TrackingApp.MAUI/
 │   │   ├── MainViewModel.cs            # ~1500 líneas, lógica pantalla principal
 │   │   ├── HistoryViewModel.cs         # ~500 líneas, filtros e historial
 │   │   ├── AlimentoGraficasViewModel.cs # [v2.0] Gráficas de tendencia de alimentos
-│   │   └── CrecimientoViewModel.cs     # [v2.0] Lista + formulario de crecimiento
+│   │   ├── CrecimientoViewModel.cs     # [v2.0] Lista de registros de crecimiento
+│   │   ├── CrecimientoFormViewModel.cs # [v2.0] Formulario add/edit con selectores de unidad
+│   │   └── PreferenciasViewModel.cs    # [v2.0] Preferencia de sistema métrico/imperial
 │   ├── Services/                       # Servicios de infraestructura MAUI
 │   │   ├── AppServices.cs              # Singleton DataService accesible globalmente
 │   │   └── DatabaseService.cs          # Implementación SQLite de IDatabaseService
@@ -61,7 +65,8 @@ TrackingApp.MAUI/
 │   ├── HistoryPage.xaml                # Historial
 │   ├── AlimentoGraficasPage.xaml       # [v2.0] Gráficas de alimentos (LiveCharts2)
 │   ├── CrecimientoPage.xaml            # [v2.0] Lista de registros de crecimiento
-│   ├── CrecimientoFormPage.xaml        # [v2.0] Formulario nuevo registro
+│   ├── CrecimientoFormPage.xaml        # [v2.0] Formulario nuevo/editar registro
+│   ├── PreferenciasPage.xaml           # [v2.0] Configuración de unidades (métrico/imperial)
 │   └── AppShell.xaml                   # Navegación Shell Tab-Bar
 │
 ├── TrackingApp.Core/                   # Librería .NET 10 (sin dependencias MAUI)
@@ -164,6 +169,23 @@ El AAB firmado se genera en: `publish_output/com.trackingapp.nutrition-Signed.aa
 3. Ingresa la cantidad y selecciona la unidad (oz, ml, g, etc.)
 4. Selecciona la hora y presiona "Agregar Alimento"
 
+### Ver Gráficas de Alimentos
+1. En la pantalla principal, pulsa **📊 Ver Gráficas de Alimentos**
+2. Selecciona el período: Hoy / 7 días / 30 días
+3. La gráfica muestra tendencias por tipo: Fórmula, Lactancia y Sólidos
+
+### Registrar Crecimiento
+1. En la pantalla principal, pulsa **📈 Ver registros de crecimiento**
+2. Pulsa **+** para agregar un nuevo registro
+3. Ingresa el peso y la talla — selecciona la unidad deseada con el Picker (kg/g/lb/oz y cm/in/ft/m)
+4. El IMC se calcula automáticamente en tiempo real
+5. Pulsa **Guardar** — los valores se almacenan siempre en unidades base (g y cm)
+
+### Configurar Unidades por Defecto
+1. En la pantalla principal, pulsa **⚖️ Unidades de medida** (sección Configuración)
+2. Elige **Métrico** o **Imperial**
+3. Pulsa **Guardar preferencia** — el formulario de Crecimiento usará esas unidades por defecto
+
 ### Registrar Medicamentos
 1. Ingresa el nombre y dosis del medicamento (ej: "5ml")
 2. Define la frecuencia en horas y/o minutos
@@ -217,15 +239,16 @@ Ver documento completo: `TrackingApp_Requerimientos_v2.md`
 
 | # | RF | Prioridad | Descripción |
 |---|---|---|---|
-| 1 | RF-005 | 🔴 Alta | Servicio centralizado de unidades (IUnitService) |
+| 1 | RF-005 | ✅ Listo | Servicio centralizado de unidades (IUnitService + UnitService) |
 | 2 | RF-001 | 🔴 Alta | Sistema de perfiles completos (Perfil model + CRUD) |
-| 3 | RF-002 | 🔴 Alta | Módulo Crecimiento (peso, talla, IMC, gráficas) |
-| 4 | RF-003 | 🟡 Media | Mejoras módulo Alimento (tipos, unidades, vinculación a perfil) |
-| 5 | RF-004 | 🟡 Media | Mejoras módulo Citas (categorías, notificaciones, post-cita) |
-| 6 | RF-003 | ✅ Listo | Gráficas de alimentos (LiveCharts2 — tendencia semanal) |
-| 7 | RF-002 | 🔄 En curso | UI Módulo Crecimiento (lista + formulario + gráficas) |
+| 3 | RF-002 | ✅ Listo | Módulo Crecimiento (peso, talla, IMC — data layer + UI) |
+| 4 | RF-005 | ✅ Listo | Selectores de unidad en formularios + PreferenciasPage |
+| 5 | RF-003 | 🟡 Media | Mejoras módulo Alimento (tipos, unidades, vinculación a perfil) |
+| 6 | RF-004 | 🟡 Media | Mejoras módulo Citas (categorías, notificaciones, post-cita) |
+| 7 | RF-003 | ✅ Listo | Gráficas de alimentos (LiveCharts2 — tendencia semanal) |
 | 8 | RF-001 | 🔲 Pendiente | UI Sistema de perfiles (lista + detalle + selector) |
-| 9 | — | 🟢 Baja | Notificaciones locales para citas y medicamentos |
+| 9 | RF-002 | 🔲 Pendiente | Gráficas de crecimiento (LiveCharts2) |
+| 10 | — | 🟢 Baja | Notificaciones locales para citas y medicamentos |
 
 ---
 
