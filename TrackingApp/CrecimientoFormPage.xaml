@@ -45,17 +45,23 @@
 
                     <!-- Peso -->
                     <VerticalStackLayout Grid.Row="0" Spacing="2" Padding="0,10,0,6">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <Label Text="⚖️  Peso (kg)" VerticalOptions="Center"
-                                   TextColor="#333" FontSize="15" WidthRequest="130"/>
-                            <Entry Grid.Column="1"
+                        <Label Text="⚖️  Peso" VerticalOptions="Center"
+                               TextColor="#333" FontSize="14" FontAttributes="Bold"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Entry Grid.Column="0"
                                    Text="{Binding PesoTexto}"
                                    Placeholder="ej. 3.5"
                                    Keyboard="Numeric"
                                    HorizontalOptions="Fill"
-                                   HorizontalTextAlignment="End"
-                                   FontSize="15"
+                                   FontSize="16"
                                    TextColor="#1565C0"/>
+                            <Picker Grid.Column="1"
+                                    ItemsSource="{Binding NombresPeso}"
+                                    SelectedIndex="{Binding UnidadPesoIndex}"
+                                    WidthRequest="80"
+                                    FontSize="15"
+                                    TextColor="#1565C0"
+                                    HorizontalOptions="End"/>
                         </Grid>
                         <Label Text="{Binding ErrorPeso}"
                                IsVisible="{Binding TienePesoError}"
@@ -67,17 +73,23 @@
 
                     <!-- Talla -->
                     <VerticalStackLayout Grid.Row="2" Spacing="2" Padding="0,10,0,6">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <Label Text="📏  Talla (cm)" VerticalOptions="Center"
-                                   TextColor="#333" FontSize="15" WidthRequest="130"/>
-                            <Entry Grid.Column="1"
+                        <Label Text="📏  Talla" VerticalOptions="Center"
+                               TextColor="#333" FontSize="14" FontAttributes="Bold"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Entry Grid.Column="0"
                                    Text="{Binding TallaTexto}"
                                    Placeholder="ej. 52.0"
                                    Keyboard="Numeric"
                                    HorizontalOptions="Fill"
-                                   HorizontalTextAlignment="End"
-                                   FontSize="15"
+                                   FontSize="16"
                                    TextColor="#1565C0"/>
+                            <Picker Grid.Column="1"
+                                    ItemsSource="{Binding NombresTalla}"
+                                    SelectedIndex="{Binding UnidadTallaIndex}"
+                                    WidthRequest="80"
+                                    FontSize="15"
+                                    TextColor="#1565C0"
+                                    HorizontalOptions="End"/>
                         </Grid>
                         <Label Text="{Binding ErrorTalla}"
                                IsVisible="{Binding TieneTallaError}"
@@ -91,10 +103,14 @@
             <!-- IMC calculado en tiempo real -->
             <Border Background="#E3F2FD" StrokeShape="RoundRectangle 8"
                     Stroke="#90CAF9" Padding="14,10" Margin="0,0,0,14">
-                <Grid ColumnDefinitions="*,Auto">
+                <Grid ColumnDefinitions="*,Auto,Auto">
                     <Label Text="IMC calculado" VerticalOptions="Center"
                            TextColor="#1565C0" FontSize="14"/>
                     <Label Grid.Column="1"
+                           Text="{Binding SimboloPeso, StringFormat='({0}'}"
+                           VerticalOptions="Center"
+                           TextColor="#90CAF9" FontSize="12" Margin="0,0,4,0"/>
+                    <Label Grid.Column="2"
                            Text="{Binding IMCDisplay}"
                            FontAttributes="Bold" FontSize="16"
                            TextColor="#1565C0" HorizontalOptions="End"/>

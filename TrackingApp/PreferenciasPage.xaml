@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
+             x:Class="TrackingApp.PreferenciasPage"
+             x:DataType="viewmodels:PreferenciasViewModel"
+             Title="Unidades de medida"
+             Background="#f5f7fa">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="0" Padding="16,16">
+
+            <!-- ── Explicación ────────────────────────────────────────────── -->
+            <Border Background="#E3F2FD" StrokeShape="RoundRectangle 10"
+                    Stroke="#90CAF9" Padding="14,12" Margin="0,0,0,20">
+                <Label TextColor="#1565C0" FontSize="14">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="ℹ️  " />
+                            <Span Text="Elige el sistema de unidades que usarás por defecto al registrar peso y talla. Puedes cambiarlo en cualquier momento y también sobreescribirlo en cada formulario." />
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
+            </Border>
+
+            <!-- ── Selector de sistema ───────────────────────────────────── -->
+            <Label Text="SISTEMA DE MEDIDAS" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,8" Margin="0,0,0,20">
+                <Picker ItemsSource="{Binding OpcionesSistema}"
+                        SelectedIndex="{Binding SistemaIndex}"
+                        FontSize="15"
+                        TextColor="#2a3d66"/>
+            </Border>
+
+            <!-- ── Vista previa ──────────────────────────────────────────── -->
+            <Label Text="UNIDADES POR DEFECTO" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,12" Margin="0,0,0,28">
+                <VerticalStackLayout Spacing="10">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Label Text="⚖️" FontSize="20" VerticalOptions="Center" Margin="0,0,10,0"/>
+                        <Label Grid.Column="1"
+                               Text="{Binding EjemploPeso}"
+                               FontSize="15" TextColor="#333"
+                               VerticalOptions="Center"/>
+                    </Grid>
+                    <BoxView HeightRequest="1" Background="#f0f0f0"/>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Label Text="📏" FontSize="20" VerticalOptions="Center" Margin="0,0,10,0"/>
+                        <Label Grid.Column="1"
+                               Text="{Binding EjemploTalla}"
+                               FontSize="15" TextColor="#333"
+                               VerticalOptions="Center"/>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- ── Botones ───────────────────────────────────────────────── -->
+            <Button Text="Guardar preferencia"
+                    Command="{Binding GuardarCommand}"
+                    Background="#2a3d66"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    FontSize="16"
+                    CornerRadius="10"
+                    HeightRequest="52"
+                    Margin="0,0,0,10"/>
+
+            <Button Text="Cancelar"
+                    Command="{Binding CancelarCommand}"
+                    Background="#e0e0e0"
+                    TextColor="#555"
+                    FontSize="15"
+                    CornerRadius="10"
+                    HeightRequest="48"
+                    Margin="0,0,0,20"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
@@ -11,8 +12,16 @@ public class CrecimientoFormViewModel : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
 
+    private static readonly UnitService _unitSvc = new();
+
     private int _registroId;
     private RegistroCrecimiento? _registroExistente;
+
+    // ── Opciones de unidad para los Pickers ───────────────────────────────────
+    public IReadOnlyList<UnitType> UnidadesPeso   { get; } = new[] { UnitType.Kilogramos, UnitType.Gramos, UnitType.Libras, UnitType.Onzas };
+    public IReadOnlyList<UnitType> UnidadesTalla  { get; } = new[] { UnitType.Centimetros, UnitType.Pulgadas, UnitType.Pies, UnitType.Metros };
+    public IReadOnlyList<string>   NombresPeso    { get; } = new[] { "kg", "g", "lb", "oz" };
+    public IReadOnlyList<string>   NombresTalla   { get; } = new[] { "cm", "in", "ft", "m" };
 
     public CrecimientoFormViewModel()
     {
@@ -25,6 +34,12 @@ public class CrecimientoFormViewModel : INotifyPropertyChanged
         _tallaTxt = string.Empty;
         _perimTxt = string.Empty;
         _notas    = string.Empty;
+
+        // Defecto según el SistemaUnidades del perfil activo
+        var sistema = AppServices.DataService.PerfilActivo?.SistemaUnidades
+                      ?? SistemaUnidades.Metrico;
+        _unidadPesoIdx  = sistema == SistemaUnidades.Imperial ? 2 : 0; // lb o kg
+        _unidadTallaIdx = sistema == SistemaUnidades.Imperial ? 1 : 0; // in o cm
     }
 
     // ── QueryProperty ─────────────────────────────────────────────────────────
@@ -71,6 +86,40 @@ public class CrecimientoFormViewModel : INotifyPropertyChanged
         get => _tallaTxt;
         set { _tallaTxt = value; OnPropertyChanged(); RecalcularIMC(); ValidarYNotificar(); }
     }
+
+    // ── Selectores de unidad ──────────────────────────────────────────────────
+
+    private int _unidadPesoIdx;
+    public int UnidadPesoIndex
+    {
+        get => _unidadPesoIdx;
+        set
+        {
+            _unidadPesoIdx = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SimboloPeso));
+            RecalcularIMC();
+        }
+    }
+
+    private int _unidadTallaIdx;
+    public int UnidadTallaIndex
+    {
+        get => _unidadTallaIdx;
+        set
+        {
+            _unidadTallaIdx = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SimboloTalla));
+            RecalcularIMC();
+        }
+    }
+
+    private UnitType UnidadPesoActual  => UnidadesPeso[Math.Clamp(_unidadPesoIdx,  0, UnidadesPeso.Count  - 1)];
+    private UnitType UnidadTallaActual => UnidadesTalla[Math.Clamp(_unidadTallaIdx, 0, UnidadesTalla.Count - 1)];
+
+    public string SimboloPeso  => _unitSvc.GetSymbol(UnidadPesoActual);
+    public string SimboloTalla => _unitSvc.GetSymbol(UnidadTallaActual);
 
     private string _perimTxt;
     public string PerimCefTexto
@@ -133,8 +182,12 @@ public class CrecimientoFormViewModel : INotifyPropertyChanged
         _registroExistente = r;
         Fecha       = r.Fecha.Date;
         Hora        = r.Fecha.TimeOfDay;
-        PesoTexto   = r.PesoGramos > 0 ? (r.PesoGramos / 1000m).ToString("F3") : string.Empty;
-        TallaTexto  = r.TallaCm.ToString("F1");
+
+        // Convertir desde unidad base (gramos → unidad seleccionada)
+        if (r.PesoGramos > 0)
+            PesoTexto  = _unitSvc.FromBaseUnit(r.PesoGramos, UnidadPesoActual).ToString("F3");
+        TallaTexto = _unitSvc.FromBaseUnit(r.TallaCm, UnidadTallaActual).ToString("F2");
+
         PerimCefTexto = r.PerimCefCm.HasValue ? r.PerimCefCm.Value.ToString("F1") : string.Empty;
         Notas       = r.Notas ?? string.Empty;
 
@@ -143,12 +196,16 @@ public class CrecimientoFormViewModel : INotifyPropertyChanged
 
     private void RecalcularIMC()
     {
-        if (TryParseDecimal(_pesoTxt, out var pesoKg) && pesoKg > 0 &&
-            TryParseDecimal(_tallaTxt, out var tallaCm) && tallaCm > 0)
+        if (TryParseDecimal(_pesoTxt, out var pesoEnUnidad) && pesoEnUnidad > 0 &&
+            TryParseDecimal(_tallaTxt, out var tallaEnUnidad) && tallaEnUnidad > 0)
         {
-            var tallaM = tallaCm / 100m;
-            var imc    = pesoKg / (tallaM * tallaM);
-            IMCDisplay = $"{imc:F1} kg/m²";
+            // Convertir a unidades base para calcular IMC (kg y metros)
+            decimal pesoGramos = _unitSvc.ToBaseUnit(pesoEnUnidad, UnidadPesoActual);
+            decimal tallaCm    = _unitSvc.ToBaseUnit(tallaEnUnidad, UnidadTallaActual);
+            decimal pesoKg     = pesoGramos / 1000m;
+            decimal tallaM     = tallaCm / 100m;
+            if (tallaM > 0)
+                IMCDisplay = $"{pesoKg / (tallaM * tallaM):F1} kg/m²";
         }
         else
         {
@@ -181,24 +238,28 @@ public class CrecimientoFormViewModel : INotifyPropertyChanged
 
     private async Task GuardarAsync()
     {
-        if (!TryParseDecimal(_pesoTxt, out var pesoKg) || pesoKg <= 0)
+        if (!TryParseDecimal(_pesoTxt, out var pesoEnUnidad) || pesoEnUnidad <= 0)
         {
             ErrorPeso = "El peso es obligatorio y debe ser mayor a 0";
             return;
         }
-        if (!TryParseDecimal(_tallaTxt, out var tallaCm) || tallaCm <= 0)
+        if (!TryParseDecimal(_tallaTxt, out var tallaEnUnidad) || tallaEnUnidad <= 0)
         {
             ErrorTalla = "La talla es obligatoria y debe ser mayor a 0";
             return;
         }
 
+        // Convertir a unidades base para almacenamiento
+        decimal pesoGramos = _unitSvc.ToBaseUnit(pesoEnUnidad, UnidadPesoActual);
+        decimal tallaCm    = _unitSvc.ToBaseUnit(tallaEnUnidad, UnidadTallaActual);
+
         decimal? perimCef = null;
         if (!string.IsNullOrWhiteSpace(_perimTxt) && TryParseDecimal(_perimTxt, out var pc) && pc > 0)
-            perimCef = pc;
+            perimCef = pc; // perímetro cefálico siempre en cm
 
         var registro = _registroExistente ?? new RegistroCrecimiento();
         registro.Fecha        = Fecha.Date + Hora;
-        registro.PesoGramos   = pesoKg * 1000m;   // se almacena en gramos
+        registro.PesoGramos   = pesoGramos;
         registro.TallaCm      = tallaCm;
         registro.PerimCefCm   = perimCef;
         registro.Notas        = string.IsNullOrWhiteSpace(Notas) ? null : Notas.Trim();
