@@ -90,7 +90,7 @@
                                     Format="dd/MM/yyyy"
                                     FontSize="12"
                                     MinimumDate="{Binding FechaDesde}"
-                                    MaximumDate="31/12/2099" />
+                                    MaximumDate="2099-12-31" />
                     </Grid>
 
                     <!-- Indicador rango personalizado activo -->
