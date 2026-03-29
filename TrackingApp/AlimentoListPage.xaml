@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
+             xmlns:models="clr-namespace:TrackingApp.Models;assembly=TrackingApp.Core"
+             x:Class="TrackingApp.AlimentoListPage"
+             x:DataType="viewmodels:AlimentoListViewModel"
+             Title="Registro de Alimentos"
+             Background="#f5f7fa">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="+" Command="{Binding AgregarCommand}" Priority="0" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,Auto,*">
+
+        <!-- ── Header: último registro ─────────────────────────────────────── -->
+        <Border Grid.Row="0"
+                Background="#2a3d66"
+                StrokeThickness="0"
+                Padding="16,14"
+                Margin="0">
+            <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="Auto,Auto">
+                <Label Grid.ColumnSpan="4" Grid.Row="0"
+                       Text="🍼 Último registro"
+                       FontSize="13" TextColor="#90CAF9" Margin="0,0,0,8" />
+
+                <VerticalStackLayout Grid.Column="0" Grid.Row="1" HorizontalOptions="Center" Spacing="2">
+                    <Label Text="Tipo" FontSize="11" TextColor="#90CAF9" HorizontalOptions="Center"/>
+                    <Label Text="{Binding UltimoTipoDisplay}"
+                           FontSize="13" FontAttributes="Bold" TextColor="White"
+                           HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="1" Grid.Row="1" HorizontalOptions="Center" Spacing="2">
+                    <Label Text="Cantidad" FontSize="11" TextColor="#90CAF9" HorizontalOptions="Center"/>
+                    <Label Text="{Binding UltimaCantidadDisplay}"
+                           FontSize="15" FontAttributes="Bold" TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="2" Grid.Row="1" HorizontalOptions="Center" Spacing="2">
+                    <Label Text="Hora" FontSize="11" TextColor="#90CAF9" HorizontalOptions="Center"/>
+                    <Label Text="{Binding UltimaHoraDisplay}"
+                           FontSize="15" FontAttributes="Bold" TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="3" Grid.Row="1" HorizontalOptions="Center" Spacing="2">
+                    <Label Text="Fecha" FontSize="11" TextColor="#90CAF9" HorizontalOptions="Center"/>
+                    <Label Text="{Binding UltimaFechaDisplay}"
+                           FontSize="13" TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <!-- ── Empty state ─────────────────────────────────────────────────── -->
+        <VerticalStackLayout Grid.Row="1"
+                             IsVisible="{Binding NoHayRegistros}"
+                             Spacing="12"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center"
+                             Margin="32,40">
+            <Label Text="🍽️" FontSize="48" HorizontalOptions="Center" />
+            <Label Text="Aún no hay registros de alimentación."
+                   FontSize="15" TextColor="#888"
+                   HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+            <Button Text="+ Agregar primer registro"
+                    Command="{Binding AgregarCommand}"
+                    Background="#2a3d66"
+                    TextColor="White"
+                    CornerRadius="8"
+                    HorizontalOptions="Center"
+                    Padding="20,10"/>
+        </VerticalStackLayout>
+
+        <!-- ── Lista de registros ───────────────────────────────────────────── -->
+        <CollectionView Grid.Row="2"
+                        ItemsSource="{Binding Registros}"
+                        IsVisible="{Binding HayRegistros}"
+                        Margin="0,4">
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:FoodEntry">
+                    <SwipeView Margin="12,4">
+
+                        <SwipeView.LeftItems>
+                            <SwipeItems Mode="Reveal">
+                                <SwipeItem Text="Editar"
+                                           BackgroundColor="#1976D2"
+                                           CommandParameter="{Binding .}"
+                                           Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:AlimentoListViewModel}}, Path=EditarCommand}" />
+                            </SwipeItems>
+                        </SwipeView.LeftItems>
+
+                        <SwipeView.RightItems>
+                            <SwipeItems Mode="Execute">
+                                <SwipeItem Text="Eliminar"
+                                           BackgroundColor="#F44336"
+                                           CommandParameter="{Binding .}"
+                                           Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:AlimentoListViewModel}}, Path=EliminarCommand}" />
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+
+                        <!-- Card -->
+                        <Border Background="White"
+                                StrokeShape="RoundRectangle 10"
+                                Stroke="#e0e0e0"
+                                Padding="14,10">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+
+                                <!-- Icono tipo -->
+                                <Label Grid.Column="0"
+                                       FontSize="28"
+                                       VerticalOptions="Center"
+                                       Text="{Binding TipoAlimentacion, Converter={StaticResource TipoAlimentoIconConverter}}" />
+
+                                <!-- Info central -->
+                                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                    <Label Text="{Binding TipoAlimentacionDisplay}"
+                                           FontAttributes="Bold"
+                                           FontSize="15"
+                                           TextColor="#212121"/>
+                                    <Label Text="{Binding DisplayAmount}"
+                                           FontSize="13"
+                                           TextColor="#555"/>
+                                    <Label Text="{Binding Notas}"
+                                           FontSize="12"
+                                           TextColor="#888"
+                                           IsVisible="{Binding Notas, Converter={StaticResource StringIsNotNullOrEmptyConverter}}"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="1"/>
+                                </VerticalStackLayout>
+
+                                <!-- Hora y fecha -->
+                                <VerticalStackLayout Grid.Column="2" Spacing="2" VerticalOptions="Center" HorizontalOptions="End">
+                                    <Label Text="{Binding FormattedTime}"
+                                           FontAttributes="Bold"
+                                           FontSize="14"
+                                           TextColor="#1976D2"
+                                           HorizontalOptions="End"/>
+                                    <Label Text="{Binding FormattedDate}"
+                                           FontSize="12"
+                                           TextColor="#888"
+                                           HorizontalOptions="End"/>
+                                </VerticalStackLayout>
+
+                            </Grid>
+                        </Border>
+                    </SwipeView>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+    </Grid>
+</ContentPage>

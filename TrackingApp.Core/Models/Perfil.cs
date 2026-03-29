@@ -74,8 +74,17 @@ namespace TrackingApp.Models
         public string TipoPerfilDisplay => TipoPerfil switch
         {
             TipoPerfil.Bebe => "Bebé / Recién nacido",
-            TipoPerfil.AdultoGeneral => "Adulto general",
+            TipoPerfil.AdultoGeneral => "Persona",
+            TipoPerfil.Mascota => "Mascota",
             _ => TipoPerfil.ToString()
+        };
+
+        [Ignore]
+        public string TipoPerfilEmoji => TipoPerfil switch
+        {
+            TipoPerfil.Bebe => "👶",
+            TipoPerfil.Mascota => "🐾",
+            _ => "👤"
         };
 
         [Ignore]

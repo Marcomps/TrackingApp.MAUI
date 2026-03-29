@@ -37,7 +37,7 @@ public class PerfilFormViewModel : INotifyPropertyChanged
 
     // ── Opciones de Pickers ───────────────────────────────────────────────────
 
-    public IReadOnlyList<string> OpcionesTipo    { get; } = new[] { "Bebé / Recién nacido", "Adulto general" };
+    public IReadOnlyList<string> OpcionesTipo    { get; } = new[] { "Bebé / Recién nacido", "Mascota", "Persona / Adulto" };
     public IReadOnlyList<string> OpcionesSexo    { get; } = new[] { "No especificado", "Masculino", "Femenino" };
     public IReadOnlyList<string> OpcionesSistema { get; } = new[] { "Métrico (kg, cm, ml)", "Imperial (lb, in, fl oz)" };
 
@@ -140,7 +140,12 @@ public class PerfilFormViewModel : INotifyPropertyChanged
         if (_perfilExistente == null) return;
 
         _nombre      = _perfilExistente.Nombre;
-        _tipoIndex   = _perfilExistente.TipoPerfil == TipoPerfil.Bebe ? 0 : 1;
+        _tipoIndex   = _perfilExistente.TipoPerfil switch
+        {
+            TipoPerfil.Bebe    => 0,
+            TipoPerfil.Mascota => 1,
+            _                  => 2  // AdultoGeneral / Persona
+        };
         _sexoIndex   = _perfilExistente.Sexo switch
         {
             Sexo.Masculino => 1,
@@ -173,7 +178,7 @@ public class PerfilFormViewModel : INotifyPropertyChanged
 
         var perfil = _perfilExistente ?? new Perfil();
         perfil.Nombre          = _nombre.Trim();
-        perfil.TipoPerfil      = _tipoIndex == 0 ? TipoPerfil.Bebe : TipoPerfil.AdultoGeneral;
+        perfil.TipoPerfil      = _tipoIndex switch { 0 => TipoPerfil.Bebe, 1 => TipoPerfil.Mascota, _ => TipoPerfil.AdultoGeneral };
         perfil.Sexo            = _sexoIndex switch { 1 => Sexo.Masculino, 2 => Sexo.Femenino, _ => Sexo.NoEspecificado };
         perfil.SistemaUnidades = _sistemaIndex == 1 ? SistemaUnidades.Imperial : SistemaUnidades.Metrico;
         perfil.FechaNacimiento = _tieneFecha ? _fechaNacimiento : null;

@@ -16,6 +16,16 @@
             Title="Historial"
             ContentTemplate="{DataTemplate local:HistoryPage}"
             Route="HistoryPage" />
+
+        <ShellContent
+            Title="Perfiles"
+            ContentTemplate="{DataTemplate local:PerfilesPage}"
+            Route="PerfilesTab" />
+
+        <ShellContent
+            Title="Ajustes"
+            ContentTemplate="{DataTemplate local:PreferenciasPage}"
+            Route="AjustesTab" />
     </TabBar>
 
 </Shell>

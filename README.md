@@ -24,11 +24,11 @@ Aplicación móvil .NET 10 MAUI para Android, iOS y Windows orientada al seguimi
 | Historial de registros con filtros | ✅ Implementado | v1.16 estable |
 | Citas médicas (crear, confirmar) | ✅ Implementado | v1.16 estable |
 | Persistencia SQLite | ✅ Implementado | v1.16 estable |
-| Perfiles completos (nombre, foto, datos) | 🔄 En desarrollo | v2.0 RF-001 |
+| Perfiles completos (nombre, foto, datos) | ✅ Implementado | v2.0 RF-001 |
 | Módulo Crecimiento (peso, talla, IMC) | ✅ Implementado | v2.0 RF-002 |
 | Servicio centralizado de unidades | ✅ Implementado | v2.0 RF-005 |
-| Mejoras módulo Alimento | 🔄 En desarrollo | v2.0 RF-003 |
-| Mejoras módulo Citas | 🔄 En desarrollo | v2.0 RF-004 |
+| Mejoras módulo Alimento | ✅ Implementado | v2.0 RF-003 |
+| Mejoras módulo Citas | ✅ Implementado | v2.0 RF-004 |
 | Gráficas de alimentos (tendencia semanal) | ✅ Implementado | v2.0 LiveCharts2 |
 | Módulo Crecimiento (UI: lista + formulario) | ✅ Implementado | v2.0 RF-002 |
 | Selectores de unidad (kg/lb/cm/in…) en formularios | ✅ Implementado | v2.0 RF-005 |
@@ -255,8 +255,8 @@ Ver documento completo: `TrackingApp_Requerimientos_v2.md`
 | 2 | RF-001 | ✅ Listo | Sistema de perfiles completos (Perfil model + CRUD + UI) |
 | 3 | RF-002 | ✅ Listo | Módulo Crecimiento (peso, talla, IMC — data layer + UI) |
 | 4 | RF-005 | ✅ Listo | Selectores de unidad en formularios + PreferenciasPage |
-| 5 | RF-003 | 🟡 Media | Mejoras módulo Alimento (tipos, unidades, vinculación a perfil) |
-| 6 | RF-004 | 🟡 Media | Mejoras módulo Citas (categorías, notificaciones, post-cita) |
+| 5 | RF-003 | ✅ Listo | Mejoras módulo Alimento — AlimentoListPage + AlimentoFormPage (TipoAlimentacion, PerfilId, campos condicionales) |
+| 6 | RF-004 | ✅ Listo | Mejoras módulo Citas — CitasListPage + CitaFormPage (Categoria, Estado, NotasPostCita, Recordatorio, PerfilId) |
 | 7 | RF-003 | ✅ Listo | Gráficas de alimentos (LiveCharts2 — tendencia semanal) |
 | 8 | RF-001 | ✅ Listo | UI Sistema de perfiles (PerfilesPage + PerfilFormPage + activo) |
 | 9 | — | ✅ Listo | Índices SQLite para gráficas personalizadas (12 índices) |

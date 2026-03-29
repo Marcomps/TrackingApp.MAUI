@@ -24,6 +24,10 @@
             <converters:BoolToNextDoseBackgroundConverter x:Key="BoolToNextDoseBackgroundConverter" />
             <converters:BoolToNextDoseTextConverter x:Key="BoolToNextDoseTextConverter" />
             <converters:BoolToConfirmButtonColorConverter x:Key="BoolToConfirmButtonColorConverter" />
+            <converters:TipoAlimentoIconConverter x:Key="TipoAlimentoIconConverter" />
+            <!-- Chip / filtro pill buttons -->
+            <converters:BoolToChipBgConverter   x:Key="BoolToChipBgConverter" />
+            <converters:BoolToChipTextConverter x:Key="BoolToChipTextConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

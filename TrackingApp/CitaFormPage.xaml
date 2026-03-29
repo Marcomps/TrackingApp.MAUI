@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
+             x:Class="TrackingApp.CitaFormPage"
+             x:DataType="viewmodels:CitaFormViewModel"
+             Title="{Binding Titulo}"
+             Background="#f5f7fa">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="0" Padding="16,12">
+
+            <!-- ── Información básica ─────────────────────────────────────── -->
+            <Label Text="INFORMACIÓN BÁSICA" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,14">
+                <Grid RowDefinitions="Auto,1,Auto">
+                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Padding="0,10">
+                        <Label Text="📋  Título" VerticalOptions="Center"
+                               TextColor="#333" FontSize="15" WidthRequest="110"/>
+                        <Entry Grid.Column="1"
+                               Text="{Binding Title}"
+                               Placeholder="Ej: Consulta pediatría"
+                               HorizontalOptions="Fill"
+                               FontSize="15"
+                               TextColor="#333"/>
+                    </Grid>
+                    <BoxView Grid.Row="1" HeightRequest="1" Background="#f0f0f0"/>
+                    <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="0,10">
+                        <Label Text="🏷️  Categoría" VerticalOptions="Center"
+                               TextColor="#333" FontSize="15" WidthRequest="110"/>
+                        <Picker Grid.Column="1"
+                                ItemsSource="{Binding Categorias}"
+                                SelectedIndex="{Binding CategoriaIndex}"
+                                HorizontalOptions="Fill"
+                                FontSize="14"
+                                TextColor="#7B1FA2"/>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- ── Descripción ────────────────────────────────────────────── -->
+            <Label Text="DESCRIPCIÓN (OPCIONAL)" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,8" Margin="0,0,0,14">
+                <Editor Text="{Binding Descripcion}"
+                        Placeholder="Motivo de la visita, síntomas, preguntas..."
+                        AutoSize="TextChanges"
+                        MinimumHeightRequest="70"
+                        FontSize="15"
+                        TextColor="#333"/>
+            </Border>
+
+            <!-- ── Fecha y hora ───────────────────────────────────────────── -->
+            <Label Text="FECHA Y HORA" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,14">
+                <Grid RowDefinitions="Auto,1,Auto">
+                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Padding="0,8">
+                        <Label Text="📅  Fecha" VerticalOptions="Center"
+                               TextColor="#333" FontSize="15" WidthRequest="110"/>
+                        <DatePicker Grid.Column="1" Date="{Binding Fecha}"
+                                    Format="dd/MM/yyyy" HorizontalOptions="End"
+                                    TextColor="#7B1FA2" FontSize="15"/>
+                    </Grid>
+                    <BoxView Grid.Row="1" HeightRequest="1" Background="#f0f0f0"/>
+                    <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="0,8">
+                        <Label Text="🕐  Hora" VerticalOptions="Center"
+                               TextColor="#333" FontSize="15" WidthRequest="110"/>
+                        <TimePicker Grid.Column="1" Time="{Binding Hora}"
+                                    Format="HH:mm" HorizontalOptions="End"
+                                    TextColor="#7B1FA2" FontSize="15"/>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- ── Lugar y Doctor ─────────────────────────────────────────── -->
+            <Label Text="LUGAR Y DOCTOR (OPCIONAL)" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,14">
+                <Grid ColumnDefinitions="Auto,*" Padding="0,10">
+                    <Label Text="🏥  Lugar/Dr." VerticalOptions="Center"
+                           TextColor="#333" FontSize="15" WidthRequest="110"/>
+                    <Entry Grid.Column="1"
+                           Text="{Binding LugarYDoctor}"
+                           Placeholder="Ej: Dr. García - Hospital Central"
+                           HorizontalOptions="Fill"
+                           FontSize="15"
+                           TextColor="#333"/>
+                </Grid>
+            </Border>
+
+            <!-- ── Estado y Recordatorio ──────────────────────────────────── -->
+            <Label Text="ESTADO Y RECORDATORIO" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,14">
+                <Grid RowDefinitions="Auto,1,Auto">
+                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Padding="0,10">
+                        <Label Text="📌  Estado" VerticalOptions="Center"
+                               TextColor="#333" FontSize="15" WidthRequest="110"/>
+                        <Picker Grid.Column="1"
+                                ItemsSource="{Binding Estados}"
+                                SelectedIndex="{Binding EstadoIndex}"
+                                HorizontalOptions="Fill"
+                                FontSize="15"
+                                TextColor="#7B1FA2"/>
+                    </Grid>
+                    <BoxView Grid.Row="1" HeightRequest="1" Background="#f0f0f0"/>
+                    <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="0,10">
+                        <Label Text="🔔  Recordar" VerticalOptions="Center"
+                               TextColor="#333" FontSize="15" WidthRequest="110"/>
+                        <Picker Grid.Column="1"
+                                ItemsSource="{Binding OpcionesRecordatorio}"
+                                SelectedIndex="{Binding RecordatorioIndex}"
+                                HorizontalOptions="Fill"
+                                FontSize="14"
+                                TextColor="#7B1FA2"/>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- ── Notas post-cita ────────────────────────────────────────── -->
+            <Label Text="NOTAS POST-CITA (OPCIONAL)" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,8" Margin="0,0,0,24">
+                <Editor Text="{Binding NotasPostCita}"
+                        Placeholder="Diagnóstico, recetas, indicaciones del médico..."
+                        AutoSize="TextChanges"
+                        MinimumHeightRequest="80"
+                        FontSize="15"
+                        TextColor="#333"/>
+            </Border>
+
+            <!-- ── Botones de acción ──────────────────────────────────────── -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,0,0,24">
+                <Button Grid.Column="0"
+                        Text="Cancelar"
+                        Command="{Binding CancelarCommand}"
+                        Background="#e0e0e0"
+                        TextColor="#333"
+                        FontAttributes="Bold"
+                        CornerRadius="10"
+                        Padding="0,14"/>
+                <Button Grid.Column="1"
+                        Text="💾 Guardar"
+                        Command="{Binding GuardarCommand}"
+                        Background="#7B1FA2"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        CornerRadius="10"
+                        Padding="0,14"/>
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

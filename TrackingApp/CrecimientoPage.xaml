@@ -156,6 +156,18 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
 
+        <!-- ── Botón Gráficas ─────────────────────────────────────────────── -->
+        <Button Grid.Row="1"
+                Text="📈 Ver gráficas de crecimiento"
+                Clicked="OnGraficasCrecimientoClicked"
+                Background="#1976D2"
+                TextColor="White"
+                CornerRadius="8"
+                Padding="20,10"
+                Margin="16,8"
+                FontSize="14"
+                IsVisible="{Binding HayRegistros}" />
+
         <!-- ── FAB Agregar ──────────────────────────────────────────────── -->
         <Button Grid.Row="2"
                 Text="+"

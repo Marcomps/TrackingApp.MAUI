@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Maui;assembly=LiveChartsCore.SkiaSharpView.Maui"
+             x:Class="TrackingApp.CrecimientoGraficasPage"
+             x:DataType="viewmodels:CrecimientoGraficasViewModel"
+             Title="Gráficas de Crecimiento"
+             Background="#f5f7fa">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="14">
+
+            <!-- ── Encabezado ─────────────────────────────────────────────── -->
+            <Border Background="#2a3d66"
+                    StrokeShape="RoundRectangle 12"
+                    StrokeThickness="0"
+                    Padding="16,14">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="📈 Tendencia de Crecimiento"
+                           FontSize="20" FontAttributes="Bold"
+                           TextColor="White" />
+                    <Label Text="Evolución de peso, talla e IMC en el tiempo"
+                           FontSize="12" TextColor="#90CAF9" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- ── Selector de período ────────────────────────────────────── -->
+            <Border Background="White"
+                    StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0"
+                    Padding="12,10">
+                <VerticalStackLayout Spacing="8">
+
+                    <!-- Presets rápidos -->
+                    <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+
+                        <Button Text="7 días"
+                                Command="{Binding SeleccionarPeriodoCommand}"
+                                CommandParameter="7"
+                                Background="{Binding Boton7DiasBg}"
+                                TextColor="{Binding Texto7Dias}"
+                                CornerRadius="20"
+                                Padding="12,8"
+                                FontSize="12" />
+
+                        <Button Text="30 días"
+                                Command="{Binding SeleccionarPeriodoCommand}"
+                                CommandParameter="30"
+                                Background="{Binding Boton30DiasBg}"
+                                TextColor="{Binding Texto30Dias}"
+                                CornerRadius="20"
+                                Padding="12,8"
+                                FontSize="12" />
+
+                        <Button Text="3 meses"
+                                Command="{Binding SeleccionarPeriodoCommand}"
+                                CommandParameter="90"
+                                Background="{Binding Boton3MesesBg}"
+                                TextColor="{Binding Texto3Meses}"
+                                CornerRadius="20"
+                                Padding="12,8"
+                                FontSize="12" />
+
+                        <Button Text="Todo"
+                                Command="{Binding SeleccionarPeriodoCommand}"
+                                CommandParameter="0"
+                                Background="{Binding BotonTodoBg}"
+                                TextColor="{Binding TextoTodo}"
+                                CornerRadius="20"
+                                Padding="12,8"
+                                FontSize="12" />
+
+                    </HorizontalStackLayout>
+
+                    <!-- DatePickers para rango personalizado -->
+                    <Grid ColumnDefinitions="Auto,*,Auto,*" ColumnSpacing="6">
+                        <Label Grid.Column="0" Text="Desde:"
+                               FontSize="12" TextColor="#555" VerticalOptions="Center"/>
+                        <DatePicker Grid.Column="1"
+                                    Date="{Binding FechaDesde, Mode=TwoWay}"
+                                    Format="dd/MM/yyyy"
+                                    FontSize="12"
+                                    MinimumDate="01/01/2000"
+                                    MaximumDate="{Binding FechaHasta}" />
+                        <Label Grid.Column="2" Text="Hasta:"
+                               FontSize="12" TextColor="#555" VerticalOptions="Center" Margin="4,0,0,0"/>
+                        <DatePicker Grid.Column="3"
+                                    Date="{Binding FechaHasta, Mode=TwoWay}"
+                                    Format="dd/MM/yyyy"
+                                    FontSize="12"
+                                    MinimumDate="{Binding FechaDesde}"
+                                    MaximumDate="31/12/2099" />
+                    </Grid>
+
+                    <!-- Indicador rango personalizado activo -->
+                    <Border Background="{Binding BotonPersonalizadoBg}"
+                            StrokeShape="RoundRectangle 6"
+                            StrokeThickness="0"
+                            Padding="8,4"
+                            HorizontalOptions="Center">
+                        <Label Text="📅 Rango personalizado activo"
+                               FontSize="11"
+                               TextColor="{Binding TextoPersonalizado}" />
+                    </Border>
+
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- ── Sin datos ──────────────────────────────────────────────── -->
+            <Label Text="No hay registros de crecimiento en este período."
+                   IsVisible="{Binding NoHayDatos}"
+                   TextColor="#999999"
+                   FontSize="14"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center"
+                   Margin="0,16" />
+
+            <!-- ── Gráfica: Peso ───────────────────────────────────────────── -->
+            <Border Background="White"
+                    StrokeShape="RoundRectangle 12"
+                    Stroke="#e0e0e0"
+                    Padding="8,10"
+                    IsVisible="{Binding HayDatos}">
+                <VerticalStackLayout Spacing="6">
+                    <HorizontalStackLayout Spacing="6" Margin="8,0">
+                        <BoxView Color="#2196F3" WidthRequest="14" HeightRequest="14"
+                                 VerticalOptions="Center" CornerRadius="7"/>
+                        <Label Text="⚖️ Peso (kg)"
+                               FontSize="14" FontAttributes="Bold"
+                               TextColor="#2a3d66" VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+
+                    <lvc:CartesianChart
+                        Series="{Binding SeriesPeso}"
+                        XAxes="{Binding EjeX}"
+                        YAxes="{Binding EjeYPeso}"
+                        HeightRequest="250"
+                        LegendPosition="Hidden" />
+
+                    <Label Text="{Binding ResumenPeso}"
+                           FontSize="12"
+                           TextColor="#555555"
+                           Margin="8,0,8,4" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- ── Gráfica: Talla ─────────────────────────────────────────── -->
+            <Border Background="White"
+                    StrokeShape="RoundRectangle 12"
+                    Stroke="#e0e0e0"
+                    Padding="8,10"
+                    IsVisible="{Binding HayDatos}">
+                <VerticalStackLayout Spacing="6">
+                    <HorizontalStackLayout Spacing="6" Margin="8,0">
+                        <BoxView Color="#4CAF50" WidthRequest="14" HeightRequest="14"
+                                 VerticalOptions="Center" CornerRadius="7"/>
+                        <Label Text="📏 Talla (cm)"
+                               FontSize="14" FontAttributes="Bold"
+                               TextColor="#2a3d66" VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+
+                    <lvc:CartesianChart
+                        Series="{Binding SeriesTalla}"
+                        XAxes="{Binding EjeXTalla}"
+                        YAxes="{Binding EjeYTalla}"
+                        HeightRequest="250"
+                        LegendPosition="Hidden" />
+
+                    <Label Text="{Binding ResumenTalla}"
+                           FontSize="12"
+                           TextColor="#555555"
+                           Margin="8,0,8,4" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- ── Gráfica: IMC ───────────────────────────────────────────── -->
+            <Border Background="White"
+                    StrokeShape="RoundRectangle 12"
+                    Stroke="#e0e0e0"
+                    Padding="8,10"
+                    IsVisible="{Binding HayDatos}">
+                <VerticalStackLayout Spacing="6">
+                    <HorizontalStackLayout Spacing="6" Margin="8,0">
+                        <BoxView Color="#FF9800" WidthRequest="14" HeightRequest="14"
+                                 VerticalOptions="Center" CornerRadius="7"/>
+                        <Label Text="📊 IMC (kg/m²)"
+                               FontSize="14" FontAttributes="Bold"
+                               TextColor="#2a3d66" VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+
+                    <lvc:CartesianChart
+                        Series="{Binding SeriesIMC}"
+                        XAxes="{Binding EjeXIMC}"
+                        YAxes="{Binding EjeYIMC}"
+                        HeightRequest="250"
+                        LegendPosition="Hidden" />
+
+                    <Label Text="{Binding ResumenIMC}"
+                           FontSize="12"
+                           TextColor="#555555"
+                           Margin="8,0,8,4" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- ── Leyenda ────────────────────────────────────────────────── -->
+            <HorizontalStackLayout Spacing="20"
+                                   HorizontalOptions="Center"
+                                   IsVisible="{Binding HayDatos}"
+                                   Margin="0,4">
+                <HorizontalStackLayout Spacing="6">
+                    <BoxView Color="#2196F3" WidthRequest="16" HeightRequest="4"
+                             VerticalOptions="Center" CornerRadius="2"/>
+                    <Label Text="Peso" FontSize="12" TextColor="#555" VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+                <HorizontalStackLayout Spacing="6">
+                    <BoxView Color="#4CAF50" WidthRequest="16" HeightRequest="4"
+                             VerticalOptions="Center" CornerRadius="2"/>
+                    <Label Text="Talla" FontSize="12" TextColor="#555" VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+                <HorizontalStackLayout Spacing="6">
+                    <BoxView Color="#FF9800" WidthRequest="16" HeightRequest="4"
+                             VerticalOptions="Center" CornerRadius="2"/>
+                    <Label Text="IMC" FontSize="12" TextColor="#555" VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+            </HorizontalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

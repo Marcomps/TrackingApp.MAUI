@@ -11,19 +11,27 @@
     </ContentPage.BindingContext>
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="20">
+        <VerticalStackLayout Padding="16,20" Spacing="16">
 
-            <!-- Selector de Tipo de Usuario -->
-            <Frame BackgroundColor="#2a3d66" Padding="15" CornerRadius="8">
-                <HorizontalStackLayout Spacing="10">
-                    <Label Text="Tipo de usuario:" TextColor="White" VerticalOptions="Center"/>
-                    <Picker ItemsSource="{Binding UserTypes}"
-                            SelectedItem="{Binding SelectedUserType}"
+            <!-- Selector de Perfil activo -->
+            <Border Background="#2a3d66"
+                    StrokeShape="RoundRectangle 10"
+                    StrokeThickness="0"
+                    Padding="16,12">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                    <Label Text="👤" FontSize="22" VerticalOptions="Center"/>
+                    <Picker Grid.Column="1"
+                            ItemsSource="{Binding Perfiles}"
+                            SelectedItem="{Binding PerfilSeleccionado}"
+                            ItemDisplayBinding="{Binding DisplayName}"
                             TextColor="White"
                             BackgroundColor="#1a2540"
-                            HorizontalOptions="Fill"/>
-                </HorizontalStackLayout>
-            </Frame>
+                            HorizontalOptions="Fill"
+                            VerticalOptions="Center"
+                            Title="Seleccionar perfil"
+                            TitleColor="#aabbdd"/>
+                </Grid>
+            </Border>
 
             <!-- Sección de Alimentos -->
             <Frame BackgroundColor="White" Padding="15" CornerRadius="8" HasShadow="True">
@@ -58,13 +66,6 @@
                             BackgroundColor="#4CAF50"
                             TextColor="White"
                             FontAttributes="Bold"/>
-
-                    <Button Text="📊 Ver Gráficas de Alimentos"
-                            Clicked="OnGraficasAlimentoClicked"
-                            Background="#1976D2"
-                            TextColor="White"
-                            FontAttributes="Bold"
-                            CornerRadius="8" />
 
                 </VerticalStackLayout>
             </Frame>
@@ -376,6 +377,13 @@
                             BackgroundColor="#9C27B0"
                             TextColor="White"
                             FontAttributes="Bold"/>
+
+                    <Button Text="📅 Ver todas las citas"
+                            Clicked="OnCitasListClicked"
+                            BackgroundColor="#7B1FA2"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            CornerRadius="8"/>
                     
                     <Label Text="Citas Registradas:" 
                            FontAttributes="Bold" 
@@ -392,6 +400,10 @@
                                             <SwipeItem Text="Editar"
                                                        BackgroundColor="#2196F3"
                                                        Command="{Binding Source={x:Reference MainPageRoot}, Path=BindingContext.EditAppointmentCommand}"
+                                                       CommandParameter="{Binding .}"/>
+                                            <SwipeItem Text="✓ Confirmar"
+                                                       BackgroundColor="#4CAF50"
+                                                       Command="{Binding Source={x:Reference MainPageRoot}, Path=BindingContext.ConfirmAppointmentCommand}"
                                                        CommandParameter="{Binding .}"/>
                                         </SwipeItems>
                                     </SwipeView.LeftItems>
@@ -442,73 +454,26 @@
                 </VerticalStackLayout>
             </Frame>
 
-            <!-- Sección de Perfiles (RF-001) -->
-            <Frame BackgroundColor="White" Padding="15" CornerRadius="8" HasShadow="True">
+            <!-- ── Acceso Rápido ──────────────────────────────────────────── -->
+            <Border Background="White"
+                    StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0"
+                    Padding="14,12">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="👤 Perfiles" FontSize="20" FontAttributes="Bold" TextColor="#2a3d66"/>
-                    <Label Text="Gestiona los perfiles de bebés, niños o adultos que deseas monitorear."
-                           FontSize="13" TextColor="#666"/>
-                    <Button Text="👤 Ver y gestionar perfiles"
-                            Clicked="OnPerfilesClicked"
-                            Background="#5C6BC0"
-                            TextColor="White"
-                            FontAttributes="Bold"
-                            CornerRadius="8"/>
-                </VerticalStackLayout>
-            </Frame>
-
-            <!-- Sección de Crecimiento -->
-            <Frame BackgroundColor="White" Padding="15" CornerRadius="8" HasShadow="True">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="📏 Crecimiento" FontSize="20" FontAttributes="Bold" TextColor="#2a3d66"/>
-                    <Label Text="Registra peso, talla, IMC y perímetro cefálico."
-                           FontSize="13" TextColor="#666"/>
-                    <Button Text="📈 Ver registros de crecimiento"
+                    <Label Text="🔗 Acceso Rápido"
+                           FontSize="15" FontAttributes="Bold" TextColor="#2a3d66"/>
+                    <Button Text="📏 Registros de Crecimiento"
                             Clicked="OnCrecimientoClicked"
                             Background="#00897B"
                             TextColor="White"
-                            FontAttributes="Bold"
                             CornerRadius="8"/>
-                </VerticalStackLayout>
-            </Frame>
-
-            <!-- Configuración de unidades -->
-            <Frame BackgroundColor="White" Padding="15" CornerRadius="8" HasShadow="True">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="⚙️ Configuración" FontSize="20" FontAttributes="Bold" TextColor="#2a3d66"/>
-                    <Label Text="Cambia las unidades por defecto para peso y talla (métrico o imperial)."
-                           FontSize="13" TextColor="#666"/>
-                    <Button Text="⚖️ Unidades de medida"
-                            Clicked="OnPreferenciasClicked"
-                            Background="#546E7A"
-                            TextColor="White"
-                            FontAttributes="Bold"
-                            CornerRadius="8"/>
-                </VerticalStackLayout>
-            </Frame>
-
-            <!-- Botón de Restablecer Todo -->
-            <Frame BackgroundColor="White" Padding="15" CornerRadius="8" HasShadow="True" Margin="0,10,0,0">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="⚠️ Zona de Peligro" 
-                           FontSize="18" 
-                           FontAttributes="Bold" 
-                           TextColor="#f44336"
-                           HorizontalOptions="Center"/>
-                    <Label Text="Esta acción eliminará TODOS los datos de forma permanente"
-                           FontSize="12"
-                           TextColor="#666"
-                           HorizontalOptions="Center"
-                           HorizontalTextAlignment="Center"/>
                     <Button Text="🗑️ Restablecer Todo"
                             Command="{Binding ResetAllDataCommand}"
-                            BackgroundColor="#f44336"
+                            Background="#f44336"
                             TextColor="White"
-                            FontAttributes="Bold"
-                            HorizontalOptions="Center"
-                            WidthRequest="250"/>
+                            CornerRadius="8"/>
                 </VerticalStackLayout>
-            </Frame>
+            </Border>
 
         </VerticalStackLayout>
     </ScrollView>

@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
+             xmlns:models="clr-namespace:TrackingApp.Models;assembly=TrackingApp.Core"
+             x:Class="TrackingApp.CitasListPage"
+             x:DataType="viewmodels:CitasListViewModel"
+             Title="Citas Médicas"
+             Background="#f5f7fa">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="+" Command="{Binding AgregarCommand}" Priority="0" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
+
+        <!-- ── Header: próxima cita ─────────────────────────────────────────── -->
+        <Border Grid.Row="0"
+                Background="#7B1FA2"
+                StrokeThickness="0"
+                Padding="16,14"
+                Margin="0">
+            <Grid ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto">
+                <Label Grid.ColumnSpan="3" Grid.Row="0"
+                       Text="📅 Citas Médicas"
+                       FontSize="13" TextColor="#CE93D8" Margin="0,0,0,8" />
+
+                <!-- Próxima cita -->
+                <VerticalStackLayout Grid.Column="0" Grid.Row="1" Spacing="2">
+                    <Label Text="Próxima cita"
+                           FontSize="11" TextColor="#CE93D8"/>
+                    <Label Text="{Binding ProximaCita.Title, FallbackValue='—'}"
+                           FontSize="15" FontAttributes="Bold" TextColor="White"
+                           LineBreakMode="TailTruncation"/>
+                    <Label Text="{Binding ProximaCita.FormattedDateTime, FallbackValue=''}"
+                           FontSize="12" TextColor="#CE93D8"
+                           IsVisible="{Binding HayProximaCita}"/>
+                </VerticalStackLayout>
+
+                <!-- Pendientes badge -->
+                <VerticalStackLayout Grid.Column="1" Grid.Row="1"
+                                     HorizontalOptions="Center" Spacing="2" Margin="8,0">
+                    <Label Text="{Binding CitasPendientesCount}"
+                           FontSize="22" FontAttributes="Bold" TextColor="White"
+                           HorizontalOptions="Center"/>
+                    <Label Text="Pendientes" FontSize="11" TextColor="#CE93D8" HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+
+                <!-- Hoy badge -->
+                <VerticalStackLayout Grid.Column="2" Grid.Row="1"
+                                     HorizontalOptions="Center" Spacing="2">
+                    <Label Text="{Binding CitasHoyCount}"
+                           FontSize="22" FontAttributes="Bold" TextColor="White"
+                           HorizontalOptions="Center"/>
+                    <Label Text="Hoy" FontSize="11" TextColor="#CE93D8" HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <!-- ── Filtros ──────────────────────────────────────────────────────── -->
+        <HorizontalStackLayout Grid.Row="1"
+                               Spacing="8"
+                               Padding="12,10"
+                               Background="White">
+            <Button Text="Todas"
+                    Command="{Binding FiltrarCommand}"
+                    CommandParameter="Todas"
+                    Background="{Binding FiltroTodas, Converter={StaticResource BoolToChipBgConverter}}"
+                    TextColor="{Binding FiltroTodas, Converter={StaticResource BoolToChipTextConverter}}"
+                    BorderColor="#2a3d66" BorderWidth="1"
+                    FontSize="13"
+                    Padding="14,6"
+                    CornerRadius="16"/>
+            <Button Text="Pendientes"
+                    Command="{Binding FiltrarCommand}"
+                    CommandParameter="Pendientes"
+                    Background="{Binding FiltroPendientes, Converter={StaticResource BoolToChipBgConverter}}"
+                    TextColor="{Binding FiltroPendientes, Converter={StaticResource BoolToChipTextConverter}}"
+                    BorderColor="#2a3d66" BorderWidth="1"
+                    FontSize="13"
+                    Padding="14,6"
+                    CornerRadius="16"/>
+            <Button Text="Completadas"
+                    Command="{Binding FiltrarCommand}"
+                    CommandParameter="Completadas"
+                    Background="{Binding FiltroCompletadas, Converter={StaticResource BoolToChipBgConverter}}"
+                    TextColor="{Binding FiltroCompletadas, Converter={StaticResource BoolToChipTextConverter}}"
+                    BorderColor="#2a3d66" BorderWidth="1"
+                    FontSize="13"
+                    Padding="14,6"
+                    CornerRadius="16"/>
+        </HorizontalStackLayout>
+
+        <!-- ── Empty state ─────────────────────────────────────────────────── -->
+        <VerticalStackLayout Grid.Row="2"
+                             IsVisible="{Binding NoHayCitas}"
+                             Spacing="12"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center"
+                             Margin="32,40">
+            <Label Text="📅" FontSize="48" HorizontalOptions="Center" />
+            <Label Text="No hay citas en esta categoría."
+                   FontSize="15" TextColor="#888"
+                   HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+            <Button Text="+ Agregar cita"
+                    Command="{Binding AgregarCommand}"
+                    Background="#7B1FA2"
+                    TextColor="White"
+                    CornerRadius="8"
+                    HorizontalOptions="Center"
+                    Padding="20,10"/>
+        </VerticalStackLayout>
+
+        <!-- ── Lista de citas ───────────────────────────────────────────────── -->
+        <CollectionView Grid.Row="3"
+                        ItemsSource="{Binding Citas}"
+                        IsVisible="{Binding HayCitas}"
+                        Margin="0,4">
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:MedicalAppointment">
+                    <SwipeView Margin="12,4">
+
+                        <SwipeView.LeftItems>
+                            <SwipeItems Mode="Reveal">
+                                <SwipeItem Text="Editar"
+                                           BackgroundColor="#1976D2"
+                                           CommandParameter="{Binding .}"
+                                           Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CitasListViewModel}}, Path=EditarCommand}" />
+                                <SwipeItem Text="✓ Confirmar"
+                                           BackgroundColor="#388E3C"
+                                           CommandParameter="{Binding .}"
+                                           Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CitasListViewModel}}, Path=ConfirmarCommand}" />
+                            </SwipeItems>
+                        </SwipeView.LeftItems>
+
+                        <SwipeView.RightItems>
+                            <SwipeItems Mode="Execute">
+                                <SwipeItem Text="Eliminar"
+                                           BackgroundColor="#F44336"
+                                           CommandParameter="{Binding .}"
+                                           Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CitasListViewModel}}, Path=EliminarCommand}" />
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+
+                        <!-- Card -->
+                        <Border Background="White"
+                                StrokeShape="RoundRectangle 10"
+                                Stroke="#e0e0e0"
+                                Padding="14,10">
+                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="4">
+
+                                <!-- Título + Estado badge -->
+                                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                    <Label Grid.Column="0"
+                                           Text="{Binding Title}"
+                                           FontAttributes="Bold"
+                                           FontSize="15"
+                                           TextColor="#212121"
+                                           LineBreakMode="TailTruncation"/>
+                                    <Border Grid.Column="1"
+                                            StrokeShape="RoundRectangle 8"
+                                            Background="#EDE7F6"
+                                            Padding="8,2"
+                                            Margin="6,0,0,0">
+                                        <Label Text="{Binding EstadoDisplay}"
+                                               FontSize="11"
+                                               TextColor="#7B1FA2"
+                                               FontAttributes="Bold"/>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Categoría + Lugar -->
+                                <HorizontalStackLayout Grid.Row="1" Spacing="6">
+                                    <Label Text="{Binding CategoriaDisplay}"
+                                           FontSize="12"
+                                           TextColor="#7B1FA2"/>
+                                    <Label Text="·" FontSize="12" TextColor="#ccc"
+                                           IsVisible="{Binding LugarYDoctor, Converter={StaticResource StringIsNotNullOrEmptyConverter}}"/>
+                                    <Label Text="{Binding LugarYDoctor}"
+                                           FontSize="12"
+                                           TextColor="#555"
+                                           IsVisible="{Binding LugarYDoctor, Converter={StaticResource StringIsNotNullOrEmptyConverter}}"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="1"/>
+                                </HorizontalStackLayout>
+
+                                <!-- Fecha y Hora -->
+                                <HorizontalStackLayout Grid.Row="2" Spacing="8">
+                                    <Label Text="{Binding FormattedDate}"
+                                           FontSize="13"
+                                           FontAttributes="Bold"
+                                           TextColor="#7B1FA2"/>
+                                    <Label Text="{Binding FormattedTime}"
+                                           FontSize="13"
+                                           TextColor="#888"/>
+                                </HorizontalStackLayout>
+
+                            </Grid>
+                        </Border>
+                    </SwipeView>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+    </Grid>
+</ContentPage>

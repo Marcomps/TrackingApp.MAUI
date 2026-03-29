@@ -9,8 +9,15 @@ public partial class AppShell : Shell
 		Routing.RegisterRoute(nameof(CrecimientoPage),       typeof(CrecimientoPage));
 		Routing.RegisterRoute(nameof(CrecimientoFormPage),   typeof(CrecimientoFormPage));
 		Routing.RegisterRoute(nameof(PreferenciasPage),      typeof(PreferenciasPage));
-		// RF-001: Perfiles
-		Routing.RegisterRoute(nameof(PerfilesPage),          typeof(PerfilesPage));
+		// RF-001: Perfiles (PerfilesPage is a tab; PerfilFormPage is a modal route)
 		Routing.RegisterRoute(nameof(PerfilFormPage),        typeof(PerfilFormPage));
+		// RF-003: Alimentos
+		Routing.RegisterRoute(nameof(AlimentoListPage),      typeof(AlimentoListPage));
+		Routing.RegisterRoute(nameof(AlimentoFormPage),      typeof(AlimentoFormPage));
+		// RF-004: Citas Médicas
+		Routing.RegisterRoute(nameof(CitasListPage),         typeof(CitasListPage));
+		Routing.RegisterRoute(nameof(CitaFormPage),          typeof(CitaFormPage));
+		// RF-002: Gráficas de crecimiento
+		Routing.RegisterRoute(nameof(CrecimientoGraficasPage), typeof(CrecimientoGraficasPage));
 	}
 }

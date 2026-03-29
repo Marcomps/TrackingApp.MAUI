@@ -692,6 +692,14 @@ namespace TrackingApp.Services
             try
             {
                 var perfiles = await _databaseService.GetAllPerfilesAsync();
+
+                // Crear perfiles por defecto si la base de datos está vacía
+                if (perfiles.Count == 0)
+                {
+                    await SeedDefaultPerfilesAsync();
+                    perfiles = await _databaseService.GetAllPerfilesAsync();
+                }
+
                 Perfiles.Clear();
                 foreach (var perfil in perfiles)
                     Perfiles.Add(perfil);
@@ -704,6 +712,24 @@ namespace TrackingApp.Services
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading perfiles: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Crea los tres perfiles por defecto (Bebé, Mascota, Persona).
+        /// Solo se llama cuando no existe ningún perfil en la base de datos.
+        /// </summary>
+        private async Task SeedDefaultPerfilesAsync()
+        {
+            var defaults = new[]
+            {
+                new Perfil { Nombre = "Bebé",    TipoPerfil = TipoPerfil.Bebe,         SistemaUnidades = SistemaUnidades.Metrico, FechaCreacion = DateTime.Now },
+                new Perfil { Nombre = "Mascota", TipoPerfil = TipoPerfil.Mascota,      SistemaUnidades = SistemaUnidades.Metrico, FechaCreacion = DateTime.Now },
+                new Perfil { Nombre = "Persona", TipoPerfil = TipoPerfil.AdultoGeneral, SistemaUnidades = SistemaUnidades.Metrico, FechaCreacion = DateTime.Now },
+            };
+            foreach (var p in defaults)
+                await _databaseService.SavePerfilAsync(p);
+
+            System.Diagnostics.Debug.WriteLine("✅ Perfiles por defecto creados: Bebé, Mascota, Persona");
         }
 
         public async Task AddPerfilAsync(Perfil perfil)

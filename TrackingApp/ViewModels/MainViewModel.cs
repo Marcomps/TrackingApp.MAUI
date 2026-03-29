@@ -64,14 +64,53 @@ namespace TrackingApp.ViewModels
                 OnPropertyChanged(nameof(ConfirmedDoses));
             };
             _dataService.Appointments.CollectionChanged += (s, e) => OnPropertyChanged(nameof(FilteredAppointments));
-            
+            _dataService.Perfiles.CollectionChanged += (s, e) => { OnPropertyChanged(nameof(Perfiles)); SyncPerfilActivo(); };
+
             // Set first medication as default
             UpdateSelectedMedication();
+
+            // Sync active profile
+            SyncPerfilActivo();
+        }
+
+        private void SyncPerfilActivo()
+        {
+            var activo = _dataService.PerfilActivo ?? _dataService.Perfiles.FirstOrDefault();
+            if (activo != null && activo != _perfilSeleccionado)
+            {
+                _perfilSeleccionado = activo;
+                _dataService.CurrentUserType = activo.DisplayName;
+                _selectedUserType = activo.DisplayName;
+                OnPropertyChanged(nameof(PerfilSeleccionado));
+                OnPropertyChanged(nameof(NombrePerfilActivo));
+            }
         }
 
         // Properties
         public ObservableCollection<FoodEntry> FoodEntries => _dataService.FoodEntries;
         public ObservableCollection<Medication> Medications => _dataService.Medications;
+
+        // ── Perfiles ─────────────────────────────────────────────────────────
+
+        public ObservableCollection<Perfil> Perfiles => _dataService.Perfiles;
+
+        private Perfil? _perfilSeleccionado;
+        public Perfil? PerfilSeleccionado
+        {
+            get => _perfilSeleccionado;
+            set
+            {
+                if (value == null || value == _perfilSeleccionado) return;
+                _perfilSeleccionado = value;
+                _dataService.SetPerfilActivo(value);
+                _dataService.CurrentUserType = value.DisplayName;
+                _selectedUserType = value.DisplayName;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(NombrePerfilActivo));
+            }
+        }
+
+        public string NombrePerfilActivo => _perfilSeleccionado?.DisplayName ?? "Sin perfil";
 
         public string SelectedUserType
         {

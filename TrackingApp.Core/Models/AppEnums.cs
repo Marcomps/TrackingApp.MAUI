@@ -5,7 +5,8 @@ namespace TrackingApp.Models
     public enum TipoPerfil
     {
         Bebe,
-        AdultoGeneral
+        AdultoGeneral,
+        Mascota
     }
 
     public enum Sexo

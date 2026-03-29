@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
+             x:Class="TrackingApp.AlimentoFormPage"
+             x:DataType="viewmodels:AlimentoFormViewModel"
+             Title="{Binding Titulo}"
+             Background="#f5f7fa">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="0" Padding="16,12">
+
+            <!-- ── Tipo de alimentación ───────────────────────────────────── -->
+            <Label Text="TIPO DE ALIMENTACIÓN" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,14">
+                <Grid ColumnDefinitions="Auto,*" Padding="0,10">
+                    <Label Text="🍽️  Tipo" VerticalOptions="Center"
+                           TextColor="#333" FontSize="15" WidthRequest="110"/>
+                    <Picker Grid.Column="1"
+                            ItemsSource="{Binding TiposAlimentacion}"
+                            SelectedIndex="{Binding TipoIndex}"
+                            HorizontalOptions="Fill"
+                            FontSize="15"
+                            TextColor="#1565C0"/>
+                </Grid>
+            </Border>
+
+            <!-- ── Sección Lactancia ──────────────────────────────────────── -->
+            <VerticalStackLayout IsVisible="{Binding EsLactancia}" Spacing="0">
+                <Label Text="LACTANCIA MATERNA" FontSize="11" TextColor="#888"
+                       FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+                <Border Background="White" StrokeShape="RoundRectangle 10"
+                        Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,14">
+                    <Grid RowDefinitions="Auto,1,Auto">
+                        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Padding="0,10">
+                            <Label Text="🤱  Pecho" VerticalOptions="Center"
+                                   TextColor="#333" FontSize="15" WidthRequest="110"/>
+                            <Picker Grid.Column="1"
+                                    ItemsSource="{Binding OpcionesPecho}"
+                                    SelectedIndex="{Binding PechoIndex}"
+                                    HorizontalOptions="Fill"
+                                    FontSize="15"
+                                    TextColor="#1565C0"/>
+                        </Grid>
+                        <BoxView Grid.Row="1" HeightRequest="1" Background="#f0f0f0"/>
+                        <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="0,8">
+                            <Label Text="⏱️  Duración" VerticalOptions="Center"
+                                   TextColor="#333" FontSize="15" WidthRequest="110"/>
+                            <HorizontalStackLayout Grid.Column="1" Spacing="8">
+                                <Entry Text="{Binding DuracionTexto}"
+                                       Placeholder="ej. 15"
+                                       Keyboard="Numeric"
+                                       HorizontalOptions="Fill"
+                                       WidthRequest="80"
+                                       FontSize="16"
+                                       TextColor="#1565C0"/>
+                                <Label Text="min" VerticalOptions="Center"
+                                       TextColor="#666" FontSize="15"/>
+                            </HorizontalStackLayout>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- ── Sección Fórmula ────────────────────────────────────────── -->
+            <VerticalStackLayout IsVisible="{Binding EsFormula}" Spacing="0">
+                <Label Text="FÓRMULA / BIBERÓN" FontSize="11" TextColor="#888"
+                       FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+                <Border Background="White" StrokeShape="RoundRectangle 10"
+                        Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,14">
+                    <Grid ColumnDefinitions="Auto,*,Auto" Padding="0,10">
+                        <Label Text="🍼  Cantidad" VerticalOptions="Center"
+                               TextColor="#333" FontSize="15" WidthRequest="110"/>
+                        <Entry Grid.Column="1"
+                               Text="{Binding CantidadMlTexto}"
+                               Placeholder="ej. 120"
+                               Keyboard="Numeric"
+                               HorizontalOptions="Fill"
+                               FontSize="16"
+                               TextColor="#1565C0"/>
+                        <Label Grid.Column="2" Text="ml" VerticalOptions="Center"
+                               TextColor="#666" FontSize="15" Margin="8,0,0,0"/>
+                    </Grid>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- ── Sección Sólido ─────────────────────────────────────────── -->
+            <VerticalStackLayout IsVisible="{Binding EsSolido}" Spacing="0">
+                <Label Text="ALIMENTACIÓN SÓLIDA" FontSize="11" TextColor="#888"
+                       FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+                <Border Background="White" StrokeShape="RoundRectangle 10"
+                        Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,14">
+                    <Grid ColumnDefinitions="Auto,*,Auto" Padding="0,10">
+                        <Label Text="🥣  Cantidad" VerticalOptions="Center"
+                               TextColor="#333" FontSize="15" WidthRequest="110"/>
+                        <Entry Grid.Column="1"
+                               Text="{Binding CantidadGramosTexto}"
+                               Placeholder="ej. 80"
+                               Keyboard="Numeric"
+                               HorizontalOptions="Fill"
+                               FontSize="16"
+                               TextColor="#1565C0"/>
+                        <Label Grid.Column="2" Text="g" VerticalOptions="Center"
+                               TextColor="#666" FontSize="15" Margin="8,0,0,0"/>
+                    </Grid>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- ── Fecha y Hora ───────────────────────────────────────────── -->
+            <Label Text="FECHA Y HORA" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,14">
+                <Grid RowDefinitions="Auto,1,Auto">
+                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Padding="0,8">
+                        <Label Text="📅  Fecha" VerticalOptions="Center"
+                               TextColor="#333" FontSize="15" WidthRequest="110"/>
+                        <DatePicker Grid.Column="1" Date="{Binding Fecha}"
+                                    Format="dd/MM/yyyy" HorizontalOptions="End"
+                                    TextColor="#1565C0" FontSize="15"/>
+                    </Grid>
+                    <BoxView Grid.Row="1" HeightRequest="1" Background="#f0f0f0"/>
+                    <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="0,8">
+                        <Label Text="🕐  Hora" VerticalOptions="Center"
+                               TextColor="#333" FontSize="15" WidthRequest="110"/>
+                        <TimePicker Grid.Column="1" Time="{Binding Hora}"
+                                    Format="HH:mm" HorizontalOptions="End"
+                                    TextColor="#1565C0" FontSize="15"/>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- ── Notas ──────────────────────────────────────────────────── -->
+            <Label Text="NOTAS (OPCIONAL)" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
+
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,8" Margin="0,0,0,24">
+                <Editor Text="{Binding Notas}"
+                        Placeholder="Observaciones, alimentos dados, reacciones..."
+                        AutoSize="TextChanges"
+                        MinimumHeightRequest="80"
+                        FontSize="15"
+                        TextColor="#333"/>
+            </Border>
+
+            <!-- ── Botones de acción ──────────────────────────────────────── -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,0,0,24">
+                <Button Grid.Column="0"
+                        Text="Cancelar"
+                        Command="{Binding CancelarCommand}"
+                        Background="#e0e0e0"
+                        TextColor="#333"
+                        FontAttributes="Bold"
+                        CornerRadius="10"
+                        Padding="0,14"/>
+                <Button Grid.Column="1"
+                        Text="💾 Guardar"
+                        Command="{Binding GuardarCommand}"
+                        Background="#2a3d66"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        CornerRadius="10"
+                        Padding="0,14"/>
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

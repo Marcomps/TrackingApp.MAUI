@@ -34,13 +34,13 @@ public partial class MainPage : ContentPage
 		await Shell.Current.GoToAsync(nameof(CrecimientoPage));
 	}
 
-	private async void OnPreferenciasClicked(object sender, EventArgs e)
+	private async void OnAlimentoListClicked(object sender, EventArgs e)
 	{
-		await Shell.Current.GoToAsync(nameof(PreferenciasPage));
+		await Shell.Current.GoToAsync(nameof(AlimentoListPage));
 	}
 
-	private async void OnPerfilesClicked(object sender, EventArgs e)
+	private async void OnCitasListClicked(object sender, EventArgs e)
 	{
-		await Shell.Current.GoToAsync(nameof(PerfilesPage));
+		await Shell.Current.GoToAsync(nameof(CitasListPage));
 	}
 }

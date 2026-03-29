@@ -16,4 +16,7 @@ public partial class CrecimientoPage : ContentPage
         base.OnAppearing();
         _vm.Cargar();
     }
+
+    private async void OnGraficasCrecimientoClicked(object sender, EventArgs e)
+        => await Shell.Current.GoToAsync(nameof(CrecimientoGraficasPage));
 }

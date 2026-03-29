@@ -15,7 +15,42 @@ namespace TrackingApp.ViewModels
 
         private ObservableCollection<MedicationHistory> _allMedicationHistory;
         private ObservableCollection<FoodEntry> _allFoodHistory;
-        
+
+        // ── Section selector ─────────────────────────────────────────────────
+        private string _seccionActual = "Medicamentos";
+        public string SeccionActual
+        {
+            get => _seccionActual;
+            set
+            {
+                if (_seccionActual == value) return;
+                _seccionActual = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(MostrarMedicamentos));
+                OnPropertyChanged(nameof(MostrarAlimentos));
+                OnPropertyChanged(nameof(MostrarCitas));
+                OnPropertyChanged(nameof(ChipMedBg));
+                OnPropertyChanged(nameof(ChipAliBg));
+                OnPropertyChanged(nameof(ChipCitBg));
+                OnPropertyChanged(nameof(ChipMedTxt));
+                OnPropertyChanged(nameof(ChipAliTxt));
+                OnPropertyChanged(nameof(ChipCitTxt));
+            }
+        }
+
+        public bool MostrarMedicamentos => _seccionActual == "Medicamentos";
+        public bool MostrarAlimentos    => _seccionActual == "Alimentos";
+        public bool MostrarCitas        => _seccionActual == "Citas";
+
+        public Color ChipMedBg  => _seccionActual == "Medicamentos" ? Color.FromArgb("#2a3d66") : Color.FromArgb("#f0f2f8");
+        public Color ChipAliBg  => _seccionActual == "Alimentos"    ? Color.FromArgb("#2a3d66") : Color.FromArgb("#f0f2f8");
+        public Color ChipCitBg  => _seccionActual == "Citas"        ? Color.FromArgb("#2a3d66") : Color.FromArgb("#f0f2f8");
+        public Color ChipMedTxt => _seccionActual == "Medicamentos" ? Colors.White : Color.FromArgb("#2a3d66");
+        public Color ChipAliTxt => _seccionActual == "Alimentos"    ? Colors.White : Color.FromArgb("#2a3d66");
+        public Color ChipCitTxt => _seccionActual == "Citas"        ? Colors.White : Color.FromArgb("#2a3d66");
+
+        public Command<string> SeleccionarSeccionCommand { get; }
+
         private string _selectedMedicationFilter = "Todos";
         private string _selectedFoodTypeFilter = "Todos";
         private string _selectedUnitFilter = "Todos";
@@ -133,6 +168,7 @@ namespace TrackingApp.ViewModels
                 "Mes anterior"
             };
 
+            SeleccionarSeccionCommand  = new Command<string>(s => { if (s != null) SeccionActual = s; });
             DeleteMedicationHistoryCommand = new Command<MedicationHistory>(DeleteMedicationHistory);
             DeleteFoodHistoryCommand = new Command<FoodEntry>(DeleteFoodHistory);
             EditMedicationHistoryCommand = new Command<MedicationHistory>(EditMedicationHistory);
