@@ -41,10 +41,6 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-android|AnyCPU'">
-	  <RunAOTCompilation>True</RunAOTCompilation>
-	</PropertyGroup>
-
 	<!-- Android Signing - Consistent key to avoid reinstalling -->
 	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
 		<AndroidKeyStore>true</AndroidKeyStore>
@@ -52,6 +48,19 @@
 		<AndroidSigningKeyAlias>trackingapp</AndroidSigningKeyAlias>
 		<AndroidSigningKeyPass>TrackingApp2026</AndroidSigningKeyPass>
 		<AndroidSigningStorePass>TrackingApp2026</AndroidSigningStorePass>
+	</PropertyGroup>
+
+	<!-- APK Size Optimizations for Release -->
+	<PropertyGroup Condition="'$(Configuration)' == 'Release' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<!-- Only build for 64-bit ARM (all modern Android devices since 2020) -->
+		<AndroidAbis>arm64-v8a</AndroidAbis>
+		<!-- R8 bytecode shrinking (safe Java-level optimization) -->
+		<AndroidEnableR8>true</AndroidEnableR8>
+		<!-- Trim unused SDK assemblies (partial = safe, keeps app code intact) -->
+		<PublishTrimmed>true</PublishTrimmed>
+		<TrimMode>partial</TrimMode>
+		<!-- Disable AOT to favour smaller size over startup time -->
+		<RunAOTCompilation>false</RunAOTCompilation>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -82,6 +91,11 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\TrackingApp.Core\TrackingApp.Core.csproj" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)' == 'Release'">
+		<!-- Protect SQLite-net-pcl models from IL trimmer -->
+		<TrimmerRootDescriptor Include="TrimmerRoots.xml" />
 	</ItemGroup>
 
 </Project>

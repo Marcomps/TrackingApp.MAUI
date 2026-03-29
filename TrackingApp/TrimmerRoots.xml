@@ -1,0 +1,9 @@
+<linker>
+  <!--
+    Preserve SQLite-net-pcl model classes from being trimmed.
+    SQLite-net-pcl uses reflection to map C# properties to columns.
+  -->
+  <assembly fullname="TrackingApp.Core">
+    <namespace fullname="TrackingApp.Core.Models" preserve="all" />
+  </assembly>
+</linker>
