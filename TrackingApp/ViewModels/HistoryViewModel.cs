@@ -251,8 +251,23 @@ namespace TrackingApp.ViewModels
                 FoodTypes.Add(type);
             }
 
+            // Actualizar unidades desde datos reales (ml, g, min, etc.)
+            var units = _allFoodHistory
+                .Select(f => f.Unit)
+                .Where(u => !string.IsNullOrWhiteSpace(u))
+                .Distinct()
+                .OrderBy(u => u)
+                .ToList();
+            var prevUnit = _selectedUnitFilter;
+            Units.Clear();
+            Units.Add("Todos");
+            foreach (var u in units) Units.Add(u);
+            if (!Units.Contains(prevUnit)) _selectedUnitFilter = "Todos";
+
             OnPropertyChanged(nameof(MedicationNames));
             OnPropertyChanged(nameof(FoodTypes));
+            OnPropertyChanged(nameof(Units));
+            OnPropertyChanged(nameof(SelectedUnitFilter));
         }
 
         private void ApplyFilters()
@@ -398,43 +413,7 @@ namespace TrackingApp.ViewModels
 
         private async void EditFood(FoodEntry food)
         {
-            var newType = await Shell.Current.DisplayPromptAsync(
-                "Editar Alimento",
-                "Tipo de alimento:",
-                initialValue: food.FoodType);
-
-            if (string.IsNullOrWhiteSpace(newType)) return;
-
-            var newAmountStr = await Shell.Current.DisplayPromptAsync(
-                "Editar Cantidad",
-                "Cantidad:",
-                initialValue: food.Amount.ToString(),
-                keyboard: Keyboard.Numeric);
-
-            if (string.IsNullOrWhiteSpace(newAmountStr)) return;
-
-            var newTimeStr = await Shell.Current.DisplayPromptAsync(
-                "Editar Hora",
-                "Hora (formato 12h, ej: 09:30 AM o 02:45 PM):",
-                initialValue: food.Time.ToString("hh:mm tt"));
-
-            if (string.IsNullOrWhiteSpace(newTimeStr)) return;
-
-            if (!NumericParser.TryParseDouble(newAmountStr, out double newAmount)) return;
-
-            if (!DateTime.TryParse(newTimeStr, out var parsedTime))
-            {
-                await Shell.Current.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK");
-                return;
-            }
-
-            food.FoodType = newType;
-            food.Amount = newAmount;
-            food.Time = food.Time.Date + parsedTime.TimeOfDay;
-            await _dataService.UpdateFoodEntryAsync(food);
-            UpdateAvailableFilters();
-            ApplyFilters();
-            await Shell.Current.DisplayAlert("✅ Actualizado", "Alimento actualizado (incluye nueva hora)", "OK");
+            await Shell.Current.GoToAsync($"AlimentoFormPage?id={food.Id}");
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)

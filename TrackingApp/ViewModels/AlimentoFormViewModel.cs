@@ -22,6 +22,16 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
     public IReadOnlyList<string> OpcionesPecho { get; } =
         new[] { "Izquierdo", "Derecho", "Ambos" };
 
+    private List<int> _perfilesIds = new();
+    public IReadOnlyList<string> OpcionesPerfiles { get; private set; } = new List<string>();
+
+    private int _perfilIndex;
+    public int PerfilIndex
+    {
+        get => _perfilIndex;
+        set { _perfilIndex = value; OnPropertyChanged(); }
+    }
+
     public AlimentoFormViewModel()
     {
         GuardarCommand  = new Command(async () => await GuardarAsync());
@@ -29,6 +39,21 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
 
         _fecha = DateTime.Today;
         _hora  = DateTime.Now.TimeOfDay;
+
+        // Cargar perfiles para el picker
+        var perfiles = AppServices.DataService.Perfiles.ToList();
+        _perfilesIds = new List<int> { 0 };
+        var nombres  = new List<string> { "(Sin perfil)" };
+        foreach (var p in perfiles)
+        {
+            _perfilesIds.Add(p.Id);
+            nombres.Add(p.Nombre);
+        }
+        OpcionesPerfiles = nombres;
+
+        var activeId  = AppServices.DataService.PerfilActivo?.Id ?? 0;
+        var activeIdx = _perfilesIds.IndexOf(activeId);
+        _perfilIndex  = activeIdx >= 0 ? activeIdx : 0;
     }
 
     // ── QueryProperty ─────────────────────────────────────────────────────────
@@ -158,6 +183,9 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
         CantidadMlTexto     = e.CantidadMl?.ToString("F0") ?? string.Empty;
         CantidadGramosTexto = e.CantidadGramos?.ToString("F0") ?? string.Empty;
 
+        var perfilIdx = _perfilesIds.IndexOf(e.PerfilId);
+        PerfilIndex   = perfilIdx >= 0 ? perfilIdx : 0;
+
         OnPropertyChanged(nameof(Titulo));
     }
 
@@ -197,7 +225,8 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
                 canGrs = g;
         }
 
-        var perfilId = AppServices.DataService.PerfilActivo?.Id ?? 0;
+        var perfilId = _perfilIndex >= 0 && _perfilIndex < _perfilesIds.Count
+            ? _perfilesIds[_perfilIndex] : 0;
         var fechaHora = _fecha.Date.Add(_hora);
 
         var pecho = (PechoLactancia)_pechoIndex;

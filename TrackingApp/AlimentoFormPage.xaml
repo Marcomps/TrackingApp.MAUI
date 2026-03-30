@@ -111,7 +111,23 @@
                     </Grid>
                 </Border>
             </VerticalStackLayout>
+            <!-- ── Perfil ──────────────────────────────────────────────────── -->
+            <Label Text="PERFIL" FontSize="11" TextColor="#888"
+                   FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
 
+            <Border Background="White" StrokeShape="RoundRectangle 10"
+                    Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,14">
+                <Grid ColumnDefinitions="Auto,*" Padding="0,10">
+                    <Label Text="👤  Perfil" VerticalOptions="Center"
+                           TextColor="#333" FontSize="15" WidthRequest="110"/>
+                    <Picker Grid.Column="1"
+                            ItemsSource="{Binding OpcionesPerfiles}"
+                            SelectedIndex="{Binding PerfilIndex}"
+                            HorizontalOptions="Fill"
+                            FontSize="15"
+                            TextColor="#1565C0"/>
+                </Grid>
+            </Border>
             <!-- ── Fecha y Hora ───────────────────────────────────────────── -->
             <Label Text="FECHA Y HORA" FontSize="11" TextColor="#888"
                    FontAttributes="Bold" Margin="0,0,0,6" CharacterSpacing="1"/>
