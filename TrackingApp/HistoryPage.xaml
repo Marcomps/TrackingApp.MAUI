@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
+             xmlns:models="clr-namespace:TrackingApp.Models;assembly=TrackingApp.Core"
              x:Class="TrackingApp.HistoryPage"
              x:DataType="viewmodels:HistoryViewModel"
              Title="Historial"
@@ -118,7 +119,7 @@
                             </VerticalStackLayout>
                         </CollectionView.EmptyView>
                         <CollectionView.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="models:MedicationHistory">
                                 <SwipeView Margin="0,3">
                                     <SwipeView.LeftItems>
                                         <SwipeItems>
@@ -212,7 +213,7 @@
                             </VerticalStackLayout>
                         </CollectionView.EmptyView>
                         <CollectionView.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="models:FoodEntry">
                                 <SwipeView Margin="0,3">
                                     <SwipeView.LeftItems>
                                         <SwipeItems>
