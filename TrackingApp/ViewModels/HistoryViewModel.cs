@@ -194,22 +194,20 @@ namespace TrackingApp.ViewModels
             RefreshCommand = new Command(async () =>
             {
                 IsRefreshing = true;
-                try
-                {
-                    await _dataService.ReloadAllDataAsync();
-                    await LoadHistoryAsync();
-                }
-                finally
-                {
-                    IsRefreshing = false;
-                }
+                try { await ReloadAsync(); }
+                finally { IsRefreshing = false; }
             });
 
             LoadHistoryAsync();
         }
 
-        private async Task LoadHistoryAsync()
+        public Task ReloadAsync() => LoadHistoryAsync(true);
+
+        private async Task LoadHistoryAsync(bool reloadFromDb = false)
         {
+            if (reloadFromDb)
+                await _dataService.ReloadAllDataAsync();
+
             // Cargar historial de medicamentos
             var medHistory = await _dataService.GetAllMedicationHistoryAsync();
             _allMedicationHistory.Clear();
@@ -341,35 +339,29 @@ namespace TrackingApp.ViewModels
 
         private async void DeleteMedicationHistory(MedicationHistory history)
         {
-            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+            bool confirm = await Shell.Current.DisplayAlert(
                 "Confirmar",
                 $"¿Eliminar registro de {history.MedicationName} administrado el {history.FormattedDate}?",
-                "Sí", "No")!;
+                "Sí", "No");
 
             if (confirm)
             {
-                // Guardar el medicationId antes de borrar
                 int medicationId = history.MedicationId;
-                
                 await _dataService.DeleteMedicationHistoryAsync(history);
                 _allMedicationHistory.Remove(history);
-                
-                // 🔄 Recalcular las dosis pendientes después de borrar del historial
-                System.Diagnostics.Debug.WriteLine($"🔄 Recalculando dosis pendientes tras borrar historial de medicamento {medicationId}...");
-                await _dataService.RecalculateNextDosesFromLastConfirmedAsync(medicationId, 7); // 7 días por defecto
+                await _dataService.RecalculateNextDosesFromLastConfirmedAsync(medicationId, 7);
                 _dataService.RebuildCombinedEvents();
-                
                 ApplyFilters();
-                await Application.Current?.MainPage?.DisplayAlert("Eliminado", "Registro eliminado del historial y dosis recalculadas", "OK")!;
+                await Shell.Current.DisplayAlert("Eliminado", "Registro eliminado del historial y dosis recalculadas", "OK");
             }
         }
 
         private async void DeleteFoodHistory(FoodEntry food)
         {
-            bool confirm = await Application.Current?.MainPage?.DisplayAlert(
+            bool confirm = await Shell.Current.DisplayAlert(
                 "Confirmar",
                 $"¿Eliminar registro de {food.FoodType} del historial?",
-                "Sí", "No")!;
+                "Sí", "No");
 
             if (confirm)
             {
@@ -377,100 +369,72 @@ namespace TrackingApp.ViewModels
                 _allFoodHistory.Remove(food);
                 UpdateAvailableFilters();
                 ApplyFilters();
-                await Application.Current?.MainPage?.DisplayAlert("Eliminado", "Registro de alimento eliminado", "OK")!;
+                await Shell.Current.DisplayAlert("Eliminado", "Registro de alimento eliminado", "OK");
             }
         }
 
         private async void EditMedicationHistory(MedicationHistory medicationHistory)
         {
-            // Solo permitir editar la hora de administración
-            var newTimeStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var newTimeStr = await Shell.Current.DisplayPromptAsync(
                 "Editar Hora",
                 $"Hora de administración de {medicationHistory.MedicationName} (formato 12h, ej: 09:30 AM o 02:45 PM):",
-                initialValue: medicationHistory.AdministeredTime.ToString("hh:mm tt"))!;
+                initialValue: medicationHistory.AdministeredTime.ToString("hh:mm tt"));
 
             if (string.IsNullOrWhiteSpace(newTimeStr)) return;
 
-            // Intentar parsear la hora
-            DateTime newTime;
-            if (DateTime.TryParse(newTimeStr, out var parsedTime))
+            if (!DateTime.TryParse(newTimeStr, out var parsedTime))
             {
-                newTime = medicationHistory.AdministeredTime.Date + parsedTime.TimeOfDay;
-            }
-            else
-            {
-                await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK")!;
+                await Shell.Current.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK");
                 return;
             }
 
-            medicationHistory.AdministeredTime = newTime;
+            medicationHistory.AdministeredTime = medicationHistory.AdministeredTime.Date + parsedTime.TimeOfDay;
             await _dataService.UpdateMedicationHistoryAsync(medicationHistory);
-            
-            // 🔄 CRÍTICO: Recalcular las siguientes dosis desde esta dosis editada
-            // Esto asegura que si cambias la hora de una dosis pasada, las futuras se ajusten
-            System.Diagnostics.Debug.WriteLine($"🔄 Recalculando dosis futuras después de editar {medicationHistory.MedicationName}...");
-            await _dataService.RecalculateNextDosesFromLastConfirmedAsync(medicationHistory.MedicationId, 3); // Usar 3 días por defecto
-            
-            // Actualizar la lista local y los filtros
+            await _dataService.RecalculateNextDosesFromLastConfirmedAsync(medicationHistory.MedicationId, 3);
             UpdateAvailableFilters();
             ApplyFilters();
-            
-            await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Hora actualizada y dosis futuras recalculadas", "OK")!;
+            await Shell.Current.DisplayAlert("✅ Actualizado", "Hora actualizada y dosis futuras recalculadas", "OK");
         }
 
         private async void EditFood(FoodEntry food)
         {
-            // Prompt para editar tipo
-            var newType = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var newType = await Shell.Current.DisplayPromptAsync(
                 "Editar Alimento",
                 "Tipo de alimento:",
-                initialValue: food.FoodType)!;
+                initialValue: food.FoodType);
 
             if (string.IsNullOrWhiteSpace(newType)) return;
 
-            // Prompt para editar cantidad
-            var newAmountStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var newAmountStr = await Shell.Current.DisplayPromptAsync(
                 "Editar Cantidad",
                 "Cantidad:",
                 initialValue: food.Amount.ToString(),
-                keyboard: Keyboard.Numeric)!;
+                keyboard: Keyboard.Numeric);
 
             if (string.IsNullOrWhiteSpace(newAmountStr)) return;
 
-            // Prompt para editar hora
-            var newTimeStr = await Application.Current?.MainPage?.DisplayPromptAsync(
+            var newTimeStr = await Shell.Current.DisplayPromptAsync(
                 "Editar Hora",
                 "Hora (formato 12h, ej: 09:30 AM o 02:45 PM):",
-                initialValue: food.Time.ToString("hh:mm tt"))!;
+                initialValue: food.Time.ToString("hh:mm tt"));
 
             if (string.IsNullOrWhiteSpace(newTimeStr)) return;
 
-            // Usar helper para parsear
-            if (NumericParser.TryParseDouble(newAmountStr, out double newAmount))
-            {
-                // Intentar parsear la hora
-                DateTime newTime;
-                if (DateTime.TryParse(newTimeStr, out var parsedTime))
-                {
-                    newTime = food.Time.Date + parsedTime.TimeOfDay;
-                }
-                else
-                {
-                    await Application.Current?.MainPage?.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK")!;
-                    return;
-                }
+            if (!NumericParser.TryParseDouble(newAmountStr, out double newAmount)) return;
 
-                food.FoodType = newType;
-                food.Amount = newAmount;
-                food.Time = newTime;
-                await _dataService.UpdateFoodEntryAsync(food);
-                
-                // Actualizar la lista local y los filtros
-                UpdateAvailableFilters();
-                ApplyFilters();
-                
-                await Application.Current?.MainPage?.DisplayAlert("✅ Actualizado", "Alimento actualizado (incluye nueva hora)", "OK")!;
+            if (!DateTime.TryParse(newTimeStr, out var parsedTime))
+            {
+                await Shell.Current.DisplayAlert("❌ Error", "Formato de hora inválido. Use formato 12h con AM/PM", "OK");
+                return;
             }
+
+            food.FoodType = newType;
+            food.Amount = newAmount;
+            food.Time = food.Time.Date + parsedTime.TimeOfDay;
+            await _dataService.UpdateFoodEntryAsync(food);
+            UpdateAvailableFilters();
+            ApplyFilters();
+            await Shell.Current.DisplayAlert("✅ Actualizado", "Alimento actualizado (incluye nueva hora)", "OK");
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
