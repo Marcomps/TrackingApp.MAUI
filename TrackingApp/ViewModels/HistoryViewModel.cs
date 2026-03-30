@@ -70,6 +70,17 @@ namespace TrackingApp.ViewModels
         public int TotalConfirmedDoses => FilteredMedicationHistory?.Count ?? 0;
         public int TotalFoodEntries => FilteredFoodHistory?.Count ?? 0;
         public double TotalFoodAmount => FilteredFoodHistory?.Sum(f => f.Amount) ?? 0;
+        public IEnumerable<string> FoodAmountByUnit
+        {
+            get
+            {
+                if (FilteredFoodHistory == null || !FilteredFoodHistory.Any())
+                    return Enumerable.Empty<string>();
+                return FilteredFoodHistory
+                    .GroupBy(f => string.IsNullOrWhiteSpace(f.Unit) ? "(sin unidad)" : f.Unit)
+                    .Select(g => $"Total cantidad: {g.Sum(f => f.Amount):0.##} {g.Key}");
+            }
+        }
         public string MostFrequentFoodType 
         {
             get
@@ -145,6 +156,13 @@ namespace TrackingApp.ViewModels
         public ICommand EditFoodCommand { get; }
         public ICommand RefreshCommand { get; }
 
+        private bool _isRefreshing;
+        public bool IsRefreshing
+        {
+            get => _isRefreshing;
+            set { _isRefreshing = value; OnPropertyChanged(); }
+        }
+
         public HistoryViewModel()
         {
             _dataService = AppServices.DataService;
@@ -173,7 +191,19 @@ namespace TrackingApp.ViewModels
             DeleteFoodHistoryCommand = new Command<FoodEntry>(DeleteFoodHistory);
             EditMedicationHistoryCommand = new Command<MedicationHistory>(EditMedicationHistory);
             EditFoodCommand = new Command<FoodEntry>(EditFood);
-            RefreshCommand = new Command(async () => await LoadHistoryAsync());
+            RefreshCommand = new Command(async () =>
+            {
+                IsRefreshing = true;
+                try
+                {
+                    await _dataService.ReloadAllDataAsync();
+                    await LoadHistoryAsync();
+                }
+                finally
+                {
+                    IsRefreshing = false;
+                }
+            });
 
             LoadHistoryAsync();
         }
@@ -288,6 +318,7 @@ namespace TrackingApp.ViewModels
             OnPropertyChanged(nameof(TotalConfirmedDoses));
             OnPropertyChanged(nameof(TotalFoodEntries));
             OnPropertyChanged(nameof(TotalFoodAmount));
+            OnPropertyChanged(nameof(FoodAmountByUnit));
             OnPropertyChanged(nameof(MostFrequentFoodType));
         }
 

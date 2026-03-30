@@ -197,6 +197,9 @@
                     </Border>
 
                     <!-- Lista -->
+                    <RefreshView Command="{Binding RefreshCommand}"
+                                 IsRefreshing="{Binding IsRefreshing}"
+                                 RefreshColor="#FF9800">
                     <CollectionView ItemsSource="{Binding FilteredFoodHistory}"
                                     x:Name="FoodHistoryCollectionView"
                                     MaximumHeightRequest="600">
@@ -248,6 +251,7 @@
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
+                    </RefreshView>
 
                     <!-- Estadísticas + Ver Gráficas -->
                     <Border Background="White" StrokeShape="RoundRectangle 10"
@@ -255,6 +259,13 @@
                         <VerticalStackLayout Spacing="4">
                             <Label Text="{Binding TotalFoodEntries, StringFormat='Total registros: {0}'}"
                                    FontSize="13" TextColor="#555"/>
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding FoodAmountByUnit}" Spacing="2">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                        <Label Text="{Binding .}" FontSize="13" TextColor="#555"/>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
                             <Label Text="{Binding MostFrequentFoodType, StringFormat='Tipo más frecuente: {0}'}"
                                    FontSize="13" TextColor="#555"/>
                         </VerticalStackLayout>
