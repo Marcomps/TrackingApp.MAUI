@@ -137,6 +137,15 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
         set { _cantidadMlTexto = value; OnPropertyChanged(); }
     }
 
+    public List<string> UnidadesFormula { get; } = new() { "ml", "oz", "cc" };
+
+    private string _unidadFormula = "ml";
+    public string UnidadFormula
+    {
+        get => _unidadFormula;
+        set { _unidadFormula = value ?? "ml"; OnPropertyChanged(); }
+    }
+
     // ── Campos Sólido ─────────────────────────────────────────────────────────
 
     private string _cantidadGramosTexto = string.Empty;
@@ -144,6 +153,15 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
     {
         get => _cantidadGramosTexto;
         set { _cantidadGramosTexto = value; OnPropertyChanged(); }
+    }
+
+    public List<string> UnidadesSolido { get; } = new() { "g", "oz", "cucharadas", "tazas", "porción" };
+
+    private string _unidadSolido = "g";
+    public string UnidadSolido
+    {
+        get => _unidadSolido;
+        set { _unidadSolido = value ?? "g"; OnPropertyChanged(); }
     }
 
     // ── Comandos ──────────────────────────────────────────────────────────────
@@ -182,6 +200,12 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
         DuracionTexto       = e.DuracionMinutos?.ToString() ?? string.Empty;
         CantidadMlTexto     = e.CantidadMl?.ToString("F0") ?? string.Empty;
         CantidadGramosTexto = e.CantidadGramos?.ToString("F0") ?? string.Empty;
+
+        // Cargar unidad guardada
+        if (e.TipoAlimentacion == TipoAlimentacion.Formula && !string.IsNullOrWhiteSpace(e.Unit) && e.Unit != "min")
+            UnidadFormula = e.Unit;
+        if (e.TipoAlimentacion == TipoAlimentacion.Solido && !string.IsNullOrWhiteSpace(e.Unit) && e.Unit != "min")
+            UnidadSolido = e.Unit;
 
         var perfilIdx = _perfilesIds.IndexOf(e.PerfilId);
         PerfilIndex   = perfilIdx >= 0 ? perfilIdx : 0;
@@ -252,7 +276,7 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
             };
             _entradaExistente.Amount = (double)(canMl ?? canGrs ?? (duracion.HasValue ? (decimal)duracion.Value : 0m));
             _entradaExistente.Unit   = tipo == TipoAlimentacion.Lactancia ? "min" :
-                                       tipo == TipoAlimentacion.Formula   ? "ml"  : "g";
+                                       tipo == TipoAlimentacion.Formula   ? _unidadFormula : _unidadSolido;
 
             await AppServices.DataService.UpdateFoodEntryAsync(_entradaExistente);
         }
@@ -279,7 +303,7 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
                 },
                 Amount = (double)(canMl ?? canGrs ?? (duracion.HasValue ? (decimal)duracion.Value : 0m)),
                 Unit   = tipo == TipoAlimentacion.Lactancia ? "min" :
-                         tipo == TipoAlimentacion.Formula   ? "ml"  : "g"
+                         tipo == TipoAlimentacion.Formula   ? _unidadFormula : _unidadSolido
             };
             await AppServices.DataService.AddFoodEntryAsync(nuevaEntrada);
         }

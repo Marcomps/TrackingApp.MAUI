@@ -73,18 +73,29 @@
 
                 <Border Background="White" StrokeShape="RoundRectangle 10"
                         Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,14">
-                    <Grid ColumnDefinitions="Auto,*,Auto" Padding="0,10">
-                        <Label Text="🍼  Cantidad" VerticalOptions="Center"
-                               TextColor="#333" FontSize="15" WidthRequest="110"/>
-                        <Entry Grid.Column="1"
-                               Text="{Binding CantidadMlTexto}"
-                               Placeholder="ej. 120"
-                               Keyboard="Numeric"
-                               HorizontalOptions="Fill"
-                               FontSize="16"
-                               TextColor="#1565C0"/>
-                        <Label Grid.Column="2" Text="ml" VerticalOptions="Center"
-                               TextColor="#666" FontSize="15" Margin="8,0,0,0"/>
+                    <Grid RowDefinitions="Auto,1,Auto">
+                        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Padding="0,10">
+                            <Label Text="🍼  Cantidad" VerticalOptions="Center"
+                                   TextColor="#333" FontSize="15" WidthRequest="110"/>
+                            <Entry Grid.Column="1"
+                                   Text="{Binding CantidadMlTexto}"
+                                   Placeholder="ej. 120"
+                                   Keyboard="Numeric"
+                                   HorizontalOptions="Fill"
+                                   FontSize="16"
+                                   TextColor="#1565C0"/>
+                        </Grid>
+                        <BoxView Grid.Row="1" HeightRequest="1" Background="#f0f0f0"/>
+                        <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="0,4">
+                            <Label Text="📐  Unidad" VerticalOptions="Center"
+                                   TextColor="#333" FontSize="15" WidthRequest="110"/>
+                            <Picker Grid.Column="1"
+                                    ItemsSource="{Binding UnidadesFormula}"
+                                    SelectedItem="{Binding UnidadFormula}"
+                                    HorizontalOptions="Fill"
+                                    FontSize="15"
+                                    TextColor="#1565C0"/>
+                        </Grid>
                     </Grid>
                 </Border>
             </VerticalStackLayout>
@@ -96,18 +107,29 @@
 
                 <Border Background="White" StrokeShape="RoundRectangle 10"
                         Stroke="#e0e0e0" Padding="14,4" Margin="0,0,0,14">
-                    <Grid ColumnDefinitions="Auto,*,Auto" Padding="0,10">
-                        <Label Text="🥣  Cantidad" VerticalOptions="Center"
-                               TextColor="#333" FontSize="15" WidthRequest="110"/>
-                        <Entry Grid.Column="1"
-                               Text="{Binding CantidadGramosTexto}"
-                               Placeholder="ej. 80"
-                               Keyboard="Numeric"
-                               HorizontalOptions="Fill"
-                               FontSize="16"
-                               TextColor="#1565C0"/>
-                        <Label Grid.Column="2" Text="g" VerticalOptions="Center"
-                               TextColor="#666" FontSize="15" Margin="8,0,0,0"/>
+                    <Grid RowDefinitions="Auto,1,Auto">
+                        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Padding="0,10">
+                            <Label Text="🥣  Cantidad" VerticalOptions="Center"
+                                   TextColor="#333" FontSize="15" WidthRequest="110"/>
+                            <Entry Grid.Column="1"
+                                   Text="{Binding CantidadGramosTexto}"
+                                   Placeholder="ej. 80"
+                                   Keyboard="Numeric"
+                                   HorizontalOptions="Fill"
+                                   FontSize="16"
+                                   TextColor="#1565C0"/>
+                        </Grid>
+                        <BoxView Grid.Row="1" HeightRequest="1" Background="#f0f0f0"/>
+                        <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Padding="0,4">
+                            <Label Text="📐  Unidad" VerticalOptions="Center"
+                                   TextColor="#333" FontSize="15" WidthRequest="110"/>
+                            <Picker Grid.Column="1"
+                                    ItemsSource="{Binding UnidadesSolido}"
+                                    SelectedItem="{Binding UnidadSolido}"
+                                    HorizontalOptions="Fill"
+                                    FontSize="15"
+                                    TextColor="#1565C0"/>
+                        </Grid>
                     </Grid>
                 </Border>
             </VerticalStackLayout>

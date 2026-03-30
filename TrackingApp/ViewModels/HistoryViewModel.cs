@@ -76,9 +76,39 @@ namespace TrackingApp.ViewModels
             {
                 if (FilteredFoodHistory == null || !FilteredFoodHistory.Any())
                     return Enumerable.Empty<string>();
-                return FilteredFoodHistory
-                    .GroupBy(f => string.IsNullOrWhiteSpace(f.Unit) ? "(sin unidad)" : f.Unit)
-                    .Select(g => $"Total cantidad: {g.Sum(f => f.Amount):0.##} {g.Key}");
+
+                var lines = new List<string>();
+
+                // Fórmula / Biberón — agrupar por unidad (oz, ml, cc…)
+                var formula = FilteredFoodHistory
+                    .Where(f => f.TipoAlimentacion == TipoAlimentacion.Formula && f.Amount > 0);
+                foreach (var g in formula
+                    .GroupBy(f => string.IsNullOrWhiteSpace(f.Unit) ? "ml" : f.Unit)
+                    .OrderByDescending(g => g.Sum(f => f.Amount)))
+                {
+                    lines.Add($"🍼 Fórmula: {g.Sum(f => f.Amount):0.##} {g.Key} ({g.Count()} toma{(g.Count() != 1 ? "s" : "")})");
+                }
+
+                // Sólido — agrupar por unidad (g, cucharadas, porción…)
+                var solido = FilteredFoodHistory
+                    .Where(f => f.TipoAlimentacion == TipoAlimentacion.Solido && f.Amount > 0);
+                foreach (var g in solido
+                    .GroupBy(f => string.IsNullOrWhiteSpace(f.Unit) ? "g" : f.Unit)
+                    .OrderByDescending(g => g.Sum(f => f.Amount)))
+                {
+                    lines.Add($"🥣 Sólido: {g.Sum(f => f.Amount):0.##} {g.Key} ({g.Count()} toma{(g.Count() != 1 ? "s" : "")})");
+                }
+
+                // Lactancia — sumar minutos
+                var lactancia = FilteredFoodHistory
+                    .Where(f => f.TipoAlimentacion == TipoAlimentacion.Lactancia);
+                if (lactancia.Any())
+                {
+                    var totalMin = lactancia.Sum(f => f.DuracionMinutos ?? (int)f.Amount);
+                    lines.Add($"🤱 Lactancia: {totalMin} min ({lactancia.Count()} toma{(lactancia.Count() != 1 ? "s" : "")})");
+                }
+
+                return lines;
             }
         }
         public string MostFrequentFoodType 
