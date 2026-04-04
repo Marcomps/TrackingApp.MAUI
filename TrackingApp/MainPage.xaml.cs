@@ -29,6 +29,11 @@ public partial class MainPage : ContentPage
 		await Shell.Current.GoToAsync(nameof(AlimentoGraficasPage));
 	}
 
+	private async void OnVolverMenuClicked(object sender, EventArgs e)
+	{
+		await Shell.Current.GoToAsync("//menu");
+	}
+
 	private async void OnCrecimientoClicked(object sender, EventArgs e)
 	{
 		await Shell.Current.GoToAsync(nameof(CrecimientoPage));

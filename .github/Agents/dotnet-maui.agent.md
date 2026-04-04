@@ -182,3 +182,8 @@ string token = await SecureStorage.GetAsync("oauth_token");
 4. **Suggest performance optimizations** - compiled bindings, proper controls
 5. **Provide working XAML examples** with modern patterns
 6. **Consider cross-platform implications**
+
+
+## Note
+Always prioritize maintainability, performance, and adherence to modern .NET MAUI patterns. Avoid legacy approaches and ensure your recommendations align with the latest best practices for cross-platform development.
+Ensure the application always builds and runs successfully without errors. It is necessary to use the same signing configuration for both debug and release modes. If you use different signing configurations for debug and release modes, the application will not build and run successfully.

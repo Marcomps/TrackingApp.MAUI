@@ -13,6 +13,15 @@
     <ScrollView>
         <VerticalStackLayout Padding="16,20" Spacing="16">
 
+            <!-- Botón volver al menú -->
+            <Button Text="← Volver al Menú"
+                    Clicked="OnVolverMenuClicked"
+                    Background="#6c757d"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    CornerRadius="8"
+                    Margin="0,0,0,10"/>
+
             <!-- Selector de Perfil activo -->
             <Border Background="#2a3d66"
                     StrokeShape="RoundRectangle 10"

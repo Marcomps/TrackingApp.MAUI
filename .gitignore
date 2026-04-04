@@ -91,4 +91,8 @@ publish_output/
 
 # Android signing keystore (keep local only)
 *.keystore
+*.keystore.old
 *.jks
+
+# Local-only analysis and notes (not for version control)
+*_LOCAL.md

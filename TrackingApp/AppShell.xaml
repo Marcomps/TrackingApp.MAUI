@@ -6,6 +6,11 @@
     xmlns:local="clr-namespace:TrackingApp"
     Shell.FlyoutBehavior="Disabled">
 
+    <ShellContent
+        Route="menu"
+        Title="Menú"
+        ContentTemplate="{DataTemplate local:MenuPage}" />
+
     <TabBar>
         <ShellContent
             Title="Inicio"
