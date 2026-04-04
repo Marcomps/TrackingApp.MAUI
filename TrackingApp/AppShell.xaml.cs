@@ -19,5 +19,7 @@ public partial class AppShell : Shell
 		Routing.RegisterRoute(nameof(CitaFormPage),          typeof(CitaFormPage));
 		// RF-002: Gráficas de crecimiento
 		Routing.RegisterRoute(nameof(CrecimientoGraficasPage), typeof(CrecimientoGraficasPage));
+		// Salud: medicamentos y confirmación de dosis
+		Routing.RegisterRoute(nameof(SaludPage),             typeof(SaludPage));
 	}
 }

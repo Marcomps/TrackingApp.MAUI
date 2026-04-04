@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
+             xmlns:models="clr-namespace:TrackingApp.Models;assembly=TrackingApp.Core"
+             x:Class="TrackingApp.SaludPage"
+             x:Name="SaludPageRoot"
+             x:DataType="viewmodels:MainViewModel"
+             Title="Salud"
+             Background="#f5f7fa">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="← Menú" Clicked="OnVolverMenuClicked" Priority="0" />
+    </ContentPage.ToolbarItems>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16,16" Spacing="16">
+
+            <!-- Selector de Perfil activo -->
+            <Border Background="#2a3d66"
+                    StrokeShape="RoundRectangle 10"
+                    StrokeThickness="0"
+                    Padding="16,12">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                    <Label Text="👤" FontSize="22" VerticalOptions="Center"/>
+                    <Picker Grid.Column="1"
+                            ItemsSource="{Binding Perfiles}"
+                            SelectedItem="{Binding PerfilSeleccionado}"
+                            ItemDisplayBinding="{Binding DisplayName}"
+                            TextColor="White"
+                            BackgroundColor="#1a2540"
+                            HorizontalOptions="Fill"
+                            VerticalOptions="Center"
+                            Title="Seleccionar perfil"
+                            TitleColor="#aabbdd"/>
+                </Grid>
+            </Border>
+
+            <!-- Registrar Medicamento -->
+            <Frame BackgroundColor="White" Padding="15" CornerRadius="8" HasShadow="True">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="💊 Registrar Medicamento" FontSize="20" FontAttributes="Bold" TextColor="#2a3d66"/>
+
+                    <Entry Placeholder="Nombre del medicamento"
+                           Text="{Binding MedicationName}"
+                           TextColor="Black"
+                           PlaceholderColor="Gray"
+                           BackgroundColor="#f5f5f5"/>
+                    <Entry Placeholder="Dosis (ej: 5ml)"
+                           Text="{Binding MedicationDose}"
+                           TextColor="Black"
+                           PlaceholderColor="Gray"
+                           BackgroundColor="#f5f5f5"/>
+
+                    <Label Text="Frecuencia:" FontAttributes="Bold" TextColor="#2a3d66"/>
+                    <HorizontalStackLayout Spacing="10">
+                        <VerticalStackLayout Spacing="5" HorizontalOptions="FillAndExpand">
+                            <Label Text="Horas" FontSize="12" TextColor="Gray"/>
+                            <Entry Placeholder="0"
+                                   Text="{Binding MedicationFrequencyHours}"
+                                   Keyboard="Default"
+                                   TextColor="Black"
+                                   PlaceholderColor="Gray"
+                                   BackgroundColor="#f5f5f5"
+                                   HorizontalOptions="Fill"/>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Spacing="5" HorizontalOptions="FillAndExpand">
+                            <Label Text="Minutos" FontSize="12" TextColor="Gray"/>
+                            <Entry Placeholder="30"
+                                   Text="{Binding MedicationFrequencyMinutes}"
+                                   Keyboard="Default"
+                                   TextColor="Black"
+                                   PlaceholderColor="Gray"
+                                   BackgroundColor="#f5f5f5"
+                                   HorizontalOptions="Fill"/>
+                        </VerticalStackLayout>
+                    </HorizontalStackLayout>
+
+                    <Label Text="Primera dosis:" FontSize="12" TextColor="Gray"/>
+                    <TimePicker Time="{Binding MedicationTime}"
+                                Format="hh:mm tt"
+                                TextColor="Black"
+                                BackgroundColor="#f5f5f5"/>
+                    <Button Text="Agregar Medicamento"
+                            Command="{Binding AddMedicationCommand}"
+                            BackgroundColor="#4CAF50"
+                            TextColor="White"
+                            FontAttributes="Bold"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Medicamentos Registrados -->
+            <Frame BackgroundColor="#fff3cd"
+                   BorderColor="#ffc107"
+                   Padding="10"
+                   CornerRadius="8"
+                   HasShadow="True">
+                <VerticalStackLayout Spacing="10">
+                    <HorizontalStackLayout Spacing="10">
+                        <Label Text="💊" FontSize="24" VerticalOptions="Center"/>
+                        <Label Text="Medicamentos Registrados"
+                               FontAttributes="Bold"
+                               FontSize="18"
+                               TextColor="#856404"
+                               VerticalOptions="Center"/>
+                        <Label Text="{Binding FilteredMedications.Count, StringFormat='({0})'}"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="#856404"
+                               VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+
+                    <Frame BackgroundColor="#d1ecf1"
+                           Padding="10"
+                           CornerRadius="5"
+                           IsVisible="{Binding FilteredMedications.Count, Converter={StaticResource InverseBoolConverter}}">
+                        <Label Text="ℹ️ No hay medicamentos registrados. Agrega uno arriba para comenzar."
+                               TextColor="#0c5460"
+                               FontSize="14"
+                               HorizontalTextAlignment="Center"/>
+                    </Frame>
+
+                    <Frame BackgroundColor="White"
+                           BorderColor="#ffc107"
+                           Padding="5"
+                           CornerRadius="5"
+                           IsVisible="{Binding FilteredMedications.Count}">
+                        <CollectionView ItemsSource="{Binding FilteredMedications}"
+                                        MinimumHeightRequest="80"
+                                        MaximumHeightRequest="400">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <SwipeView>
+                                        <SwipeView.LeftItems>
+                                            <SwipeItems Mode="Reveal">
+                                                <SwipeItem Text="Editar"
+                                                           BackgroundColor="#2196F3"
+                                                           Command="{Binding Source={x:Reference SaludPageRoot}, Path=BindingContext.EditMedicationCommand}"
+                                                           CommandParameter="{Binding .}"/>
+                                            </SwipeItems>
+                                        </SwipeView.LeftItems>
+                                        <SwipeView.RightItems>
+                                            <SwipeItems Mode="Reveal">
+                                                <SwipeItem Text="Eliminar"
+                                                           BackgroundColor="#f44336"
+                                                           Command="{Binding Source={x:Reference SaludPageRoot}, Path=BindingContext.DeleteMedicationCommand}"
+                                                           CommandParameter="{Binding .}"/>
+                                            </SwipeItems>
+                                        </SwipeView.RightItems>
+                                        <Frame BackgroundColor="#e3f2fd"
+                                               Padding="10"
+                                               Margin="2,3"
+                                               CornerRadius="8"
+                                               BorderColor="#2196F3"
+                                               HasShadow="True">
+                                            <Label Text="{Binding DisplayText}"
+                                                   TextColor="#01579b"
+                                                   FontSize="15"
+                                                   FontAttributes="Bold"
+                                                   VerticalOptions="Center"/>
+                                        </Frame>
+                                    </SwipeView>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </Frame>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Próximas Dosis y Confirmar -->
+            <Frame BackgroundColor="White" Padding="15" CornerRadius="8" HasShadow="True">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="📅 Eventos de Medicación" FontSize="20" FontAttributes="Bold" TextColor="#2a3d66"/>
+
+                    <HorizontalStackLayout Spacing="10">
+                        <Label Text="Días de cobertura:"
+                               VerticalOptions="Center"
+                               TextColor="Black"
+                               FontSize="14"/>
+                        <Picker ItemsSource="{Binding DaysOptions}"
+                                SelectedItem="{Binding SelectedDays}"
+                                TextColor="Black"
+                                BackgroundColor="#f5f5f5"
+                                WidthRequest="80"/>
+                        <Button Text="Actualizar"
+                                Command="{Binding RefreshCalendarCommand}"
+                                BackgroundColor="#4CAF50"
+                                TextColor="White"
+                                FontAttributes="Bold"
+                                HorizontalOptions="End"/>
+                    </HorizontalStackLayout>
+
+                    <VerticalStackLayout Spacing="8" IsVisible="{Binding Medications.Count}">
+                        <Label Text="{Binding SelectedMedicationFilterLabel}"
+                               TextColor="#2196F3"
+                               FontSize="14"
+                               FontAttributes="Bold"/>
+                        <HorizontalStackLayout Spacing="10">
+                            <Label Text="Medicamento:"
+                                   VerticalOptions="Center"
+                                   TextColor="Black"
+                                   FontSize="14"/>
+                            <Picker ItemsSource="{Binding Medications}"
+                                    ItemDisplayBinding="{Binding Name}"
+                                    SelectedItem="{Binding SelectedMedication}"
+                                    TextColor="Black"
+                                    BackgroundColor="#f5f5f5"
+                                    HorizontalOptions="Fill"/>
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+
+                    <Label Text="⏰ Próximas Dosis"
+                           FontAttributes="Bold"
+                           FontSize="18"
+                           TextColor="#2a3d66"
+                           Margin="0,10,0,5"/>
+
+                    <CollectionView ItemsSource="{Binding PendingDoses}"
+                                    MaximumHeightRequest="500">
+                        <CollectionView.EmptyView>
+                            <VerticalStackLayout Padding="20" HorizontalOptions="Center">
+                                <Label Text="✅"
+                                       FontSize="48"
+                                       HorizontalOptions="Center"
+                                       Margin="0,20,0,10"/>
+                                <Label Text="No hay dosis pendientes"
+                                       TextColor="#4CAF50"
+                                       FontAttributes="Bold"
+                                       FontSize="16"
+                                       HorizontalOptions="Center"/>
+                            </VerticalStackLayout>
+                        </CollectionView.EmptyView>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:MedicationEvent">
+                                <SwipeView>
+                                    <SwipeView.RightItems>
+                                        <SwipeItems Mode="Reveal">
+                                            <SwipeItem Text="Eliminar"
+                                                       BackgroundColor="#f44336"
+                                                       Command="{Binding Source={x:Reference SaludPageRoot}, Path=BindingContext.DeleteEventCommand}"
+                                                       CommandParameter="{Binding .}"/>
+                                        </SwipeItems>
+                                    </SwipeView.RightItems>
+                                    <Frame Padding="12"
+                                           Margin="0,5"
+                                           CornerRadius="8"
+                                           BorderColor="{Binding IsNextDose, Converter={StaticResource BoolToNextDoseColorConverter}}"
+                                           BackgroundColor="{Binding IsNextDose, Converter={StaticResource BoolToNextDoseBackgroundConverter}}">
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                            <Label Grid.Column="0"
+                                                   Text="{Binding DisplayTime}"
+                                                   FontAttributes="Bold"
+                                                   FontSize="18"
+                                                   TextColor="{Binding IsNextDose, Converter={StaticResource BoolToNextDoseTextConverter}}"
+                                                   VerticalOptions="Center"/>
+                                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                                <HorizontalStackLayout Spacing="8">
+                                                    <Label Text="⏰ SIGUIENTE"
+                                                           FontSize="14"
+                                                           TextColor="#FF6B35"
+                                                           FontAttributes="Bold"
+                                                           IsVisible="{Binding IsNextDose}"/>
+                                                    <Label Text="{Binding MedicationName}"
+                                                           FontAttributes="Bold"
+                                                           TextColor="Black"/>
+                                                </HorizontalStackLayout>
+                                                <Label Text="{Binding Dose}"
+                                                       FontSize="12"
+                                                       TextColor="#666"/>
+                                            </VerticalStackLayout>
+                                            <Button Grid.Column="2"
+                                                    Text="Confirmar"
+                                                    Command="{Binding Source={x:Reference SaludPageRoot}, Path=BindingContext.ConfirmEventCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    BackgroundColor="{Binding IsNextDose, Converter={StaticResource BoolToConfirmButtonColorConverter}}"
+                                                    TextColor="White"
+                                                    FontAttributes="Bold"
+                                                    FontSize="12"
+                                                    Padding="10,8"/>
+                                        </Grid>
+                                    </Frame>
+                                </SwipeView>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

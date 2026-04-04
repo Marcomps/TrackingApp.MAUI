@@ -58,10 +58,11 @@ namespace TrackingApp.Models
         [Ignore]
         public string TipoAlimentacionDisplay => TipoAlimentacion switch
         {
-            TipoAlimentacion.Lactancia => "Lactancia materna",
-            TipoAlimentacion.Formula   => "Fórmula / Biberón",
-            TipoAlimentacion.Solido    => "Alimentación sólida",
-            _                          => TipoAlimentacion.ToString()
+            TipoAlimentacion.Lactancia     => "Lactancia materna",
+            TipoAlimentacion.Formula       => "Fórmula / Biberón",
+            TipoAlimentacion.Solido        => "Alimentación sólida",
+            TipoAlimentacion.Personalizado => string.IsNullOrWhiteSpace(FoodType) ? "Personalizado" : FoodType,
+            _                              => TipoAlimentacion.ToString()
         };
     }
 }

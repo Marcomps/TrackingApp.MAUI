@@ -17,7 +17,7 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
     // ── Opciones de Picker ────────────────────────────────────────────────────
 
     public IReadOnlyList<string> TiposAlimentacion { get; } =
-        new[] { "Fórmula / Biberón", "Lactancia materna", "Alimentación sólida" };
+        new[] { "Fórmula / Biberón", "Lactancia materna", "Alimentación sólida", "Personalizado" };
 
     public IReadOnlyList<string> OpcionesPecho { get; } =
         new[] { "Izquierdo", "Derecho", "Ambos" };
@@ -82,12 +82,21 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(EsLactancia));
             OnPropertyChanged(nameof(EsFormula));
             OnPropertyChanged(nameof(EsSolido));
+            OnPropertyChanged(nameof(EsPersonalizado));
         }
     }
 
-    public bool EsLactancia => _tipoIndex == 1;
-    public bool EsFormula   => _tipoIndex == 0;
-    public bool EsSolido    => _tipoIndex == 2;
+    public bool EsLactancia    => _tipoIndex == 1;
+    public bool EsFormula      => _tipoIndex == 0;
+    public bool EsSolido       => _tipoIndex == 2;
+    public bool EsPersonalizado => _tipoIndex == 3;
+
+    private string _nombrePersonalizado = string.Empty;
+    public string NombrePersonalizado
+    {
+        get => _nombrePersonalizado;
+        set { _nombrePersonalizado = value; OnPropertyChanged(); }
+    }
 
     // ── Campos comunes ────────────────────────────────────────────────────────
 
@@ -183,11 +192,15 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
 
         TipoIndex = e.TipoAlimentacion switch
         {
-            TipoAlimentacion.Formula   => 0,
-            TipoAlimentacion.Lactancia => 1,
-            TipoAlimentacion.Solido    => 2,
-            _                          => 0
+            TipoAlimentacion.Formula       => 0,
+            TipoAlimentacion.Lactancia     => 1,
+            TipoAlimentacion.Solido        => 2,
+            TipoAlimentacion.Personalizado => 3,
+            _                              => 0
         };
+
+        if (e.TipoAlimentacion == TipoAlimentacion.Personalizado)
+            NombrePersonalizado = e.FoodType ?? string.Empty;
 
         PechoIndex = e.Pecho switch
         {
@@ -220,6 +233,7 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
             0 => TipoAlimentacion.Formula,
             1 => TipoAlimentacion.Lactancia,
             2 => TipoAlimentacion.Solido,
+            3 => TipoAlimentacion.Personalizado,
             _ => TipoAlimentacion.Formula
         };
 
@@ -269,14 +283,16 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
             // Keep legacy fields in sync
             _entradaExistente.FoodType = tipo switch
             {
-                TipoAlimentacion.Lactancia => "Lactancia",
-                TipoAlimentacion.Formula   => "Fórmula",
-                TipoAlimentacion.Solido    => "Sólido",
-                _                          => "Alimento"
+                TipoAlimentacion.Lactancia     => "Lactancia",
+                TipoAlimentacion.Formula       => "Fórmula",
+                TipoAlimentacion.Solido        => "Sólido",
+                TipoAlimentacion.Personalizado => string.IsNullOrWhiteSpace(_nombrePersonalizado) ? "Personalizado" : _nombrePersonalizado,
+                _                              => "Alimento"
             };
             _entradaExistente.Amount = (double)(canMl ?? canGrs ?? (duracion.HasValue ? (decimal)duracion.Value : 0m));
             _entradaExistente.Unit   = tipo == TipoAlimentacion.Lactancia ? "min" :
-                                       tipo == TipoAlimentacion.Formula   ? _unidadFormula : _unidadSolido;
+                                       tipo == TipoAlimentacion.Formula   ? _unidadFormula :
+                                       tipo == TipoAlimentacion.Solido    ? _unidadSolido : string.Empty;
 
             await AppServices.DataService.UpdateFoodEntryAsync(_entradaExistente);
         }
@@ -296,14 +312,16 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
                 // Legacy fields
                 FoodType = tipo switch
                 {
-                    TipoAlimentacion.Lactancia => "Lactancia",
-                    TipoAlimentacion.Formula   => "Fórmula",
-                    TipoAlimentacion.Solido    => "Sólido",
-                    _                          => "Alimento"
+                    TipoAlimentacion.Lactancia     => "Lactancia",
+                    TipoAlimentacion.Formula       => "Fórmula",
+                    TipoAlimentacion.Solido        => "Sólido",
+                    TipoAlimentacion.Personalizado => string.IsNullOrWhiteSpace(_nombrePersonalizado) ? "Personalizado" : _nombrePersonalizado,
+                    _                              => "Alimento"
                 },
                 Amount = (double)(canMl ?? canGrs ?? (duracion.HasValue ? (decimal)duracion.Value : 0m)),
                 Unit   = tipo == TipoAlimentacion.Lactancia ? "min" :
-                         tipo == TipoAlimentacion.Formula   ? _unidadFormula : _unidadSolido
+                         tipo == TipoAlimentacion.Formula   ? _unidadFormula :
+                         tipo == TipoAlimentacion.Solido    ? _unidadSolido : string.Empty
             };
             await AppServices.DataService.AddFoodEntryAsync(nuevaEntrada);
         }

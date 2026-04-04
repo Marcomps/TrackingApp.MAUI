@@ -18,4 +18,7 @@ public partial class AlimentoListPage : ContentPage
         base.OnAppearing();
         _vm.Cargar();
     }
+
+    private async void OnGraficasTapped(object sender, EventArgs e)
+        => await Shell.Current.GoToAsync(nameof(AlimentoGraficasPage));
 }

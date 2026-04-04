@@ -1,13 +1,12 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="TrackingApp.MenuPage"
-             Title="Seguimiento">
+             Title="Seguimiento"
+             Shell.TabBarIsVisible="False"
+             Shell.NavBarIsVisible="False">
 
-    <Shell.TabBarIsVisible>False</Shell.TabBarIsVisible>
-    <Shell.NavBarIsVisible>False</Shell.NavBarIsVisible>
-
-    <Grid RowDefinitions="Auto,*,Auto" Padding="0">
+    <Grid RowDefinitions="Auto,*" Padding="0">
 
         <!-- Header -->
         <Border Grid.Row="0"
@@ -26,7 +25,7 @@
                         WidthRequest="50"
                         HeightRequest="50"
                         StrokeThickness="0">
-                    <Label Text="👤"
+                    <Label Text="&#x1F464;"
                            FontSize="24"
                            HorizontalOptions="Center"
                            VerticalOptions="Center"/>
@@ -34,9 +33,9 @@
             </Grid>
         </Border>
 
-        <!-- Grid de Opciones -->
-        <ScrollView Grid.Row="1" Padding="20,10">
-            <Grid RowDefinitions="Auto,Auto,Auto"
+        <!-- Grid de Opciones (2x2) -->
+        <ScrollView Grid.Row="1" Padding="20,20">
+            <Grid RowDefinitions="*,*"
                   ColumnDefinitions="*,*"
                   RowSpacing="20"
                   ColumnSpacing="20">
@@ -59,7 +58,7 @@
                                 HorizontalOptions="Center"
                                 StrokeThickness="0"
                                 Margin="0,10,0,20">
-                            <Label Text="📏"
+                            <Label Text="&#x1F4CF;"
                                    FontSize="36"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center"/>
@@ -94,7 +93,7 @@
                                 HorizontalOptions="Center"
                                 StrokeThickness="0"
                                 Margin="0,10,0,20">
-                            <Label Text="🍼"
+                            <Label Text="&#x1F37C;"
                                    FontSize="36"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center"/>
@@ -111,7 +110,7 @@
                     </Border.GestureRecognizers>
                 </Border>
 
-                <!-- Peso de mamá -->
+                <!-- Salud -->
                 <Border Grid.Row="1" Grid.Column="0"
                         Background="White"
                         StrokeShape="RoundRectangle 16"
@@ -129,24 +128,24 @@
                                 HorizontalOptions="Center"
                                 StrokeThickness="0"
                                 Margin="0,10,0,20">
-                            <Label Text="⚖️"
+                            <Label Text="&#x1F48A;"
                                    FontSize="36"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center"/>
                         </Border>
                         <Label Grid.Row="1"
-                               Text="Peso de mamá"
+                               Text="Salud"
                                FontSize="16"
                                FontAttributes="Bold"
                                TextColor="#666"
                                HorizontalOptions="Center"/>
                     </Grid>
                     <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnPesoMamaTapped"/>
+                        <TapGestureRecognizer Tapped="OnSaludTapped"/>
                     </Border.GestureRecognizers>
                 </Border>
 
-                <!-- Calmar -->
+                <!-- Citas Medicas -->
                 <Border Grid.Row="1" Grid.Column="1"
                         Background="White"
                         StrokeShape="RoundRectangle 16"
@@ -164,159 +163,25 @@
                                 HorizontalOptions="Center"
                                 StrokeThickness="0"
                                 Margin="0,10,0,20">
-                            <Label Text="😴"
+                            <Label Text="&#x1F4C5;"
                                    FontSize="36"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center"/>
                         </Border>
                         <Label Grid.Row="1"
-                               Text="Calmar"
+                               Text="Citas Medicas"
                                FontSize="16"
                                FontAttributes="Bold"
                                TextColor="#666"
                                HorizontalOptions="Center"/>
                     </Grid>
                     <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnCalmarTapped"/>
-                    </Border.GestureRecognizers>
-                </Border>
-
-                <!-- Salud (Medicamentos) -->
-                <Border Grid.Row="2" Grid.Column="0"
-                        Background="White"
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="0"
-                        Padding="0">
-                    <Border.Shadow>
-                        <Shadow Brush="#E0E0E0" Offset="0,2" Radius="8" Opacity="0.3"/>
-                    </Border.Shadow>
-                    <Grid RowDefinitions="*,Auto" Padding="20">
-                        <Border Grid.Row="0"
-                                Background="#E8F4F8"
-                                StrokeShape="RoundRectangle 50"
-                                WidthRequest="80"
-                                HeightRequest="80"
-                                HorizontalOptions="Center"
-                                StrokeThickness="0"
-                                Margin="0,10,0,20">
-                            <Label Text="💊"
-                                   FontSize="36"
-                                   HorizontalOptions="Center"
-                                   VerticalOptions="Center"/>
-                        </Border>
-                        <Label Grid.Row="1"
-                               Text="Salud"
-                               FontSize="16"
-                               FontAttributes="Bold"
-                               TextColor="#666"
-                               HorizontalOptions="Center"/>
-                    </Grid>
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnSaludTapped"/>
-                    </Border.GestureRecognizers>
-                </Border>
-
-                <!-- Pañal -->
-                <Border Grid.Row="2" Grid.Column="1"
-                        Background="White"
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="0"
-                        Padding="0">
-                    <Border.Shadow>
-                        <Shadow Brush="#E0E0E0" Offset="0,2" Radius="8" Opacity="0.3"/>
-                    </Border.Shadow>
-                    <Grid RowDefinitions="*,Auto" Padding="20">
-                        <Border Grid.Row="0"
-                                Background="#E8F4F8"
-                                StrokeShape="RoundRectangle 50"
-                                WidthRequest="80"
-                                HeightRequest="80"
-                                HorizontalOptions="Center"
-                                StrokeThickness="0"
-                                Margin="0,10,0,20">
-                            <Label Text="🧷"
-                                   FontSize="36"
-                                   HorizontalOptions="Center"
-                                   VerticalOptions="Center"/>
-                        </Border>
-                        <Label Grid.Row="1"
-                               Text="Pañal"
-                               FontSize="16"
-                               FontAttributes="Bold"
-                               TextColor="#666"
-                               HorizontalOptions="Center"/>
-                    </Grid>
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnPanalTapped"/>
+                        <TapGestureRecognizer Tapped="OnCitasMedicasTapped"/>
                     </Border.GestureRecognizers>
                 </Border>
 
             </Grid>
         </ScrollView>
-
-        <!-- Bottom Navigation -->
-        <Border Grid.Row="2"
-                Background="White"
-                Padding="0"
-                StrokeThickness="0">
-            <Border.Shadow>
-                <Shadow Brush="#E0E0E0" Offset="0,-2" Radius="8" Opacity="0.2"/>
-            </Border.Shadow>
-            <Grid ColumnDefinitions="*,*,*,*"
-                  Padding="0,10,0,20">
-
-                <VerticalStackLayout Grid.Column="0" Spacing="4">
-                    <Label Text="📅"
-                           FontSize="24"
-                           HorizontalOptions="Center"/>
-                    <Label Text="Calendario"
-                           FontSize="11"
-                           TextColor="#999"
-                           HorizontalOptions="Center"/>
-                    <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnCalendarioTapped"/>
-                    </VerticalStackLayout.GestureRecognizers>
-                </VerticalStackLayout>
-
-                <VerticalStackLayout Grid.Column="1" Spacing="4">
-                    <Label Text="📊"
-                           FontSize="24"
-                           HorizontalOptions="Center"/>
-                    <Label Text="Seguimiento"
-                           FontSize="11"
-                           TextColor="#00BCD4"
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center"/>
-                </VerticalStackLayout>
-
-                <VerticalStackLayout Grid.Column="2" Spacing="4">
-                    <Label Text="❤️"
-                           FontSize="24"
-                           HorizontalOptions="Center"/>
-                    <Label Text="Favoritos"
-                           FontSize="11"
-                           TextColor="#999"
-                           HorizontalOptions="Center"/>
-                    <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnFavoritosTapped"/>
-                    </VerticalStackLayout.GestureRecognizers>
-                </VerticalStackLayout>
-
-                <VerticalStackLayout Grid.Column="3" Spacing="4">
-                    <Label Text="💬"
-                           FontSize="24"
-                           HorizontalOptions="Center"/>
-                    <Label Text="Chat"
-                           FontSize="11"
-                           TextColor="#999"
-                           HorizontalOptions="Center"/>
-                    <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnChatTapped"/>
-                    </VerticalStackLayout.GestureRecognizers>
-                </VerticalStackLayout>
-
-            </Grid>
-        </Border>
 
     </Grid>
 

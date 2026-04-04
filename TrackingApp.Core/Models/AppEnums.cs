@@ -28,7 +28,8 @@ namespace TrackingApp.Models
     {
         Lactancia,
         Formula,
-        Solido
+        Solido,
+        Personalizado
     }
 
     public enum PechoLactancia

@@ -10,6 +10,7 @@
 
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="+" Command="{Binding AgregarCommand}" Priority="0" />
+        <ToolbarItem Text="📊" Clicked="OnGraficasTapped" Priority="1" />
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="Auto,Auto,*">
