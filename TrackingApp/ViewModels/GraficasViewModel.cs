@@ -47,12 +47,13 @@ public class GraficasViewModel : INotifyPropertyChanged
 
     // ── Commands ──────────────────────────────────────────────────────────────
 
-    public Command<int> CambiarTabCommand { get; }
+    public Command<string> CambiarTabCommand { get; }
 
     public GraficasViewModel()
     {
-        CambiarTabCommand = new Command<int>(tab =>
+        CambiarTabCommand = new Command<string>(param =>
         {
+            if (!int.TryParse(param, out int tab)) return;
             if (_tabActivo == tab) return;
             _tabActivo = tab;
             NotifyTabChange();
