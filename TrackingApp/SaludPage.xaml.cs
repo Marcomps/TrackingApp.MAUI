@@ -8,20 +8,19 @@ public partial class SaludPage : ContentPage
     public SaludPage()
     {
         InitializeComponent();
-        BindingContext = new MainViewModel();
+        // Reuse the singleton ViewModel — no extra event subscriptions on revisit
+        BindingContext = AppServices.MainViewModel;
     }
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
 
-        // Refresh data in the background so the page renders immediately.
-        // Using Dispatcher so UI-bound collections update on the main thread.
+        // Light reload: only medications + doses + profiles — skips food/appointments/growth
         Dispatcher.DispatchAsync(async () =>
         {
-            await AppServices.DataService.ReloadAllDataAsync();
-            if (BindingContext is MainViewModel viewModel)
-                viewModel.NotifyAllDataChanged();
+            await AppServices.DataService.ReloadMedicationDataAsync();
+            AppServices.MainViewModel.NotifyAllDataChanged();
         });
     }
 

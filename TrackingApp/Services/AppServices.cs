@@ -1,17 +1,23 @@
+using TrackingApp.ViewModels;
+
 namespace TrackingApp.Services
 {
     /// <summary>
-    /// Provides a singleton instance of DataService for MAUI applications.
-    /// This is a MAUI-specific wrapper since DataService in Core doesn't have
-    /// access to the MAUI-specific DatabaseService.
+    /// Provides singleton instances of shared services and ViewModels.
     /// </summary>
     public static class AppServices
     {
         private static DataService? _dataService;
-        
-        /// <summary>
-        /// Gets the singleton instance of DataService using DatabaseService.Instance
-        /// </summary>
+        private static MainViewModel? _mainViewModel;
+
+        /// <summary>Singleton DataService backed by the SQLite DatabaseService.</summary>
         public static DataService DataService => _dataService ??= new DataService(DatabaseService.Instance);
+
+        /// <summary>
+        /// Singleton MainViewModel — created once and reused across pages
+        /// (SaludPage, MainPage) to avoid re-subscribing to collection events
+        /// on every navigation.
+        /// </summary>
+        public static MainViewModel MainViewModel => _mainViewModel ??= new MainViewModel();
     }
 }

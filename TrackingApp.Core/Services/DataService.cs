@@ -92,6 +92,45 @@ namespace TrackingApp.Services
         /// Recarga todos los datos desde la base de datos. Llamar desde OnAppearing
         /// para asegurar que la UI refleje el estado actual de la DB.
         /// </summary>
+        /// <summary>
+        /// Light reload: only loads medications, pending doses and profiles.
+        /// Use this for pages that only need medication data (e.g. SaludPage).
+        /// Much faster than ReloadAllDataAsync.
+        /// </summary>
+        public async Task ReloadMedicationDataAsync()
+        {
+            _suppressRebuild = true;
+            try
+            {
+                var medications = await _databaseService.GetAllMedicationsAsync();
+                Medications.Clear();
+                foreach (var med in medications)
+                    Medications.Add(med);
+
+                var doses = await _databaseService.GetAllDosesAsync();
+                MedicationDoses.Clear();
+                foreach (var dose in doses)
+                {
+                    if (!dose.IsConfirmed)
+                    {
+                        dose.Medication = Medications.FirstOrDefault(m => m.Id == dose.MedicationId);
+                        MedicationDoses.Add(dose);
+                    }
+                }
+
+                await LoadPerfilesAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error reloading medication data: {ex.Message}");
+            }
+            finally
+            {
+                _suppressRebuild = false;
+                RebuildCombinedEvents();
+            }
+        }
+
         public async Task ReloadAllDataAsync()
         {
             _suppressRebuild = true;
