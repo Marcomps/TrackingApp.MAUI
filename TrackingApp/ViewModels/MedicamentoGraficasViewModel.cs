@@ -32,11 +32,10 @@ public class MedicamentoGraficasViewModel : INotifyPropertyChanged
                 RefreshPeriodButtonColors();
                 OnPropertyChanged(nameof(FechaDesde));
                 OnPropertyChanged(nameof(FechaHasta));
-                CargarGraficas();
+                _ = CargarGraficasAsync();
             }
         });
-        RefrescarCommand = new Command(CargarGraficas);
-        CargarGraficas();
+        RefrescarCommand = new Command(() => _ = CargarGraficasAsync());
     }
 
     // ── Período ───────────────────────────────────────────────────────────────
@@ -80,7 +79,7 @@ public class MedicamentoGraficasViewModel : INotifyPropertyChanged
             _rangoPersonalizado = true;
             RefreshPeriodButtonColors();
             OnPropertyChanged();
-            CargarGraficas();
+            _ = CargarGraficasAsync();
         }
     }
 
@@ -94,7 +93,7 @@ public class MedicamentoGraficasViewModel : INotifyPropertyChanged
             _rangoPersonalizado = true;
             RefreshPeriodButtonColors();
             OnPropertyChanged();
-            CargarGraficas();
+            _ = CargarGraficasAsync();
         }
     }
 
@@ -164,16 +163,42 @@ public class MedicamentoGraficasViewModel : INotifyPropertyChanged
 
     // ── Carga de datos ────────────────────────────────────────────────────────
 
-    public void CargarGraficas()
-    {
-        var historial = AppServices.DataService.MedicationHistory;
-        var hoy       = DateTime.Today;
+    private bool _loading;
 
+    private record MedResult(
+        ISeries[] SeriesDosis, ISeries[] SeriesPorMed,
+        Axis[]    EjeXDosis,   Axis[]    EjeXPorMed,
+        string    Resumen,     bool      HayDatos);
+
+    public void CargarGraficas() => _ = CargarGraficasAsync();
+
+    public async Task CargarGraficasAsync()
+    {
+        if (_loading) return;
+        _loading = true;
+        try
+        {
+            var snapshot = AppServices.DataService.MedicationHistory.ToList();
+            var r = await Task.Run(() => ComputeGraficas(snapshot));
+            SeriesDosis  = r.SeriesDosis;
+            SeriesPorMed = r.SeriesPorMed;
+            EjeXDosis    = r.EjeXDosis;
+            EjeXPorMed   = r.EjeXPorMed;
+            Resumen      = r.Resumen;
+            HayDatos     = r.HayDatos;
+            OnPropertyChanged(nameof(NoHayDatos));
+        }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error med chart: {ex.Message}"); }
+        finally { _loading = false; }
+    }
+
+    private MedResult ComputeGraficas(List<TrackingApp.Models.MedicationHistory> historial)
+    {
+        var hoy = DateTime.Today;
         DateTime desde, hasta;
         if (_rangoPersonalizado)
         {
-            desde = _fechaDesde.Date;
-            hasta = _fechaHasta.Date;
+            desde = _fechaDesde.Date; hasta = _fechaHasta.Date;
             if (desde > hasta) (desde, hasta) = (hasta, desde);
         }
         else if (_dias == 0)
@@ -181,30 +206,20 @@ public class MedicamentoGraficasViewModel : INotifyPropertyChanged
             desde = historial.Any() ? historial.Min(h => h.AdministeredTime.Date) : hoy.AddDays(-29);
             hasta = hoy;
         }
-        else
-        {
-            hasta = hoy;
-            desde = hoy.AddDays(-(_dias - 1));
-        }
+        else { hasta = hoy; desde = hoy.AddDays(-(_dias - 1)); }
 
-        var filtrados = historial
-            .Where(h => h.AdministeredTime.Date >= desde && h.AdministeredTime.Date <= hasta)
-            .ToList();
+        var filtrados = historial.Where(h => h.AdministeredTime.Date >= desde && h.AdministeredTime.Date <= hasta).ToList();
 
         if (filtrados.Count == 0)
         {
             var ejeVacio = new Axis { Labels = [], TextSize = 11, LabelsPaint = new SolidColorPaint(new SKColor(80, 80, 80)) };
-            SeriesDosis  = [new ColumnSeries<int> { Values = Array.Empty<int>(), Name = "Sin datos" }];
-            SeriesPorMed = [new ColumnSeries<int> { Values = Array.Empty<int>(), Name = "Sin datos" }];
-            EjeXDosis    = [ejeVacio];
-            EjeXPorMed   = [ejeVacio];
-            Resumen      = "Sin registros de medicamentos en este período.";
-            HayDatos     = false;
-            OnPropertyChanged(nameof(NoHayDatos));
-            return;
+            return new MedResult(
+                [new ColumnSeries<int> { Values = Array.Empty<int>(), Name = "Sin datos" }],
+                [new ColumnSeries<int> { Values = Array.Empty<int>(), Name = "Sin datos" }],
+                [ejeVacio], [ejeVacio],
+                "Sin registros de medicamentos en este período.", false);
         }
 
-        // ── Dosis por día ─────────────────────────────────────────────────────
         int totalDias = Math.Max(1, (int)(hasta - desde).TotalDays + 1);
         bool muchos   = totalDias > 14;
 
@@ -218,80 +233,56 @@ public class MedicamentoGraficasViewModel : INotifyPropertyChanged
             .Select(d => filtrados.Count(h => h.AdministeredTime.Date == d.Fecha))
             .ToArray();
 
-        SeriesDosis =
+        ISeries[] seriesDosis =
         [
             new ColumnSeries<int>
             {
-                Values     = countsPorDia,
-                Name       = "Dosis administradas",
-                Fill       = new SolidColorPaint(new SKColor(42, 61, 102)),
-                Stroke     = null,
-                MaxBarWidth = 30,
+                Values = countsPorDia, Name = "Dosis administradas",
+                Fill = new SolidColorPaint(new SKColor(42, 61, 102)), Stroke = null, MaxBarWidth = 30,
             }
         ];
 
-        EjeXDosis =
+        Axis[] ejeXDosis =
         [
             new Axis
             {
-                Labels             = diasLabel.Select(d => d.Label).ToArray(),
-                LabelsRotation     = muchos ? -45 : 0,
-                TextSize           = 11,
-                LabelsPaint        = new SolidColorPaint(new SKColor(80, 80, 80)),
-                SeparatorsAtCenter = false,
-                TicksAtCenter      = true,
+                Labels         = diasLabel.Select(d => d.Label).ToArray(), LabelsRotation = muchos ? -45 : 0,
+                TextSize       = 11, LabelsPaint = new SolidColorPaint(new SKColor(80, 80, 80)),
+                SeparatorsAtCenter = false, TicksAtCenter = true,
             }
         ];
 
-        // ── Dosis por medicamento (top 8 para legibilidad) ────────────────────
         var grupos = filtrados
             .GroupBy(h => h.MedicationName)
             .Select(g => (Nombre: g.Key, Count: g.Count()))
-            .OrderByDescending(g => g.Count)
-            .Take(8)
-            .ToList();
+            .OrderByDescending(g => g.Count).Take(8).ToList();
 
-        var colores = new[]
-        {
-            new SKColor(42,  61,  102),
-            new SKColor(33,  150, 243),
-            new SKColor(76,  175, 80),
-            new SKColor(255, 152, 0),
-            new SKColor(156, 39,  176),
-            new SKColor(233, 30,  99),
-            new SKColor(0,   150, 136),
-            new SKColor(255, 87,  34),
+        var colores = new[] {
+            new SKColor(42,61,102), new SKColor(33,150,243), new SKColor(76,175,80),  new SKColor(255,152,0),
+            new SKColor(156,39,176),new SKColor(233,30,99),  new SKColor(0,150,136),  new SKColor(255,87,34),
         };
 
-        SeriesPorMed = grupos
+        ISeries[] seriesPorMed = grupos
             .Select((g, i) => (ISeries)new ColumnSeries<int>
             {
-                Values      = new[] { g.Count },
-                Name        = g.Nombre,
-                Fill        = new SolidColorPaint(colores[i % colores.Length]),
-                Stroke      = null,
-                MaxBarWidth = 40,
-            })
-            .ToArray();
+                Values = new[] { g.Count }, Name = g.Nombre,
+                Fill = new SolidColorPaint(colores[i % colores.Length]), Stroke = null, MaxBarWidth = 40,
+            }).ToArray();
 
-        EjeXPorMed =
+        Axis[] ejeXPorMed =
         [
             new Axis
             {
                 Labels      = grupos.Select(g => g.Nombre.Length > 12 ? g.Nombre[..12] + "…" : g.Nombre).ToArray(),
-                TextSize    = 11,
-                LabelsPaint = new SolidColorPaint(new SKColor(80, 80, 80)),
-                TicksAtCenter      = true,
-                SeparatorsAtCenter = false,
+                TextSize    = 11, LabelsPaint = new SolidColorPaint(new SKColor(80, 80, 80)),
+                TicksAtCenter = true, SeparatorsAtCenter = false,
             }
         ];
 
-        int total   = filtrados.Count;
-        string top  = grupos.FirstOrDefault().Nombre ?? "—";
-        int topCnt  = grupos.FirstOrDefault().Count;
-        Resumen = $"Total: {total} dosis  •  Más frecuente: {top} ({topCnt})";
-        HayDatos = true;
-        OnPropertyChanged(nameof(NoHayDatos));
+        string top    = grupos.FirstOrDefault().Nombre ?? "—";
+        int    topCnt = grupos.FirstOrDefault().Count;
+        return new MedResult(seriesDosis, seriesPorMed, ejeXDosis, ejeXPorMed,
+            $"Total: {filtrados.Count} dosis  •  Más frecuente: {top} ({topCnt})", true);
     }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)

@@ -33,11 +33,10 @@ public class CitasGraficasViewModel : INotifyPropertyChanged
                 RefreshPeriodButtonColors();
                 OnPropertyChanged(nameof(FechaDesde));
                 OnPropertyChanged(nameof(FechaHasta));
-                CargarGraficas();
+                _ = CargarGraficasAsync();
             }
         });
-        RefrescarCommand = new Command(CargarGraficas);
-        CargarGraficas();
+        RefrescarCommand = new Command(() => _ = CargarGraficasAsync());
     }
 
     // ── Período ───────────────────────────────────────────────────────────────
@@ -81,7 +80,7 @@ public class CitasGraficasViewModel : INotifyPropertyChanged
             _rangoPersonalizado = true;
             RefreshPeriodButtonColors();
             OnPropertyChanged();
-            CargarGraficas();
+            _ = CargarGraficasAsync();
         }
     }
 
@@ -95,7 +94,7 @@ public class CitasGraficasViewModel : INotifyPropertyChanged
             _rangoPersonalizado = true;
             RefreshPeriodButtonColors();
             OnPropertyChanged();
-            CargarGraficas();
+            _ = CargarGraficasAsync();
         }
     }
 
@@ -165,10 +164,46 @@ public class CitasGraficasViewModel : INotifyPropertyChanged
 
     // ── Carga de datos ────────────────────────────────────────────────────────
 
-    public void CargarGraficas()
+    private bool _loading;
+
+    private record CitasResult(
+        ISeries[] SeriesPorMes,
+        ISeries[] SeriesPorCategoria,
+        Axis[]    EjeXMes,
+        Axis[]    EjeXCategoria,
+        string    Resumen,
+        bool      HayDatos
+    );
+
+    public void CargarGraficas() => _ = CargarGraficasAsync();
+
+    public async Task CargarGraficasAsync()
     {
-        var citas = AppServices.DataService.Appointments;
-        var hoy   = DateTime.Today;
+        if (_loading) return;
+        _loading = true;
+        try
+        {
+            var snapshot = AppServices.DataService.Appointments.ToList();
+            var r = await Task.Run(() => ComputeGraficas(snapshot));
+            // Back on UI thread: apply all results
+            SeriesPorMes       = r.SeriesPorMes;
+            SeriesPorCategoria = r.SeriesPorCategoria;
+            EjeXMes            = r.EjeXMes;
+            EjeXCategoria      = r.EjeXCategoria;
+            Resumen            = r.Resumen;
+            HayDatos           = r.HayDatos;
+            OnPropertyChanged(nameof(NoHayDatos));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading appointments chart: {ex.Message}");
+        }
+        finally { _loading = false; }
+    }
+
+    private CitasResult ComputeGraficas(List<MedicalAppointment> citas)
+    {
+        var hoy = DateTime.Today;
 
         DateTime desde, hasta;
         if (_rangoPersonalizado)
@@ -195,14 +230,11 @@ public class CitasGraficasViewModel : INotifyPropertyChanged
         if (filtradas.Count == 0)
         {
             var ejeVacio = new Axis { Labels = [], TextSize = 11, LabelsPaint = new SolidColorPaint(new SKColor(80, 80, 80)) };
-            SeriesPorMes       = [new ColumnSeries<int> { Values = Array.Empty<int>(), Name = "Sin datos" }];
-            SeriesPorCategoria = [new ColumnSeries<int> { Values = Array.Empty<int>(), Name = "Sin datos" }];
-            EjeXMes            = [ejeVacio];
-            EjeXCategoria      = [ejeVacio];
-            Resumen            = "Sin citas en este período.";
-            HayDatos           = false;
-            OnPropertyChanged(nameof(NoHayDatos));
-            return;
+            return new CitasResult(
+                [new ColumnSeries<int> { Values = Array.Empty<int>(), Name = "Sin datos" }],
+                [new ColumnSeries<int> { Values = Array.Empty<int>(), Name = "Sin datos" }],
+                [ejeVacio], [ejeVacio],
+                "Sin citas en este período.", false);
         }
 
         // ── Por mes ───────────────────────────────────────────────────────────
@@ -216,7 +248,7 @@ public class CitasGraficasViewModel : INotifyPropertyChanged
                 c.AppointmentDate.Month == m.Inicio.Month))
             .ToArray();
 
-        SeriesPorMes =
+        ISeries[] seriesPorMes =
         [
             new ColumnSeries<int>
             {
@@ -228,7 +260,7 @@ public class CitasGraficasViewModel : INotifyPropertyChanged
             }
         ];
 
-        EjeXMes =
+        Axis[] ejeXMes =
         [
             new Axis
             {
@@ -276,7 +308,7 @@ public class CitasGraficasViewModel : INotifyPropertyChanged
             .Where(s => ((ColumnSeries<int>)s).Values?.Cast<int>().Sum() > 0)
             .ToArray();
 
-        SeriesPorCategoria = sersCat.Length > 0
+        ISeries[] seriesPorCategoria = sersCat.Length > 0
             ? sersCat
             : [new ColumnSeries<int> { Values = Array.Empty<int>(), Name = "Sin datos" }];
 
@@ -285,7 +317,7 @@ public class CitasGraficasViewModel : INotifyPropertyChanged
             .Select(cat => labels[(int)cat])
             .ToArray();
 
-        EjeXCategoria =
+        Axis[] ejeXCategoria =
         [
             new Axis
             {
@@ -297,12 +329,12 @@ public class CitasGraficasViewModel : INotifyPropertyChanged
             }
         ];
 
-        int total     = filtradas.Count;
+        int total      = filtradas.Count;
         int pendientes = filtradas.Count(c => c.Estado == EstadoCita.Pendiente);
         int completadas = filtradas.Count(c => c.Estado == EstadoCita.Completada);
-        Resumen = $"Total: {total}  •  Pendientes: {pendientes}  •  Completadas: {completadas}";
-        HayDatos = true;
-        OnPropertyChanged(nameof(NoHayDatos));
+        string resumen = $"Total: {total}  •  Pendientes: {pendientes}  •  Completadas: {completadas}";
+
+        return new CitasResult(seriesPorMes, seriesPorCategoria, ejeXMes, ejeXCategoria, resumen, true);
     }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)

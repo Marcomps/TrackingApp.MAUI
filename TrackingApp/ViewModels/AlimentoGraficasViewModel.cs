@@ -42,11 +42,10 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
                 RefreshPeriodButtonColors();
                 OnPropertyChanged(nameof(FechaDesde));
                 OnPropertyChanged(nameof(FechaHasta));
-                CargarGrafica();
+                _ = CargarGraficaAsync();
             }
         });
-        RefrescarCommand = new Command(CargarGrafica);
-        CargarGrafica();
+        RefrescarCommand = new Command(() => _ = CargarGraficaAsync());
     }
 
     // ── Propiedades de período ────────────────────────────────────────────────
@@ -96,7 +95,7 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
             _rangoPersonalizado = true;
             RefreshPeriodButtonColors();
             OnPropertyChanged();
-            CargarGrafica();
+            _ = CargarGraficaAsync();
         }
     }
 
@@ -110,7 +109,7 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
             _rangoPersonalizado = true;
             RefreshPeriodButtonColors();
             OnPropertyChanged();
-            CargarGrafica();
+            _ = CargarGraficaAsync();
         }
     }
 
@@ -187,9 +186,50 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
 
     // ── Lógica de datos ───────────────────────────────────────────────────────
 
-    public void CargarGrafica()
+    private bool _loading;
+
+    private record GraficaResult(
+        ISeries[]   Series,
+        Axis[]      XAxes,
+        string      ResumenFormula,
+        string      ResumenLactancia,
+        string      ResumenSolido,
+        List<PersonalizadoResumenItem> PersonalizadoItems,
+        bool        HayDatos
+    );
+
+    /// <summary>Public entry point — fires async computation off the UI thread.</summary>
+    public void CargarGrafica() => _ = CargarGraficaAsync();
+
+    public async Task CargarGraficaAsync()
     {
-        var entries = AppServices.DataService.FoodEntries;
+        if (_loading) return;
+        _loading = true;
+        try
+        {
+            var snapshot = AppServices.DataService.FoodEntries.ToList();
+            var r = await Task.Run(() => ComputeGrafica(snapshot));
+            // Back on UI thread: apply all results
+            Series           = r.Series;
+            XAxes            = r.XAxes;
+            ResumenFormula   = r.ResumenFormula;
+            ResumenLactancia = r.ResumenLactancia;
+            ResumenSolido    = r.ResumenSolido;
+            PersonalizadoResumenes.Clear();
+            foreach (var item in r.PersonalizadoItems) PersonalizadoResumenes.Add(item);
+            OnPropertyChanged(nameof(HayPersonalizado));
+            HayDatos = r.HayDatos;
+            OnPropertyChanged(nameof(NoHayDatos));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading food chart: {ex.Message}");
+        }
+        finally { _loading = false; }
+    }
+
+    private GraficaResult ComputeGrafica(List<TrackingApp.Models.FoodEntry> entries)
+    {
         var hoy     = DateTime.Today;
 
         DateTime desde, hasta;
@@ -399,9 +439,9 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
                 GeometrySize = 0,
             });
 
-        Series = [.. seriesList];
+        ISeries[] computedSeries = [.. seriesList];
 
-        XAxes =
+        Axis[] computedXAxes =
         [
             new Axis
             {
@@ -421,12 +461,12 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
             .Where(kv => kv.Value.Sum() > 0)
             .OrderByDescending(kv => kv.Value.Sum())
             .Select(kv => $"{kv.Value.Sum():F0} {kv.Key}");
-        ResumenFormula = formulaResumenParts.Any()
+        string computedResumenFormula = formulaResumenParts.Any()
             ? string.Join(" · ", formulaResumenParts)
             : "Sin registros de fórmula";
 
         double totalL = lactanciaMin.Sum();
-        ResumenLactancia = totalL > 0
+        string computedResumenLactancia = totalL > 0
             ? $"{totalL:F0} min total · {(n > 0 ? totalL / n : 0):F0} min/{unidadTiempo} prom."
             : "Sin registros de lactancia";
 
@@ -434,12 +474,12 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
             .Where(kv => kv.Value.Sum() > 0)
             .OrderByDescending(kv => kv.Value.Sum())
             .Select(kv => $"{kv.Value.Sum():F0} {kv.Key}");
-        ResumenSolido = solidoResumenParts.Any()
+        string computedResumenSolido = solidoResumenParts.Any()
             ? string.Join(" · ", solidoResumenParts)
             : "Sin registros de sólidos";
 
         // Build one resumen item per distinct Personalizado food name
-        PersonalizadoResumenes.Clear();
+        var computedPersonalizados = new List<PersonalizadoResumenItem>();
         foreach (var kv in personalizadoGroups.OrderBy(k => k.Key))
         {
             if (!kv.Value.Any(v => v > 0)) continue;
@@ -451,19 +491,20 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
                 e.Time.Date >= desde && e.Time.Date <= hasta).ToList();
             int cnt = matchingEntries.Count;
             var unit = matchingEntries.Select(e => e.Unit).FirstOrDefault(u => !string.IsNullOrWhiteSpace(u)) ?? "";
-            var resumen = total > 1.0 * cnt   // has real quantity data
+            var resumen = total > 1.0 * cnt
                 ? $"{total:0.##}{(string.IsNullOrWhiteSpace(unit) ? "" : " " + unit)} total · {cnt} registro{(cnt != 1 ? "s" : "")}"
                 : $"{cnt} registro{(cnt != 1 ? "s" : "")}";
-            PersonalizadoResumenes.Add(new PersonalizadoResumenItem { Nombre = kv.Key, Resumen = resumen });
+            computedPersonalizados.Add(new PersonalizadoResumenItem { Nombre = kv.Key, Resumen = resumen });
         }
-        OnPropertyChanged(nameof(HayPersonalizado));
 
-        bool anyFormula      = formulaGroups.Any(kv => kv.Value.Any(v => v > 0));
-        bool anyLactancia    = lactanciaMin.Any(v => v > 0);
-        bool anySolido       = solidoGroups.Any(kv => kv.Value.Any(v => v > 0));
+        bool anyFormula       = formulaGroups.Any(kv => kv.Value.Any(v => v > 0));
+        bool anyLactancia     = lactanciaMin.Any(v => v > 0);
+        bool anySolido        = solidoGroups.Any(kv => kv.Value.Any(v => v > 0));
         bool anyPersonalizado = personalizadoGroups.Any(kv => kv.Value.Any(v => v > 0));
-        HayDatos = anyFormula || anyLactancia || anySolido || anyPersonalizado;
-        OnPropertyChanged(nameof(NoHayDatos));
+        bool computedHayDatos = anyFormula || anyLactancia || anySolido || anyPersonalizado;
+
+        return new GraficaResult(computedSeries, computedXAxes, computedResumenFormula,
+            computedResumenLactancia, computedResumenSolido, computedPersonalizados, computedHayDatos);
     }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)

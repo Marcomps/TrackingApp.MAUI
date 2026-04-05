@@ -4,6 +4,7 @@ using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
+using TrackingApp.Models;
 using TrackingApp.Services;
 
 namespace TrackingApp.ViewModels;
@@ -34,11 +35,10 @@ public class CrecimientoGraficasViewModel : INotifyPropertyChanged
                 RefreshPeriodButtonColors();
                 OnPropertyChanged(nameof(FechaDesde));
                 OnPropertyChanged(nameof(FechaHasta));
-                CargarGraficas();
+                _ = CargarGraficasAsync();
             }
         });
-        RefrescarCommand = new Command(CargarGraficas);
-        CargarGraficas();
+        RefrescarCommand = new Command(() => _ = CargarGraficasAsync());
     }
 
     // ── Propiedades de período ────────────────────────────────────────────────
@@ -84,7 +84,7 @@ public class CrecimientoGraficasViewModel : INotifyPropertyChanged
             _rangoPersonalizado = true;
             RefreshPeriodButtonColors();
             OnPropertyChanged();
-            CargarGraficas();
+            _ = CargarGraficasAsync();
         }
     }
 
@@ -98,7 +98,7 @@ public class CrecimientoGraficasViewModel : INotifyPropertyChanged
             _rangoPersonalizado = true;
             RefreshPeriodButtonColors();
             OnPropertyChanged();
-            CargarGraficas();
+            _ = CargarGraficasAsync();
         }
     }
 
@@ -201,10 +201,54 @@ public class CrecimientoGraficasViewModel : INotifyPropertyChanged
 
     // ── Lógica de datos ───────────────────────────────────────────────────────
 
-    public void CargarGraficas()
+    private bool _loading;
+
+    private record CrecimientoResult(
+        ISeries[] SeriesPeso,
+        ISeries[] SeriesTalla,
+        ISeries[] SeriesIMC,
+        Axis[]    EjeX,
+        Axis[]    EjeXTalla,
+        Axis[]    EjeXIMC,
+        string    ResumenPeso,
+        string    ResumenTalla,
+        string    ResumenIMC,
+        bool      HayDatos
+    );
+
+    public void CargarGraficas() => _ = CargarGraficasAsync();
+
+    public async Task CargarGraficasAsync()
     {
-        var registros = AppServices.DataService.RegistrosCrecimiento;
-        var hoy       = DateTime.Today;
+        if (_loading) return;
+        _loading = true;
+        try
+        {
+            var snapshot = AppServices.DataService.RegistrosCrecimiento.ToList();
+            var r = await Task.Run(() => ComputeGraficas(snapshot));
+            // Back on UI thread: apply all results
+            SeriesPeso  = r.SeriesPeso;
+            SeriesTalla = r.SeriesTalla;
+            SeriesIMC   = r.SeriesIMC;
+            EjeX        = r.EjeX;
+            EjeXTalla   = r.EjeXTalla;
+            EjeXIMC     = r.EjeXIMC;
+            ResumenPeso  = r.ResumenPeso;
+            ResumenTalla = r.ResumenTalla;
+            ResumenIMC   = r.ResumenIMC;
+            HayDatos     = r.HayDatos;
+            OnPropertyChanged(nameof(NoHayDatos));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading growth chart: {ex.Message}");
+        }
+        finally { _loading = false; }
+    }
+
+    private CrecimientoResult ComputeGraficas(List<RegistroCrecimiento> registros)
+    {
+        var hoy = DateTime.Today;
 
         DateTime desde, hasta;
         if (_rangoPersonalizado)
@@ -232,25 +276,19 @@ public class CrecimientoGraficasViewModel : INotifyPropertyChanged
 
         if (filtrados.Count == 0)
         {
-            SeriesPeso  = [new LineSeries<double> { Values = Array.Empty<double>(), Name = "Sin datos", Stroke = new SolidColorPaint(new SKColor(200, 200, 200), 1), Fill = null, GeometrySize = 0 }];
-            SeriesTalla = [new LineSeries<double> { Values = Array.Empty<double>(), Name = "Sin datos", Stroke = new SolidColorPaint(new SKColor(200, 200, 200), 1), Fill = null, GeometrySize = 0 }];
-            SeriesIMC   = [new LineSeries<double> { Values = Array.Empty<double>(), Name = "Sin datos", Stroke = new SolidColorPaint(new SKColor(200, 200, 200), 1), Fill = null, GeometrySize = 0 }];
+            var emptyLine = new LineSeries<double> { Values = Array.Empty<double>(), Name = "Sin datos", Stroke = new SolidColorPaint(new SKColor(200, 200, 200), 1), Fill = null, GeometrySize = 0 };
             var emptyAxis = new Axis[] { new Axis { Labels = [], TextSize = 11, LabelsPaint = new SolidColorPaint(new SKColor(80, 80, 80)) } };
-            EjeX     = emptyAxis;
-            EjeXTalla = emptyAxis;
-            EjeXIMC  = emptyAxis;
-            ResumenPeso  = "Sin registros de crecimiento";
-            ResumenTalla = "Sin registros de crecimiento";
-            ResumenIMC   = "Sin registros de crecimiento";
-            HayDatos = false;
-            OnPropertyChanged(nameof(NoHayDatos));
-            return;
+            return new CrecimientoResult(
+                [emptyLine], [emptyLine], [emptyLine],
+                emptyAxis, emptyAxis, emptyAxis,
+                "Sin registros de crecimiento", "Sin registros de crecimiento", "Sin registros de crecimiento",
+                false);
         }
 
         // Etiquetas del eje X
         bool muchos = filtrados.Count > 14;
         string[] etiquetas = filtrados
-            .Select(r => muchos ? r.Fecha.ToString("dd/MM") : r.Fecha.ToString("dd/MM"))
+            .Select(r => r.Fecha.ToString("dd/MM"))
             .ToArray();
 
         var pesoValues  = filtrados.Select(r => (double)r.PesoKg).ToArray();
@@ -270,11 +308,11 @@ public class CrecimientoGraficasViewModel : INotifyPropertyChanged
             }
         ];
 
-        EjeX      = BuildXAxis(etiquetas, muchos);
-        EjeXTalla = BuildXAxis(etiquetas, muchos);
-        EjeXIMC   = BuildXAxis(etiquetas, muchos);
+        var ejeX      = BuildXAxis(etiquetas, muchos);
+        var ejeXTalla = BuildXAxis(etiquetas, muchos);
+        var ejeXIMC   = BuildXAxis(etiquetas, muchos);
 
-        SeriesPeso =
+        ISeries[] seriesPeso =
         [
             new LineSeries<double>
             {
@@ -288,7 +326,7 @@ public class CrecimientoGraficasViewModel : INotifyPropertyChanged
             }
         ];
 
-        SeriesTalla =
+        ISeries[] seriesTalla =
         [
             new LineSeries<double>
             {
@@ -302,7 +340,7 @@ public class CrecimientoGraficasViewModel : INotifyPropertyChanged
             }
         ];
 
-        SeriesIMC =
+        ISeries[] seriesIMC =
         [
             new LineSeries<double>
             {
@@ -323,11 +361,11 @@ public class CrecimientoGraficasViewModel : INotifyPropertyChanged
         double tallaUlt = tallaValues[^1];
         double imcUlt   = imcValues[^1];
 
-        ResumenPeso  = $"Último: {pesoUlt:F2} kg · Rango: {pesoMin:F2} – {pesoMax:F2} kg";
-        ResumenTalla = $"Último: {tallaUlt:F1} cm · {filtrados.Count} medición(es)";
-        ResumenIMC   = $"Último IMC: {imcUlt:F1} kg/m²";
-        HayDatos     = true;
-        OnPropertyChanged(nameof(NoHayDatos));
+        string resumenPeso  = $"Último: {pesoUlt:F2} kg · Rango: {pesoMin:F2} – {pesoMax:F2} kg";
+        string resumenTalla = $"Último: {tallaUlt:F1} cm · {filtrados.Count} medición(es)";
+        string resumenIMC   = $"Último IMC: {imcUlt:F1} kg/m²";
+
+        return new CrecimientoResult(seriesPeso, seriesTalla, seriesIMC, ejeX, ejeXTalla, ejeXIMC, resumenPeso, resumenTalla, resumenIMC, true);
     }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)
