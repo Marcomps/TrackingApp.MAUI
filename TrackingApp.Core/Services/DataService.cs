@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using TrackingApp.Helpers;
 using TrackingApp.Models;
 
 namespace TrackingApp.Services
@@ -9,9 +10,9 @@ namespace TrackingApp.Services
         private bool _suppressRebuild = false;
 
         public ObservableCollection<FoodEntry> FoodEntries { get; } = new();
-        public ObservableCollection<Medication> Medications { get; } = new();
-        public ObservableCollection<MedicationDose> MedicationDoses { get; } = new();
-        public ObservableCollection<MedicationEvent> CombinedMedicationEvents { get; } = new();
+        public BulkObservableCollection<Medication> Medications { get; } = new();
+        public BulkObservableCollection<MedicationDose> MedicationDoses { get; } = new();
+        public BulkObservableCollection<MedicationEvent> CombinedMedicationEvents { get; } = new();
         public ObservableCollection<MedicalAppointment> Appointments { get; } = new();
         public ObservableCollection<MedicationHistory> MedicationHistory { get; } = new();
 
@@ -103,20 +104,14 @@ namespace TrackingApp.Services
             try
             {
                 var medications = await _databaseService.GetAllMedicationsAsync();
-                Medications.Clear();
-                foreach (var med in medications)
-                    Medications.Add(med);
+                Medications.ReplaceAll(medications);
 
                 var doses = await _databaseService.GetAllDosesAsync();
-                MedicationDoses.Clear();
-                foreach (var dose in doses)
-                {
-                    if (!dose.IsConfirmed)
-                    {
-                        dose.Medication = Medications.FirstOrDefault(m => m.Id == dose.MedicationId);
-                        MedicationDoses.Add(dose);
-                    }
-                }
+                var filteredDoses = doses
+                    .Where(d => !d.IsConfirmed)
+                    .Select(d => { d.Medication = Medications.FirstOrDefault(m => m.Id == d.MedicationId); return d; })
+                    .ToList();
+                MedicationDoses.ReplaceAll(filteredDoses);
 
                 await LoadPerfilesAsync();
             }
@@ -146,23 +141,15 @@ namespace TrackingApp.Services
 
                 // Cargar medicamentos
                 var medications = await _databaseService.GetAllMedicationsAsync();
-                Medications.Clear();
-                foreach (var med in medications)
-                {
-                    Medications.Add(med);
-                }
+                Medications.ReplaceAll(medications);
 
                 // Cargar dosis (solo no confirmadas)
                 var doses = await _databaseService.GetAllDosesAsync();
-                MedicationDoses.Clear();
-                foreach (var dose in doses)
-                {
-                    if (!dose.IsConfirmed)
-                    {
-                        dose.Medication = Medications.FirstOrDefault(m => m.Id == dose.MedicationId);
-                        MedicationDoses.Add(dose);
-                    }
-                }
+                var filteredDoses2 = doses
+                    .Where(d => !d.IsConfirmed)
+                    .Select(d => { d.Medication = Medications.FirstOrDefault(m => m.Id == d.MedicationId); return d; })
+                    .ToList();
+                MedicationDoses.ReplaceAll(filteredDoses2);
 
                 // Cargar historial de medicamentos
                 await LoadMedicationHistoryAsync();
@@ -210,12 +197,6 @@ namespace TrackingApp.Services
                 
                 // Limpiar dosis anteriores de este medicamento
                 await _databaseService.DeleteDosesByMedicationAsync(medication.Id);
-                
-                var oldDoses = MedicationDoses.Where(d => d.MedicationId == medication.Id).ToList();
-                foreach (var dose in oldDoses)
-                {
-                    MedicationDoses.Remove(dose);
-                }
                 System.Diagnostics.Debug.WriteLine($"🔵 Cleared old doses. Generating doses for {days} days...");
 
                 var now = DateTime.Now;
@@ -234,32 +215,32 @@ namespace TrackingApp.Services
 
                 System.Diagnostics.Debug.WriteLine($"🔵 First dose: {firstDose:yyyy-MM-dd HH:mm}");
 
-                // Generar dosis según frecuencia durante N días
+                // Build all doses in memory first
                 var endDate = firstDose.AddDays(days);
                 var currentDose = firstDose;
-                int doseCount = 0;
+                var newDoses = new List<MedicationDose>();
 
                 while (currentDose < endDate)
                 {
-                    var newDose = new MedicationDose
+                    newDoses.Add(new MedicationDose
                     {
                         MedicationId = medication.Id,
-                        Medication = medication,
                         ScheduledTime = currentDose,
                         IsConfirmed = false,
                         IsEdited = false
-                    };
-
-                    await _databaseService.SaveDoseAsync(newDose);
-                    MedicationDoses.Add(newDose);
-                    doseCount++;
-                    System.Diagnostics.Debug.WriteLine($"  ✅ Dose {doseCount}: {currentDose:yyyy-MM-dd HH:mm}");
-                    
-                    // Siguiente dosis según la frecuencia
+                    });
                     currentDose = currentDose.AddMinutes(medication.TotalFrequencyInMinutes);
                 }
-                
-                System.Diagnostics.Debug.WriteLine($"🔵 Total doses created: {doseCount} for {days} days");
+
+                // Single bulk insert (one transaction)
+                await _databaseService.SaveDosesAsync(newDoses);
+
+                // Update in-memory collection with single Reset notification
+                foreach (var d in newDoses) d.Medication = medication;
+                var remaining = MedicationDoses.Where(d => d.MedicationId != medication.Id).ToList();
+                MedicationDoses.ReplaceAll(remaining.Concat(newDoses));
+
+                System.Diagnostics.Debug.WriteLine($"🔵 Total doses created: {newDoses.Count} for {days} days");
             }
             finally
             {
@@ -662,11 +643,8 @@ namespace TrackingApp.Services
 
                 var ordered = list.OrderByDescending(x => x.EventTime).ToList();
 
-                CombinedMedicationEvents.Clear();
-                foreach (var ev in ordered)
-                {
-                    CombinedMedicationEvents.Add(ev);
-                }
+                // Single Reset notification instead of N individual Add notifications (prevents O(N²) UI storm)
+                CombinedMedicationEvents.ReplaceAll(ordered);
             }
             catch (Exception ex)
             {

@@ -48,6 +48,15 @@ namespace TrackingApp.Tests.Mocks
             if (!Doses.Contains(dose)) Doses.Add(dose);
             return Task.FromResult(1);
         }
+        public Task<int> SaveDosesAsync(IEnumerable<MedicationDose> doses)
+        {
+            foreach (var dose in doses)
+            {
+                if (dose.Id == 0) dose.Id = Doses.Count + 1;
+                if (!Doses.Contains(dose)) Doses.Add(dose);
+            }
+            return Task.FromResult(1);
+        }
         public Task<int> DeleteDoseAsync(MedicationDose dose)
         {
             Doses.Remove(dose);

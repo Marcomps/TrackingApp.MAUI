@@ -19,6 +19,7 @@ namespace TrackingApp.Services
         Task<List<MedicationDose>> GetAllDosesAsync();
         Task<List<MedicationDose>> GetDosesByMedicationAsync(int medicationId);
         Task<int> SaveDoseAsync(MedicationDose dose);
+        Task<int> SaveDosesAsync(IEnumerable<MedicationDose> doses);
         Task<int> DeleteDoseAsync(MedicationDose dose);
         Task<int> DeleteDosesByMedicationAsync(int medicationId);
 

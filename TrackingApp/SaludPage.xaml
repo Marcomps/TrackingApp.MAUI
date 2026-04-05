@@ -37,7 +37,10 @@
             </Border>
 
             <!-- Registrar Medicamento -->
-            <Frame BackgroundColor="White" Padding="15" CornerRadius="8" HasShadow="True">
+            <Border Padding="15"
+                    StrokeShape="RoundRectangle 8"
+                    Stroke="#e0e0e0"
+                    Background="White">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="💊 Registrar Medicamento" FontSize="20" FontAttributes="Bold" TextColor="#2a3d66"/>
 
@@ -45,12 +48,12 @@
                            Text="{Binding MedicationName}"
                            TextColor="Black"
                            PlaceholderColor="Gray"
-                           BackgroundColor="#f5f5f5"/>
+                           Background="#f5f5f5"/>
                     <Entry Placeholder="Dosis (ej: 5ml)"
                            Text="{Binding MedicationDose}"
                            TextColor="Black"
                            PlaceholderColor="Gray"
-                           BackgroundColor="#f5f5f5"/>
+                           Background="#f5f5f5"/>
 
                     <Label Text="Frecuencia:" FontAttributes="Bold" TextColor="#2a3d66"/>
                     <HorizontalStackLayout Spacing="10">
@@ -61,7 +64,7 @@
                                    Keyboard="Default"
                                    TextColor="Black"
                                    PlaceholderColor="Gray"
-                                   BackgroundColor="#f5f5f5"
+                                   Background="#f5f5f5"
                                    HorizontalOptions="Fill"/>
                         </VerticalStackLayout>
                         <VerticalStackLayout Spacing="5" HorizontalOptions="FillAndExpand">
@@ -71,7 +74,7 @@
                                    Keyboard="Default"
                                    TextColor="Black"
                                    PlaceholderColor="Gray"
-                                   BackgroundColor="#f5f5f5"
+                                   Background="#f5f5f5"
                                    HorizontalOptions="Fill"/>
                         </VerticalStackLayout>
                     </HorizontalStackLayout>
@@ -80,14 +83,14 @@
                     <TimePicker Time="{Binding MedicationTime}"
                                 Format="hh:mm tt"
                                 TextColor="Black"
-                                BackgroundColor="#f5f5f5"/>
+                                Background="#f5f5f5"/>
                     <Button Text="Agregar Medicamento"
                             Command="{Binding AddMedicationCommand}"
-                            BackgroundColor="#4CAF50"
+                            Background="#4CAF50"
                             TextColor="White"
                             FontAttributes="Bold"/>
                 </VerticalStackLayout>
-            </Frame>
+            </Border>
 
             <!-- Medicamentos Registrados -->
             <Frame BackgroundColor="#fff3cd"
@@ -129,7 +132,7 @@
                                         MinimumHeightRequest="80"
                                         MaximumHeightRequest="400">
                             <CollectionView.ItemTemplate>
-                                <DataTemplate>
+                                <DataTemplate x:DataType="models:Medication">
                                     <SwipeView>
                                         <SwipeView.LeftItems>
                                             <SwipeItems Mode="Reveal">

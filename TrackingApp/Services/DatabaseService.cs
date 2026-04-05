@@ -159,6 +159,12 @@ namespace TrackingApp.Services
                 return await _database!.InsertAsync(dose);
         }
 
+        public async Task<int> SaveDosesAsync(IEnumerable<MedicationDose> doses)
+        {
+            await InitializeAsync();
+            return await _database!.InsertAllAsync(doses);
+        }
+
         public async Task<int> DeleteDoseAsync(MedicationDose dose)
         {
             await InitializeAsync();
