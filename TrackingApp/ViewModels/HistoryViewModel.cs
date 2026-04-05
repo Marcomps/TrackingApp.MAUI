@@ -15,6 +15,7 @@ namespace TrackingApp.ViewModels
 
         private ObservableCollection<MedicationHistory> _allMedicationHistory;
         private ObservableCollection<FoodEntry> _allFoodHistory;
+        private ObservableCollection<RegistroCrecimiento> _allCrecimientoHistory;
 
         // ── Section selector ─────────────────────────────────────────────────
         private string _seccionActual = "Medicamentos";
@@ -29,25 +30,31 @@ namespace TrackingApp.ViewModels
                 OnPropertyChanged(nameof(MostrarMedicamentos));
                 OnPropertyChanged(nameof(MostrarAlimentos));
                 OnPropertyChanged(nameof(MostrarCitas));
+                OnPropertyChanged(nameof(MostrarCrecimiento));
                 OnPropertyChanged(nameof(ChipMedBg));
                 OnPropertyChanged(nameof(ChipAliBg));
                 OnPropertyChanged(nameof(ChipCitBg));
+                OnPropertyChanged(nameof(ChipCreBg));
                 OnPropertyChanged(nameof(ChipMedTxt));
                 OnPropertyChanged(nameof(ChipAliTxt));
                 OnPropertyChanged(nameof(ChipCitTxt));
+                OnPropertyChanged(nameof(ChipCreTxt));
             }
         }
 
         public bool MostrarMedicamentos => _seccionActual == "Medicamentos";
         public bool MostrarAlimentos    => _seccionActual == "Alimentos";
         public bool MostrarCitas        => _seccionActual == "Citas";
+        public bool MostrarCrecimiento  => _seccionActual == "Crecimiento";
 
         public Color ChipMedBg  => _seccionActual == "Medicamentos" ? Color.FromArgb("#2a3d66") : Color.FromArgb("#f0f2f8");
         public Color ChipAliBg  => _seccionActual == "Alimentos"    ? Color.FromArgb("#2a3d66") : Color.FromArgb("#f0f2f8");
         public Color ChipCitBg  => _seccionActual == "Citas"        ? Color.FromArgb("#2a3d66") : Color.FromArgb("#f0f2f8");
+        public Color ChipCreBg  => _seccionActual == "Crecimiento"  ? Color.FromArgb("#2a3d66") : Color.FromArgb("#f0f2f8");
         public Color ChipMedTxt => _seccionActual == "Medicamentos" ? Colors.White : Color.FromArgb("#2a3d66");
         public Color ChipAliTxt => _seccionActual == "Alimentos"    ? Colors.White : Color.FromArgb("#2a3d66");
         public Color ChipCitTxt => _seccionActual == "Citas"        ? Colors.White : Color.FromArgb("#2a3d66");
+        public Color ChipCreTxt => _seccionActual == "Crecimiento"  ? Colors.White : Color.FromArgb("#2a3d66");
 
         public Command<string> SeleccionarSeccionCommand { get; }
 
@@ -61,11 +68,15 @@ namespace TrackingApp.ViewModels
 
         public ObservableCollection<MedicationHistory> FilteredMedicationHistory { get; set; }
         public ObservableCollection<FoodEntry> FilteredFoodHistory { get; set; }
+        public ObservableCollection<RegistroCrecimiento> FilteredCrecimientoHistory { get; set; }
         public ObservableCollection<string> MedicationNames { get; set; }
         public ObservableCollection<string> FoodTypes { get; set; }
         public ObservableCollection<string> Units { get; set; }
         public ObservableCollection<string> Profiles { get; set; }
         public ObservableCollection<string> DateRangeOptions { get; set; }
+
+        public int TotalCrecimientoEntries => FilteredCrecimientoHistory?.Count ?? 0;
+        public Command<RegistroCrecimiento> DeleteCrecimientoCommand { get; }
 
         public int TotalConfirmedDoses => FilteredMedicationHistory?.Count ?? 0;
         public int TotalFoodEntries => FilteredFoodHistory?.Count ?? 0;
@@ -106,6 +117,27 @@ namespace TrackingApp.ViewModels
                 {
                     var totalMin = lactancia.Sum(f => f.DuracionMinutos ?? (int)f.Amount);
                     lines.Add($"🤱 Lactancia: {totalMin} min ({lactancia.Count()} toma{(lactancia.Count() != 1 ? "s" : "")})");
+                }
+
+                // Personalizado — agrupar por nombre y luego por unidad
+                var personalizado = FilteredFoodHistory
+                    .Where(f => f.TipoAlimentacion == TipoAlimentacion.Personalizado);
+                foreach (var nameGroup in personalizado
+                    .GroupBy(f => string.IsNullOrWhiteSpace(f.FoodType) ? "Personalizado" : f.FoodType)
+                    .OrderByDescending(g => g.Count()))
+                {
+                    foreach (var unitGroup in nameGroup
+                        .GroupBy(f => string.IsNullOrWhiteSpace(f.Unit) ? "" : f.Unit)
+                        .OrderByDescending(g => g.Sum(f => f.Amount)))
+                    {
+                        var total   = unitGroup.Sum(f => f.Amount);
+                        var unitStr = string.IsNullOrWhiteSpace(unitGroup.Key) ? "" : $" {unitGroup.Key}";
+                        int cnt     = unitGroup.Count();
+                        if (total > 0)
+                            lines.Add($"✏️ {nameGroup.Key}: {total:0.##}{unitStr} ({cnt} registro{(cnt != 1 ? "s" : "")})");
+                        else
+                            lines.Add($"✏️ {nameGroup.Key}: {cnt} registro{(cnt != 1 ? "s" : "")}");
+                    }
                 }
 
                 return lines;
@@ -199,8 +231,10 @@ namespace TrackingApp.ViewModels
             
             _allMedicationHistory = new ObservableCollection<MedicationHistory>();
             _allFoodHistory = new ObservableCollection<FoodEntry>();
+            _allCrecimientoHistory = new ObservableCollection<RegistroCrecimiento>();
             FilteredMedicationHistory = new ObservableCollection<MedicationHistory>();
             FilteredFoodHistory = new ObservableCollection<FoodEntry>();
+            FilteredCrecimientoHistory = new ObservableCollection<RegistroCrecimiento>();
             
             MedicationNames = new ObservableCollection<string> { "Todos" };
             FoodTypes = new ObservableCollection<string> { "Todos" };
@@ -216,11 +250,12 @@ namespace TrackingApp.ViewModels
                 "Mes anterior"
             };
 
-            SeleccionarSeccionCommand  = new Command<string>(s => { if (s != null) SeccionActual = s; });
+            SeleccionarSeccionCommand      = new Command<string>(s => { if (s != null) SeccionActual = s; });
             DeleteMedicationHistoryCommand = new Command<MedicationHistory>(DeleteMedicationHistory);
-            DeleteFoodHistoryCommand = new Command<FoodEntry>(DeleteFoodHistory);
-            EditMedicationHistoryCommand = new Command<MedicationHistory>(EditMedicationHistory);
-            EditFoodCommand = new Command<FoodEntry>(EditFood);
+            DeleteFoodHistoryCommand       = new Command<FoodEntry>(DeleteFoodHistory);
+            DeleteCrecimientoCommand       = new Command<RegistroCrecimiento>(DeleteCrecimientoAsync);
+            EditMedicationHistoryCommand   = new Command<MedicationHistory>(EditMedicationHistory);
+            EditFoodCommand                = new Command<FoodEntry>(EditFood);
             RefreshCommand = new Command(async () =>
             {
                 IsRefreshing = true;
@@ -253,6 +288,12 @@ namespace TrackingApp.ViewModels
             {
                 _allFoodHistory.Add(item);
             }
+
+            // Cargar historial de crecimiento
+            var crecimientoHistory = _dataService.RegistrosCrecimiento.OrderByDescending(r => r.Fecha).ToList();
+            _allCrecimientoHistory.Clear();
+            foreach (var item in crecimientoHistory)
+                _allCrecimientoHistory.Add(item);
 
             // Actualizar filtros disponibles
             UpdateAvailableFilters();
@@ -357,12 +398,21 @@ namespace TrackingApp.ViewModels
                 FilteredFoodHistory.Add(item);
             }
 
+            // Filtrar crecimiento
+            var filteredCrecimiento = _allCrecimientoHistory
+                .Where(r => r.Fecha >= startDate && r.Fecha <= endDate);
+
+            FilteredCrecimientoHistory.Clear();
+            foreach (var item in filteredCrecimiento.OrderByDescending(r => r.Fecha))
+                FilteredCrecimientoHistory.Add(item);
+
             // Actualizar estadísticas
             OnPropertyChanged(nameof(TotalConfirmedDoses));
             OnPropertyChanged(nameof(TotalFoodEntries));
             OnPropertyChanged(nameof(TotalFoodAmount));
             OnPropertyChanged(nameof(FoodAmountByUnit));
             OnPropertyChanged(nameof(MostFrequentFoodType));
+            OnPropertyChanged(nameof(TotalCrecimientoEntries));
         }
 
         private (DateTime startDate, DateTime endDate) GetDateRange()
@@ -444,6 +494,22 @@ namespace TrackingApp.ViewModels
         private async void EditFood(FoodEntry food)
         {
             await Shell.Current.GoToAsync($"AlimentoFormPage?id={food.Id}");
+        }
+
+        private async void DeleteCrecimientoAsync(RegistroCrecimiento registro)
+        {
+            bool confirm = await Shell.Current.DisplayAlert(
+                "Confirmar",
+                $"¿Eliminar registro del {registro.FormattedDate}?",
+                "Sí", "No");
+
+            if (confirm)
+            {
+                await _dataService.DeleteRegistroCrecimientoAsync(registro);
+                _allCrecimientoHistory.Remove(registro);
+                ApplyFilters();
+                await Shell.Current.DisplayAlert("Eliminado", "Registro de crecimiento eliminado", "OK");
+            }
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)

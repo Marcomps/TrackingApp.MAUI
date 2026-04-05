@@ -47,7 +47,19 @@ namespace TrackingApp.Models
         public string DisplayText => $"{Amount} {Unit} de {FoodType} a las {Time:hh:mm tt}";
 
         [Ignore]
-        public string DisplayAmount => $"{Amount} {Unit}";
+        public string DisplayAmount
+        {
+            get
+            {
+                if (TipoAlimentacion == TipoAlimentacion.Lactancia)
+                    return DuracionMinutos.HasValue ? $"{DuracionMinutos} min" : "—";
+                if (Amount > 0 && !string.IsNullOrWhiteSpace(Unit))
+                    return $"{Amount:0.##} {Unit}";
+                if (Amount > 0)
+                    return $"{Amount:0.##}";
+                return "—";
+            }
+        }
 
         [Ignore]
         public string FormattedTime => Time.ToString("hh:mm tt");

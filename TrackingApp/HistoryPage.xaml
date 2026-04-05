@@ -19,7 +19,7 @@
                 Background="#2a3d66"
                 StrokeThickness="0"
                 Padding="12,10">
-            <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+            <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never"><HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
 
                 <Button Text="💊 Medicamentos"
                         Command="{Binding SeleccionarSeccionCommand}"
@@ -43,6 +43,17 @@
                         FontSize="13"
                         Padding="14,7" />
 
+                <Button Text="📈 Crecimiento"
+                        Command="{Binding SeleccionarSeccionCommand}"
+                        CommandParameter="Crecimiento"
+                        Background="{Binding ChipCreBg}"
+                        TextColor="{Binding ChipCreTxt}"
+                        BorderColor="White"
+                        BorderWidth="1"
+                        CornerRadius="20"
+                        FontSize="13"
+                        Padding="14,7" />
+
                 <Button Text="📅 Citas"
                         Command="{Binding SeleccionarSeccionCommand}"
                         CommandParameter="Citas"
@@ -55,6 +66,7 @@
                         Padding="14,7" />
 
             </HorizontalStackLayout>
+        </ScrollView>
         </Border>
 
         <!-- ── Filtro de período (compacto) ──────────────────────────────── -->
@@ -279,6 +291,80 @@
                             CornerRadius="8"
                             FontAttributes="Bold"
                             Margin="0,4,0,16"/>
+
+                </VerticalStackLayout>
+
+                <!-- ═══════════════════════ CRECIMIENTO ══════════════════════ -->
+                <VerticalStackLayout IsVisible="{Binding MostrarCrecimiento}" Spacing="8">
+
+                    <Border Background="#E3F2FD" StrokeShape="RoundRectangle 10"
+                            Stroke="#2196F3" Padding="16,14">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="📈 Historial de Crecimiento"
+                                   FontSize="16" FontAttributes="Bold"
+                                   TextColor="#0D47A1"/>
+                            <Label Text="Registros de peso, talla e IMC"
+                                   FontSize="13" TextColor="#1565C0"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <CollectionView ItemsSource="{Binding FilteredCrecimientoHistory}"
+                                    x:Name="CrecimientoHistoryCollectionView"
+                                    MaximumHeightRequest="600">
+                        <CollectionView.EmptyView>
+                            <VerticalStackLayout Padding="20" HorizontalOptions="Center" Spacing="8">
+                                <Label Text="📊" FontSize="48" HorizontalOptions="Center"/>
+                                <Label Text="No hay registros de crecimiento"
+                                       TextColor="#999" FontSize="15"
+                                       HorizontalOptions="Center"/>
+                            </VerticalStackLayout>
+                        </CollectionView.EmptyView>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:RegistroCrecimiento">
+                                <SwipeView Margin="0,3">
+                                    <SwipeView.RightItems>
+                                        <SwipeItems>
+                                            <SwipeItem Text="Eliminar" BackgroundColor="#f44336"
+                                                       Command="{Binding Source={x:Reference CrecimientoHistoryCollectionView}, Path=BindingContext.DeleteCrecimientoCommand}"
+                                                       CommandParameter="{Binding .}"/>
+                                        </SwipeItems>
+                                    </SwipeView.RightItems>
+                                    <Border Background="#E8F5E9" StrokeShape="RoundRectangle 10"
+                                            Stroke="#4CAF50" Padding="12,10">
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                            <Label Grid.Column="0"
+                                                   Text="{Binding FormattedDate}"
+                                                   FontAttributes="Bold" FontSize="13"
+                                                   TextColor="#2E7D32" VerticalOptions="Center"/>
+                                            <Grid Grid.Column="1" ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                                                <VerticalStackLayout Spacing="2">
+                                                    <Label Text="Peso" FontSize="11" TextColor="#666"/>
+                                                    <Label Text="{Binding PesoKg, StringFormat='{0:F2} kg'}"
+                                                           FontAttributes="Bold" FontSize="14" TextColor="#1B5E20"/>
+                                                </VerticalStackLayout>
+                                                <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                                    <Label Text="Talla" FontSize="11" TextColor="#666"/>
+                                                    <Label Text="{Binding TallaCm, StringFormat='{0:F1} cm'}"
+                                                           FontAttributes="Bold" FontSize="14" TextColor="#1B5E20"/>
+                                                </VerticalStackLayout>
+                                                <VerticalStackLayout Grid.Column="2" Spacing="2">
+                                                    <Label Text="IMC" FontSize="11" TextColor="#666"/>
+                                                    <Label Text="{Binding IMC, StringFormat='{0:F1}'}"
+                                                           FontAttributes="Bold" FontSize="14" TextColor="#1B5E20"/>
+                                                </VerticalStackLayout>
+                                            </Grid>
+                                        </Grid>
+                                    </Border>
+                                </SwipeView>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <Border Background="White" StrokeShape="RoundRectangle 10"
+                            Stroke="#e0e0e0" Padding="12,10" Margin="0,4,0,16">
+                        <Label Text="{Binding TotalCrecimientoEntries, StringFormat='Total registros: {0}'}"
+                               FontSize="13" TextColor="#555"/>
+                    </Border>
 
                 </VerticalStackLayout>
 

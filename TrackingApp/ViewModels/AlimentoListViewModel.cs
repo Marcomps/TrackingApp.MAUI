@@ -13,10 +13,13 @@ public class AlimentoListViewModel : INotifyPropertyChanged
 
     public AlimentoListViewModel()
     {
-        AgregarCommand   = new Command(async () => await NavigateToFormAsync(null));
-        EditarCommand    = new Command<FoodEntry>(async e => await NavigateToFormAsync(e));
-        EliminarCommand  = new Command<FoodEntry>(async e => await EliminarAsync(e));
-        RefrescarCommand = new Command(Cargar);
+        AgregarCommand       = new Command(async () => await NavigateToFormAsync(null));
+        EditarCommand        = new Command<FoodEntry>(async e => await NavigateToFormAsync(e));
+        EliminarCommand      = new Command<FoodEntry>(async e => await EliminarAsync(e));
+        RefrescarCommand     = new Command(Cargar);
+        DiaPrevioCommand     = new Command(() => FechaFiltro = FechaFiltro.AddDays(-1));
+        DiaSiguienteCommand  = new Command(() => FechaFiltro = FechaFiltro.AddDays(1));
+        IrHoyCommand         = new Command(() => FechaFiltro = DateTime.Today);
 
         Cargar();
     }
@@ -42,6 +45,29 @@ public class AlimentoListViewModel : INotifyPropertyChanged
     }
     public bool NoHayRegistros => !_hayRegistros;
 
+    // Filtro de fecha
+    private DateTime _fechaFiltro = DateTime.Today;
+    public DateTime FechaFiltro
+    {
+        get => _fechaFiltro;
+        set
+        {
+            if (_fechaFiltro == value.Date) return;
+            _fechaFiltro = value.Date;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(FechaFiltroDisplay));
+            OnPropertyChanged(nameof(EsHoy));
+            Cargar();
+        }
+    }
+    public string FechaFiltroDisplay => _fechaFiltro.Date == DateTime.Today
+        ? "Hoy"
+        : _fechaFiltro.ToString("ddd d MMM", System.Globalization.CultureInfo.CurrentCulture);
+    public bool EsHoy => _fechaFiltro.Date == DateTime.Today;
+
+    // Bloquea selección de fechas futuras en el DatePicker
+    public DateTime FechaMaxima => DateTime.Today;
+
     // Último registro (resumen en header)
     private FoodEntry? _ultimo;
     public FoodEntry? UltimoRegistro
@@ -65,10 +91,13 @@ public class AlimentoListViewModel : INotifyPropertyChanged
 
     // ── Comandos ──────────────────────────────────────────────────────────────
 
-    public ICommand AgregarCommand   { get; }
-    public ICommand EditarCommand    { get; }
-    public ICommand EliminarCommand  { get; }
-    public ICommand RefrescarCommand { get; }
+    public ICommand AgregarCommand       { get; }
+    public ICommand EditarCommand        { get; }
+    public ICommand EliminarCommand      { get; }
+    public ICommand RefrescarCommand     { get; }
+    public ICommand DiaPrevioCommand     { get; }
+    public ICommand DiaSiguienteCommand  { get; }
+    public ICommand IrHoyCommand         { get; }
 
     // ── Lógica ────────────────────────────────────────────────────────────────
 
@@ -78,12 +107,16 @@ public class AlimentoListViewModel : INotifyPropertyChanged
         try
         {
             var fuente = AppServices.DataService.FoodEntries;
+            var filtro = _fechaFiltro.Date;
 
             Registros.Clear();
-            foreach (var e in fuente.OrderByDescending(e => e.Time))
+            foreach (var e in fuente
+                .Where(e => e.Time.Date == filtro)
+                .OrderByDescending(e => e.Time))
                 Registros.Add(e);
 
-            UltimoRegistro = Registros.FirstOrDefault();
+            UltimoRegistro = AppServices.DataService.FoodEntries
+                .OrderByDescending(e => e.Time).FirstOrDefault();
             HayRegistros   = Registros.Count > 0;
         }
         finally

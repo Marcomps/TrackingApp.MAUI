@@ -26,4 +26,9 @@ public partial class MenuPage : ContentPage
     {
         await Shell.Current.GoToAsync(nameof(CitasListPage));
     }
+
+    private async void OnGraficasTapped(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync(nameof(GraficasPage));
+    }
 }

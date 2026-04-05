@@ -139,9 +139,10 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
 
     // ── Resúmenes estadísticos ────────────────────────────────────────────────
 
-    private string _resumenFormula   = "Sin datos";
-    private string _resumenLactancia = "Sin datos";
-    private string _resumenSolido    = "Sin datos";
+    private string _resumenFormula      = "Sin datos";
+    private string _resumenLactancia   = "Sin datos";
+    private string _resumenSolido      = "Sin datos";
+    private string _resumenPersonalizado = "Sin datos";
     private bool   _hayDatos;
 
     public string ResumenFormula
@@ -158,6 +159,11 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
     {
         get => _resumenSolido;
         private set { _resumenSolido = value; OnPropertyChanged(); }
+    }
+    public string ResumenPersonalizado
+    {
+        get => _resumenPersonalizado;
+        private set { _resumenPersonalizado = value; OnPropertyChanged(); }
     }
     public bool HayDatos
     {
@@ -233,10 +239,14 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
                 buckets.Add((m, m.ToString("MMM yy", _culturaEs)));
         }
 
-        int n            = buckets.Count;
-        var formulaMl    = new double[n];
-        var lactanciaMin = new double[n];
-        var solidoGr     = new double[n];
+        int n = buckets.Count;
+
+        // ── Per-unit groupings ────────────────────────────────────────────────
+        // Each key is the unit string (e.g. "ml", "oz"). Value is a bucket array.
+        var formulaGroups      = new Dictionary<string, double[]>(StringComparer.OrdinalIgnoreCase);
+        var solidoGroups       = new Dictionary<string, double[]>(StringComparer.OrdinalIgnoreCase);
+        var personalizadoGroups = new Dictionary<string, double[]>(StringComparer.OrdinalIgnoreCase);
+        var lactanciaMin       = new double[n];
 
         foreach (var entry in entries)
         {
@@ -251,7 +261,6 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
             }
             else
             {
-                // Last bucket whose start is ≤ the entry's date
                 idx = buckets.FindLastIndex(b => b.Inicio <= fecha);
             }
 
@@ -262,60 +271,115 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
                 case TipoAlimentacion.Lactancia:
                     lactanciaMin[idx] += entry.DuracionMinutos ?? 0;
                     break;
+
                 case TipoAlimentacion.Solido:
-                    solidoGr[idx] += entry.CantidadGramos.HasValue
+                {
+                    var unit = string.IsNullOrWhiteSpace(entry.Unit) ? "g" : entry.Unit;
+                    if (!solidoGroups.ContainsKey(unit)) solidoGroups[unit] = new double[n];
+                    solidoGroups[unit][idx] += entry.CantidadGramos.HasValue
                         ? (double)entry.CantidadGramos.Value
                         : entry.Amount;
                     break;
+                }
+
+                case TipoAlimentacion.Personalizado:
+                {
+                    var name = string.IsNullOrWhiteSpace(entry.FoodType) ? "Personalizado" : entry.FoodType;
+                    if (!personalizadoGroups.ContainsKey(name)) personalizadoGroups[name] = new double[n];
+                    double pVal = entry.CantidadGramos.HasValue && entry.CantidadGramos.Value > 0
+                        ? (double)entry.CantidadGramos.Value
+                        : entry.Amount > 0 ? entry.Amount : 1.0;
+                    personalizadoGroups[name][idx] += pVal;
+                    break;
+                }
+
                 default: // Formula y legado
-                    formulaMl[idx] += entry.CantidadMl.HasValue
+                {
+                    var unit = string.IsNullOrWhiteSpace(entry.Unit) ? "ml" : entry.Unit;
+                    if (!formulaGroups.ContainsKey(unit)) formulaGroups[unit] = new double[n];
+                    formulaGroups[unit][idx] += entry.CantidadMl.HasValue
                         ? (double)entry.CantidadMl.Value
                         : entry.Amount;
                     break;
+                }
             }
         }
 
-        bool tieneFormula   = formulaMl.Any(v => v > 0);
-        bool tieneLactancia = lactanciaMin.Any(v => v > 0);
-        bool tieneSolido    = solidoGr.Any(v => v > 0);
+        // ── Color palettes ───────────────────────────────────────────────────
+        SKColor[] formulaColors      = [new SKColor(33,150,243), new SKColor(3,169,244), new SKColor(0,188,212)];
+        SKColor[] solidoColors       = [new SKColor(255,152,0),  new SKColor(255,87,34),  new SKColor(255,193,7)];
+        SKColor[] personalizadoColors = [new SKColor(76,175,80), new SKColor(139,195,74), new SKColor(56,142,60)];
+        var lactanciaColor = new SKColor(156, 39, 176);
 
         var seriesList = new List<ISeries>();
+        int ci;
 
-        if (tieneFormula)
+        // Formula series – one per unit
+        ci = 0;
+        foreach (var kv in formulaGroups.OrderBy(k => k.Key))
+        {
+            if (!kv.Value.Any(v => v > 0)) continue;
+            var c = formulaColors[ci % formulaColors.Length]; ci++;
             seriesList.Add(new LineSeries<double>
             {
-                Values         = formulaMl,
-                Name           = "Fórmula (ml)",
-                Stroke         = new SolidColorPaint(new SKColor(33, 150, 243), 3),
-                Fill           = new SolidColorPaint(new SKColor(33, 150, 243, 40)),
-                GeometryStroke = new SolidColorPaint(new SKColor(33, 150, 243), 4),
+                Values         = kv.Value,
+                Name           = $"Fórmula ({kv.Key})",
+                Stroke         = new SolidColorPaint(c, 3),
+                Fill           = new SolidColorPaint(new SKColor(c.Red, c.Green, c.Blue, 40)),
+                GeometryStroke = new SolidColorPaint(c, 4),
                 GeometrySize   = 10,
                 LineSmoothness = 0.4,
             });
+        }
 
-        if (tieneLactancia)
+        // Lactancia – single series (always minutes)
+        if (lactanciaMin.Any(v => v > 0))
             seriesList.Add(new LineSeries<double>
             {
                 Values         = lactanciaMin,
                 Name           = "Lactancia (min)",
-                Stroke         = new SolidColorPaint(new SKColor(156, 39, 176), 3),
-                Fill           = new SolidColorPaint(new SKColor(156, 39, 176, 40)),
-                GeometryStroke = new SolidColorPaint(new SKColor(156, 39, 176), 4),
+                Stroke         = new SolidColorPaint(lactanciaColor, 3),
+                Fill           = new SolidColorPaint(new SKColor(lactanciaColor.Red, lactanciaColor.Green, lactanciaColor.Blue, 40)),
+                GeometryStroke = new SolidColorPaint(lactanciaColor, 4),
                 GeometrySize   = 10,
                 LineSmoothness = 0.4,
             });
 
-        if (tieneSolido)
+        // Sólido series – one per unit
+        ci = 0;
+        foreach (var kv in solidoGroups.OrderBy(k => k.Key))
+        {
+            if (!kv.Value.Any(v => v > 0)) continue;
+            var c = solidoColors[ci % solidoColors.Length]; ci++;
             seriesList.Add(new LineSeries<double>
             {
-                Values         = solidoGr,
-                Name           = "Sólidos (g)",
-                Stroke         = new SolidColorPaint(new SKColor(255, 152, 0), 3),
-                Fill           = new SolidColorPaint(new SKColor(255, 152, 0, 40)),
-                GeometryStroke = new SolidColorPaint(new SKColor(255, 152, 0), 4),
+                Values         = kv.Value,
+                Name           = $"Sólidos ({kv.Key})",
+                Stroke         = new SolidColorPaint(c, 3),
+                Fill           = new SolidColorPaint(new SKColor(c.Red, c.Green, c.Blue, 40)),
+                GeometryStroke = new SolidColorPaint(c, 4),
                 GeometrySize   = 10,
                 LineSmoothness = 0.4,
             });
+        }
+
+        // Personalizado series – one per food name
+        ci = 0;
+        foreach (var kv in personalizadoGroups.OrderBy(k => k.Key))
+        {
+            if (!kv.Value.Any(v => v > 0)) continue;
+            var c = personalizadoColors[ci % personalizadoColors.Length]; ci++;
+            seriesList.Add(new LineSeries<double>
+            {
+                Values         = kv.Value,
+                Name           = kv.Key,
+                Stroke         = new SolidColorPaint(c, 3),
+                Fill           = new SolidColorPaint(new SKColor(c.Red, c.Green, c.Blue, 40)),
+                GeometryStroke = new SolidColorPaint(c, 4),
+                GeometrySize   = 10,
+                LineSmoothness = 0.4,
+            });
+        }
 
         if (seriesList.Count == 0)
             seriesList.Add(new LineSeries<double>
@@ -342,16 +406,48 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
             }
         ];
 
-        string unidadTiempo  = bucketDays == 1 ? "día" : bucketDays == 7 ? "semana" : "mes";
-        double totalF = formulaMl.Sum();
+        // ── Resúmenes por unidad ─────────────────────────────────────────────
+        string unidadTiempo = bucketDays == 1 ? "día" : bucketDays == 7 ? "semana" : "mes";
+
+        var formulaResumenParts = formulaGroups
+            .Where(kv => kv.Value.Sum() > 0)
+            .OrderByDescending(kv => kv.Value.Sum())
+            .Select(kv => $"{kv.Value.Sum():F0} {kv.Key}");
+        ResumenFormula = formulaResumenParts.Any()
+            ? string.Join(" · ", formulaResumenParts)
+            : "Sin registros de fórmula";
+
         double totalL = lactanciaMin.Sum();
-        double totalS = solidoGr.Sum();
+        ResumenLactancia = totalL > 0
+            ? $"{totalL:F0} min total · {(n > 0 ? totalL / n : 0):F0} min/{unidadTiempo} prom."
+            : "Sin registros de lactancia";
 
-        ResumenFormula   = totalF > 0 ? $"{totalF:F0} ml total · {(n > 0 ? totalF / n : 0):F0} ml/{unidadTiempo} promedio"   : "Sin registros de fórmula";
-        ResumenLactancia = totalL > 0 ? $"{totalL:F0} min total · {(n > 0 ? totalL / n : 0):F0} min/{unidadTiempo} promedio" : "Sin registros de lactancia";
-        ResumenSolido    = totalS > 0 ? $"{totalS:F0} g total · {(n > 0 ? totalS / n : 0):F0} g/{unidadTiempo} promedio"     : "Sin registros de sólidos";
+        var solidoResumenParts = solidoGroups
+            .Where(kv => kv.Value.Sum() > 0)
+            .OrderByDescending(kv => kv.Value.Sum())
+            .Select(kv => $"{kv.Value.Sum():F0} {kv.Key}");
+        ResumenSolido = solidoResumenParts.Any()
+            ? string.Join(" · ", solidoResumenParts)
+            : "Sin registros de sólidos";
 
-        HayDatos = totalF > 0 || totalL > 0 || totalS > 0;
+        if (personalizadoGroups.Any(kv => kv.Value.Any(v => v > 0)))
+        {
+            var personalizadoEntries = entries.Where(e => e.TipoAlimentacion == TipoAlimentacion.Personalizado
+                && e.Time.Date >= desde && e.Time.Date <= hasta).ToList();
+            int countP   = personalizadoEntries.Count;
+            var tiposP   = personalizadoGroups.Keys.Take(3).ToList();
+            ResumenPersonalizado = $"{countP} registro{(countP != 1 ? "s" : "")} · {string.Join(", ", tiposP)}";
+        }
+        else
+        {
+            ResumenPersonalizado = "Sin registros personalizados";
+        }
+
+        bool anyFormula      = formulaGroups.Any(kv => kv.Value.Any(v => v > 0));
+        bool anyLactancia    = lactanciaMin.Any(v => v > 0);
+        bool anySolido       = solidoGroups.Any(kv => kv.Value.Any(v => v > 0));
+        bool anyPersonalizado = personalizadoGroups.Any(kv => kv.Value.Any(v => v > 0));
+        HayDatos = anyFormula || anyLactancia || anySolido || anyPersonalizado;
         OnPropertyChanged(nameof(NoHayDatos));
     }
 

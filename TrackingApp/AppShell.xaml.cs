@@ -17,6 +17,8 @@ public partial class AppShell : Shell
 		// RF-004: Citas Médicas
 		Routing.RegisterRoute(nameof(CitasListPage),         typeof(CitasListPage));
 		Routing.RegisterRoute(nameof(CitaFormPage),          typeof(CitaFormPage));
+		// Gráficas unificadas
+		Routing.RegisterRoute(nameof(GraficasPage),          typeof(GraficasPage));
 		// RF-002: Gráficas de crecimiento
 		Routing.RegisterRoute(nameof(CrecimientoGraficasPage), typeof(CrecimientoGraficasPage));
 		// Salud: medicamentos y confirmación de dosis

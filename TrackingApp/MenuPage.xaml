@@ -33,9 +33,9 @@
             </Grid>
         </Border>
 
-        <!-- Grid de Opciones (2x2) -->
+        <!-- Grid de Opciones (3x2) -->
         <ScrollView Grid.Row="1" Padding="20,20">
-            <Grid RowDefinitions="*,*"
+            <Grid RowDefinitions="*,*,*"
                   ColumnDefinitions="*,*"
                   RowSpacing="20"
                   ColumnSpacing="20">
@@ -177,6 +177,42 @@
                     </Grid>
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnCitasMedicasTapped"/>
+                    </Border.GestureRecognizers>
+                </Border>
+
+                <!-- Gráficas -->
+                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                        Background="White"
+                        StrokeShape="RoundRectangle 16"
+                        StrokeThickness="0"
+                        Padding="0">
+                    <Border.Shadow>
+                        <Shadow Brush="#E0E0E0" Offset="0,2" Radius="8" Opacity="0.3"/>
+                    </Border.Shadow>
+                    <Grid ColumnDefinitions="Auto,*" Padding="20" ColumnSpacing="16">
+                        <Border Grid.Column="0"
+                                Background="#E8F4F8"
+                                StrokeShape="RoundRectangle 50"
+                                WidthRequest="64"
+                                HeightRequest="64"
+                                StrokeThickness="0">
+                            <Label Text="&#x1F4CA;"
+                                   FontSize="30"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="4">
+                            <Label Text="Gráficas"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   TextColor="#333"/>
+                            <Label Text="Alimento • Medicamento • Crecimiento • Citas"
+                                   FontSize="12"
+                                   TextColor="#888"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnGraficasTapped"/>
                     </Border.GestureRecognizers>
                 </Border>
 

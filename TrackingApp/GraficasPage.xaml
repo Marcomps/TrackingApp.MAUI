@@ -1,0 +1,623 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TrackingApp.ViewModels"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Maui;assembly=LiveChartsCore.SkiaSharpView.Maui"
+             x:Class="TrackingApp.GraficasPage"
+             x:DataType="viewmodels:GraficasViewModel"
+             Title="Gráficas"
+             Background="#f5f7fa">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="← Menú" Clicked="OnVolverMenuClicked" Priority="0" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- ═══════════════════════════════════════════════════════════ CONTENT -->
+        <Grid Grid.Row="0">
+
+            <!-- ──────────────────────────────── TAB 0: Alimento ─────────────-->
+            <ScrollView IsVisible="{Binding EsTabAlimento}">
+                <!-- x:DataType="{x:Null}" to scope runtime bindings to AlimentoVm -->
+                <VerticalStackLayout x:DataType="{x:Null}"
+                                     BindingContext="{Binding AlimentoVm}"
+                                     Padding="16" Spacing="14">
+
+                    <Border Background="#2a3d66"
+                            StrokeShape="RoundRectangle 12"
+                            StrokeThickness="0"
+                            Padding="16,14">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="🍼 Tendencia de Alimentación"
+                                   FontSize="18" FontAttributes="Bold" TextColor="White" />
+                            <Label Text="Totales diarios por tipo de alimentación"
+                                   FontSize="12" TextColor="#90CAF9" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Selector período -->
+                    <Border Background="White" StrokeShape="RoundRectangle 10"
+                            Stroke="#e0e0e0" Padding="12,10">
+                        <VerticalStackLayout Spacing="8">
+                            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto"
+                                  ColumnSpacing="6" RowSpacing="6">
+                                <Button Grid.Row="0" Grid.Column="0" Text="Hoy"
+                                        Command="{Binding SeleccionarPeriodoCommand}"
+                                        CommandParameter="1"
+                                        Background="{Binding BotonHoyBg}"
+                                        TextColor="{Binding TextoHoy}"
+                                        CornerRadius="20" FontSize="12" />
+                                <Button Grid.Row="0" Grid.Column="1" Text="7 días"
+                                        Command="{Binding SeleccionarPeriodoCommand}"
+                                        CommandParameter="7"
+                                        Background="{Binding Boton7DiasBg}"
+                                        TextColor="{Binding Texto7Dias}"
+                                        CornerRadius="20" FontSize="12" />
+                                <Button Grid.Row="0" Grid.Column="2" Text="30 días"
+                                        Command="{Binding SeleccionarPeriodoCommand}"
+                                        CommandParameter="30"
+                                        Background="{Binding Boton30DiasBg}"
+                                        TextColor="{Binding Texto30Dias}"
+                                        CornerRadius="20" FontSize="12" />
+                                <Button Grid.Row="1" Grid.Column="0" Text="3 meses"
+                                        Command="{Binding SeleccionarPeriodoCommand}"
+                                        CommandParameter="90"
+                                        Background="{Binding Boton90DiasBg}"
+                                        TextColor="{Binding Texto90Dias}"
+                                        CornerRadius="20" FontSize="12" />
+                                <Button Grid.Row="1" Grid.Column="1" Text="Todo"
+                                        Command="{Binding SeleccionarPeriodoCommand}"
+                                        CommandParameter="0"
+                                        Background="{Binding BotonTodoBg}"
+                                        TextColor="{Binding TextoTodo}"
+                                        CornerRadius="20" FontSize="12" />
+                                <Border Grid.Row="1" Grid.Column="2"
+                                        Background="{Binding BotonPersonalizadoBg}"
+                                        StrokeShape="RoundRectangle 20"
+                                        StrokeThickness="0"
+                                        Padding="0,6" VerticalOptions="Center">
+                                    <Label Text="📅 Rango" FontSize="12"
+                                           HorizontalOptions="Center"
+                                           TextColor="{Binding TextoPersonalizado}" />
+                                </Border>
+                            </Grid>
+                            <Grid ColumnDefinitions="Auto,*,Auto,*" ColumnSpacing="6">
+                                <Label Grid.Column="0" Text="Desde:" FontSize="12"
+                                       TextColor="#555" VerticalOptions="Center"/>
+                                <DatePicker Grid.Column="1" Date="{Binding FechaDesde, Mode=TwoWay}"
+                                            Format="dd/MM/yyyy" FontSize="12"
+                                            MinimumDate="01/01/2000" MaximumDate="{Binding FechaHasta}" />
+                                <Label Grid.Column="2" Text="Hasta:" FontSize="12"
+                                       TextColor="#555" VerticalOptions="Center" Margin="4,0,0,0"/>
+                                <DatePicker Grid.Column="3" Date="{Binding FechaHasta, Mode=TwoWay}"
+                                            Format="dd/MM/yyyy" FontSize="12"
+                                            MinimumDate="{Binding FechaDesde}" MaximumDate="2099-12-31" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Background="White" StrokeShape="RoundRectangle 12"
+                            Stroke="#e0e0e0" Padding="8,10">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Cantidad diaria por tipo" FontSize="14"
+                                   FontAttributes="Bold" TextColor="#2a3d66" Margin="8,0" />
+                            <lvc:CartesianChart Series="{Binding Series}"
+                                               XAxes="{Binding XAxes}"
+                                               YAxes="{Binding YAxes}"
+                                               HeightRequest="260"
+                                               LegendPosition="Bottom" />
+                            <Label Text="No hay registros de alimentos en este período."
+                                   IsVisible="{Binding NoHayDatos}"
+                                   TextColor="#999999" FontSize="13"
+                                   HorizontalOptions="Center" Margin="0,8,0,4" />
+                        </VerticalStackLayout>
+                    </Border>
+
+
+                    <Border Background="#E3F2FD" StrokeShape="RoundRectangle 10"
+                            Stroke="#90CAF9" Padding="16,12">
+                        <HorizontalStackLayout Spacing="14">
+                            <Label Text="🍼" FontSize="28" VerticalOptions="Center" />
+                            <VerticalStackLayout Spacing="3" VerticalOptions="Center">
+                                <Label Text="Fórmula / Biberón" FontAttributes="Bold"
+                                       TextColor="#1565C0" FontSize="13" />
+                                <Label Text="{Binding ResumenFormula}" TextColor="#1976D2" FontSize="12" />
+                            </VerticalStackLayout>
+                        </HorizontalStackLayout>
+                    </Border>
+                    <Border Background="#F3E5F5" StrokeShape="RoundRectangle 10"
+                            Stroke="#CE93D8" Padding="16,12">
+                        <HorizontalStackLayout Spacing="14">
+                            <Label Text="🤱" FontSize="28" VerticalOptions="Center" />
+                            <VerticalStackLayout Spacing="3" VerticalOptions="Center">
+                                <Label Text="Lactancia materna" FontAttributes="Bold"
+                                       TextColor="#6A1B9A" FontSize="13" />
+                                <Label Text="{Binding ResumenLactancia}" TextColor="#7B1FA2" FontSize="12" />
+                            </VerticalStackLayout>
+                        </HorizontalStackLayout>
+                    </Border>
+                    <Border Background="#FFF3E0" StrokeShape="RoundRectangle 10"
+                            Stroke="#FFCC80" Padding="16,12">
+                        <HorizontalStackLayout Spacing="14">
+                            <Label Text="🥣" FontSize="28" VerticalOptions="Center" />
+                            <VerticalStackLayout Spacing="3" VerticalOptions="Center">
+                                <Label Text="Alimentación sólida" FontAttributes="Bold"
+                                       TextColor="#E65100" FontSize="13" />
+                                <Label Text="{Binding ResumenSolido}" TextColor="#F57C00" FontSize="12" />
+                            </VerticalStackLayout>
+                        </HorizontalStackLayout>
+                    </Border>
+                    <Border Background="#E8F5E9" StrokeShape="RoundRectangle 10"
+                            Stroke="#A5D6A7" Padding="16,12">
+                        <HorizontalStackLayout Spacing="14">
+                            <Label Text="✏️" FontSize="28" VerticalOptions="Center" />
+                            <VerticalStackLayout Spacing="3" VerticalOptions="Center">
+                                <Label Text="Personalizado" FontAttributes="Bold"
+                                       TextColor="#2E7D32" FontSize="13" />
+                                <Label Text="{Binding ResumenPersonalizado}" TextColor="#388E3C" FontSize="12" />
+                            </VerticalStackLayout>
+                        </HorizontalStackLayout>
+                    </Border>
+
+                    <Button Text="🔄 Actualizar" Command="{Binding RefrescarCommand}"
+                            Background="#4CAF50" TextColor="White"
+                            CornerRadius="8" FontAttributes="Bold" Margin="0,4,0,8" />
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <!-- ─────────────────────────────── TAB 1: Medicamento ───────────-->
+            <ScrollView IsVisible="{Binding EsTabMedicamento}">
+                <VerticalStackLayout x:DataType="{x:Null}"
+                                     BindingContext="{Binding MedicamentoVm}"
+                                     Padding="16" Spacing="14">
+
+                    <Border Background="#2a3d66"
+                            StrokeShape="RoundRectangle 12"
+                            StrokeThickness="0"
+                            Padding="16,14">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="💊 Historial de Medicamentos"
+                                   FontSize="18" FontAttributes="Bold" TextColor="White" />
+                            <Label Text="Dosis administradas en el tiempo"
+                                   FontSize="12" TextColor="#90CAF9" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Selector período -->
+                    <Border Background="White" StrokeShape="RoundRectangle 10"
+                            Stroke="#e0e0e0" Padding="12,10">
+                        <VerticalStackLayout Spacing="8">
+                            <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                                <Button Text="7 días"
+                                        Command="{Binding SeleccionarPeriodoCommand}"
+                                        CommandParameter="7"
+                                        Background="{Binding Boton7DiasBg}"
+                                        TextColor="{Binding Texto7Dias}"
+                                        CornerRadius="20" Padding="12,8" FontSize="12" />
+                                <Button Text="30 días"
+                                        Command="{Binding SeleccionarPeriodoCommand}"
+                                        CommandParameter="30"
+                                        Background="{Binding Boton30DiasBg}"
+                                        TextColor="{Binding Texto30Dias}"
+                                        CornerRadius="20" Padding="12,8" FontSize="12" />
+                                <Button Text="3 meses"
+                                        Command="{Binding SeleccionarPeriodoCommand}"
+                                        CommandParameter="90"
+                                        Background="{Binding Boton3MesesBg}"
+                                        TextColor="{Binding Texto3Meses}"
+                                        CornerRadius="20" Padding="12,8" FontSize="12" />
+                                <Button Text="Todo"
+                                        Command="{Binding SeleccionarPeriodoCommand}"
+                                        CommandParameter="0"
+                                        Background="{Binding BotonTodoBg}"
+                                        TextColor="{Binding TextoTodo}"
+                                        CornerRadius="20" Padding="12,8" FontSize="12" />
+                            </HorizontalStackLayout>
+                            <Grid ColumnDefinitions="Auto,*,Auto,*" ColumnSpacing="6">
+                                <Label Grid.Column="0" Text="Desde:" FontSize="12"
+                                       TextColor="#555" VerticalOptions="Center"/>
+                                <DatePicker Grid.Column="1" Date="{Binding FechaDesde, Mode=TwoWay}"
+                                            Format="dd/MM/yyyy" FontSize="12"
+                                            MinimumDate="01/01/2000" MaximumDate="{Binding FechaHasta}" />
+                                <Label Grid.Column="2" Text="Hasta:" FontSize="12"
+                                       TextColor="#555" VerticalOptions="Center" Margin="4,0,0,0"/>
+                                <DatePicker Grid.Column="3" Date="{Binding FechaHasta, Mode=TwoWay}"
+                                            Format="dd/MM/yyyy" FontSize="12"
+                                            MinimumDate="{Binding FechaDesde}" MaximumDate="2099-12-31" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Label Text="Sin registros de medicamentos en este período."
+                           IsVisible="{Binding NoHayDatos}"
+                           TextColor="#999999" FontSize="14"
+                           HorizontalOptions="Center" Margin="0,16" />
+
+                    <Border Background="White" StrokeShape="RoundRectangle 12"
+                            Stroke="#e0e0e0" Padding="8,10"
+                            IsVisible="{Binding HayDatos}">
+                        <VerticalStackLayout Spacing="6">
+                            <HorizontalStackLayout Spacing="6" Margin="8,0">
+                                <BoxView Color="#2a3d66" WidthRequest="14" HeightRequest="14"
+                                         VerticalOptions="Center" CornerRadius="7"/>
+                                <Label Text="💊 Dosis por día"
+                                       FontSize="14" FontAttributes="Bold"
+                                       TextColor="#2a3d66" VerticalOptions="Center"/>
+                            </HorizontalStackLayout>
+                            <lvc:CartesianChart Series="{Binding SeriesDosis}"
+                                               XAxes="{Binding EjeXDosis}"
+                                               YAxes="{Binding EjeY}"
+                                               HeightRequest="250"
+                                               LegendPosition="Hidden" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Background="White" StrokeShape="RoundRectangle 12"
+                            Stroke="#e0e0e0" Padding="8,10"
+                            IsVisible="{Binding HayDatos}">
+                        <VerticalStackLayout Spacing="6">
+                            <HorizontalStackLayout Spacing="6" Margin="8,0">
+                                <BoxView Color="#4CAF50" WidthRequest="14" HeightRequest="14"
+                                         VerticalOptions="Center" CornerRadius="7"/>
+                                <Label Text="📊 Por medicamento"
+                                       FontSize="14" FontAttributes="Bold"
+                                       TextColor="#2a3d66" VerticalOptions="Center"/>
+                            </HorizontalStackLayout>
+                            <lvc:CartesianChart Series="{Binding SeriesPorMed}"
+                                               XAxes="{Binding EjeXPorMed}"
+                                               YAxes="{Binding EjeY}"
+                                               HeightRequest="250"
+                                               LegendPosition="Bottom" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Background="#E8EAF6" StrokeShape="RoundRectangle 10"
+                            Stroke="#9FA8DA" Padding="16,12"
+                            IsVisible="{Binding HayDatos}">
+                        <HorizontalStackLayout Spacing="14">
+                            <Label Text="💊" FontSize="28" VerticalOptions="Center" />
+                            <VerticalStackLayout Spacing="3" VerticalOptions="Center">
+                                <Label Text="Resumen del período" FontAttributes="Bold"
+                                       TextColor="#283593" FontSize="13" />
+                                <Label Text="{Binding Resumen}" TextColor="#3949AB" FontSize="12" />
+                            </VerticalStackLayout>
+                        </HorizontalStackLayout>
+                    </Border>
+
+                    <Button Text="🔄 Actualizar" Command="{Binding RefrescarCommand}"
+                            Background="#4CAF50" TextColor="White"
+                            CornerRadius="8" FontAttributes="Bold" Margin="0,4,0,8" />
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <!-- ─────────────────────────────── TAB 2: Crecimiento ───────────-->
+            <ScrollView IsVisible="{Binding EsTabCrecimiento}">
+                <VerticalStackLayout x:DataType="{x:Null}"
+                                     BindingContext="{Binding CrecimientoVm}"
+                                     Padding="16" Spacing="14">
+
+                    <Border Background="#2a3d66"
+                            StrokeShape="RoundRectangle 12"
+                            StrokeThickness="0"
+                            Padding="16,14">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="📈 Tendencia de Crecimiento"
+                                   FontSize="18" FontAttributes="Bold" TextColor="White" />
+                            <Label Text="Evolución de peso, talla e IMC"
+                                   FontSize="12" TextColor="#90CAF9" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Selector período -->
+                    <Border Background="White" StrokeShape="RoundRectangle 10"
+                            Stroke="#e0e0e0" Padding="12,10">
+                        <VerticalStackLayout Spacing="8">
+                            <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                                <Button Text="7 días"
+                                        Command="{Binding SeleccionarPeriodoCommand}"
+                                        CommandParameter="7"
+                                        Background="{Binding Boton7DiasBg}"
+                                        TextColor="{Binding Texto7Dias}"
+                                        CornerRadius="20" Padding="12,8" FontSize="12" />
+                                <Button Text="30 días"
+                                        Command="{Binding SeleccionarPeriodoCommand}"
+                                        CommandParameter="30"
+                                        Background="{Binding Boton30DiasBg}"
+                                        TextColor="{Binding Texto30Dias}"
+                                        CornerRadius="20" Padding="12,8" FontSize="12" />
+                                <Button Text="3 meses"
+                                        Command="{Binding SeleccionarPeriodoCommand}"
+                                        CommandParameter="90"
+                                        Background="{Binding Boton3MesesBg}"
+                                        TextColor="{Binding Texto3Meses}"
+                                        CornerRadius="20" Padding="12,8" FontSize="12" />
+                                <Button Text="Todo"
+                                        Command="{Binding SeleccionarPeriodoCommand}"
+                                        CommandParameter="0"
+                                        Background="{Binding BotonTodoBg}"
+                                        TextColor="{Binding TextoTodo}"
+                                        CornerRadius="20" Padding="12,8" FontSize="12" />
+                            </HorizontalStackLayout>
+                            <Grid ColumnDefinitions="Auto,*,Auto,*" ColumnSpacing="6">
+                                <Label Grid.Column="0" Text="Desde:" FontSize="12"
+                                       TextColor="#555" VerticalOptions="Center"/>
+                                <DatePicker Grid.Column="1" Date="{Binding FechaDesde, Mode=TwoWay}"
+                                            Format="dd/MM/yyyy" FontSize="12"
+                                            MinimumDate="01/01/2000" MaximumDate="{Binding FechaHasta}" />
+                                <Label Grid.Column="2" Text="Hasta:" FontSize="12"
+                                       TextColor="#555" VerticalOptions="Center" Margin="4,0,0,0"/>
+                                <DatePicker Grid.Column="3" Date="{Binding FechaHasta, Mode=TwoWay}"
+                                            Format="dd/MM/yyyy" FontSize="12"
+                                            MinimumDate="{Binding FechaDesde}" MaximumDate="2099-12-31" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Label Text="No hay registros de crecimiento en este período."
+                           IsVisible="{Binding NoHayDatos}"
+                           TextColor="#999999" FontSize="14"
+                           HorizontalOptions="Center" Margin="0,16" />
+
+                    <Border Background="White" StrokeShape="RoundRectangle 12"
+                            Stroke="#e0e0e0" Padding="8,10"
+                            IsVisible="{Binding HayDatos}">
+                        <VerticalStackLayout Spacing="6">
+                            <HorizontalStackLayout Spacing="6" Margin="8,0">
+                                <BoxView Color="#2196F3" WidthRequest="14" HeightRequest="14"
+                                         VerticalOptions="Center" CornerRadius="7"/>
+                                <Label Text="⚖️ Peso (kg)" FontSize="14" FontAttributes="Bold"
+                                       TextColor="#2a3d66" VerticalOptions="Center"/>
+                            </HorizontalStackLayout>
+                            <lvc:CartesianChart Series="{Binding SeriesPeso}"
+                                               XAxes="{Binding EjeX}"
+                                               YAxes="{Binding EjeYPeso}"
+                                               HeightRequest="250"
+                                               LegendPosition="Hidden" />
+                            <Label Text="{Binding ResumenPeso}" FontSize="12"
+                                   TextColor="#555555" Margin="8,0,8,4" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Background="White" StrokeShape="RoundRectangle 12"
+                            Stroke="#e0e0e0" Padding="8,10"
+                            IsVisible="{Binding HayDatos}">
+                        <VerticalStackLayout Spacing="6">
+                            <HorizontalStackLayout Spacing="6" Margin="8,0">
+                                <BoxView Color="#4CAF50" WidthRequest="14" HeightRequest="14"
+                                         VerticalOptions="Center" CornerRadius="7"/>
+                                <Label Text="📏 Talla (cm)" FontSize="14" FontAttributes="Bold"
+                                       TextColor="#2a3d66" VerticalOptions="Center"/>
+                            </HorizontalStackLayout>
+                            <lvc:CartesianChart Series="{Binding SeriesTalla}"
+                                               XAxes="{Binding EjeXTalla}"
+                                               YAxes="{Binding EjeYTalla}"
+                                               HeightRequest="250"
+                                               LegendPosition="Hidden" />
+                            <Label Text="{Binding ResumenTalla}" FontSize="12"
+                                   TextColor="#555555" Margin="8,0,8,4" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Background="White" StrokeShape="RoundRectangle 12"
+                            Stroke="#e0e0e0" Padding="8,10"
+                            IsVisible="{Binding HayDatos}">
+                        <VerticalStackLayout Spacing="6">
+                            <HorizontalStackLayout Spacing="6" Margin="8,0">
+                                <BoxView Color="#FF9800" WidthRequest="14" HeightRequest="14"
+                                         VerticalOptions="Center" CornerRadius="7"/>
+                                <Label Text="📊 IMC (kg/m²)" FontSize="14" FontAttributes="Bold"
+                                       TextColor="#2a3d66" VerticalOptions="Center"/>
+                            </HorizontalStackLayout>
+                            <lvc:CartesianChart Series="{Binding SeriesIMC}"
+                                               XAxes="{Binding EjeXIMC}"
+                                               YAxes="{Binding EjeYIMC}"
+                                               HeightRequest="250"
+                                               LegendPosition="Hidden" />
+                            <Label Text="{Binding ResumenIMC}" FontSize="12"
+                                   TextColor="#555555" Margin="8,0,8,4" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Button Text="🔄 Actualizar" Command="{Binding RefrescarCommand}"
+                            Background="#4CAF50" TextColor="White"
+                            CornerRadius="8" FontAttributes="Bold" Margin="0,4,0,8" />
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <!-- ──────────────────────────────── TAB 3: Citas ────────────────-->
+            <ScrollView IsVisible="{Binding EsTabCitas}">
+                <VerticalStackLayout x:DataType="{x:Null}"
+                                     BindingContext="{Binding CitasVm}"
+                                     Padding="16" Spacing="14">
+
+                    <Border Background="#2a3d66"
+                            StrokeShape="RoundRectangle 12"
+                            StrokeThickness="0"
+                            Padding="16,14">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="📅 Historial de Citas Médicas"
+                                   FontSize="18" FontAttributes="Bold" TextColor="White" />
+                            <Label Text="Distribución por mes y categoría"
+                                   FontSize="12" TextColor="#90CAF9" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Selector período -->
+                    <Border Background="White" StrokeShape="RoundRectangle 10"
+                            Stroke="#e0e0e0" Padding="12,10">
+                        <VerticalStackLayout Spacing="8">
+                            <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                                <Button Text="3 meses"
+                                        Command="{Binding SeleccionarPeriodoCommand}"
+                                        CommandParameter="90"
+                                        Background="{Binding Boton3MesesBg}"
+                                        TextColor="{Binding Texto3Meses}"
+                                        CornerRadius="20" Padding="12,8" FontSize="12" />
+                                <Button Text="6 meses"
+                                        Command="{Binding SeleccionarPeriodoCommand}"
+                                        CommandParameter="180"
+                                        Background="{Binding Boton6MesesBg}"
+                                        TextColor="{Binding Texto6Meses}"
+                                        CornerRadius="20" Padding="12,8" FontSize="12" />
+                                <Button Text="1 año"
+                                        Command="{Binding SeleccionarPeriodoCommand}"
+                                        CommandParameter="365"
+                                        Background="{Binding Boton1AnoBg}"
+                                        TextColor="{Binding Texto1Ano}"
+                                        CornerRadius="20" Padding="12,8" FontSize="12" />
+                                <Button Text="Todo"
+                                        Command="{Binding SeleccionarPeriodoCommand}"
+                                        CommandParameter="0"
+                                        Background="{Binding BotonTodoBg}"
+                                        TextColor="{Binding TextoTodo}"
+                                        CornerRadius="20" Padding="12,8" FontSize="12" />
+                            </HorizontalStackLayout>
+                            <Grid ColumnDefinitions="Auto,*,Auto,*" ColumnSpacing="6">
+                                <Label Grid.Column="0" Text="Desde:" FontSize="12"
+                                       TextColor="#555" VerticalOptions="Center"/>
+                                <DatePicker Grid.Column="1" Date="{Binding FechaDesde, Mode=TwoWay}"
+                                            Format="dd/MM/yyyy" FontSize="12"
+                                            MinimumDate="01/01/2000" MaximumDate="{Binding FechaHasta}" />
+                                <Label Grid.Column="2" Text="Hasta:" FontSize="12"
+                                       TextColor="#555" VerticalOptions="Center" Margin="4,0,0,0"/>
+                                <DatePicker Grid.Column="3" Date="{Binding FechaHasta, Mode=TwoWay}"
+                                            Format="dd/MM/yyyy" FontSize="12"
+                                            MinimumDate="{Binding FechaDesde}" MaximumDate="2099-12-31" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Label Text="Sin citas en este período."
+                           IsVisible="{Binding NoHayDatos}"
+                           TextColor="#999999" FontSize="14"
+                           HorizontalOptions="Center" Margin="0,16" />
+
+                    <Border Background="White" StrokeShape="RoundRectangle 12"
+                            Stroke="#e0e0e0" Padding="8,10"
+                            IsVisible="{Binding HayDatos}">
+                        <VerticalStackLayout Spacing="6">
+                            <HorizontalStackLayout Spacing="6" Margin="8,0">
+                                <BoxView Color="#2a3d66" WidthRequest="14" HeightRequest="14"
+                                         VerticalOptions="Center" CornerRadius="7"/>
+                                <Label Text="📅 Citas por mes" FontSize="14" FontAttributes="Bold"
+                                       TextColor="#2a3d66" VerticalOptions="Center"/>
+                            </HorizontalStackLayout>
+                            <lvc:CartesianChart Series="{Binding SeriesPorMes}"
+                                               XAxes="{Binding EjeXMes}"
+                                               YAxes="{Binding EjeY}"
+                                               HeightRequest="250"
+                                               LegendPosition="Hidden" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Background="White" StrokeShape="RoundRectangle 12"
+                            Stroke="#e0e0e0" Padding="8,10"
+                            IsVisible="{Binding HayDatos}">
+                        <VerticalStackLayout Spacing="6">
+                            <HorizontalStackLayout Spacing="6" Margin="8,0">
+                                <BoxView Color="#4CAF50" WidthRequest="14" HeightRequest="14"
+                                         VerticalOptions="Center" CornerRadius="7"/>
+                                <Label Text="🏥 Por categoría" FontSize="14" FontAttributes="Bold"
+                                       TextColor="#2a3d66" VerticalOptions="Center"/>
+                            </HorizontalStackLayout>
+                            <lvc:CartesianChart Series="{Binding SeriesPorCategoria}"
+                                               XAxes="{Binding EjeXCategoria}"
+                                               YAxes="{Binding EjeY}"
+                                               HeightRequest="250"
+                                               LegendPosition="Bottom" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Background="#E8F5E9" StrokeShape="RoundRectangle 10"
+                            Stroke="#A5D6A7" Padding="16,12"
+                            IsVisible="{Binding HayDatos}">
+                        <HorizontalStackLayout Spacing="14">
+                            <Label Text="📅" FontSize="28" VerticalOptions="Center" />
+                            <VerticalStackLayout Spacing="3" VerticalOptions="Center">
+                                <Label Text="Resumen del período" FontAttributes="Bold"
+                                       TextColor="#1B5E20" FontSize="13" />
+                                <Label Text="{Binding Resumen}" TextColor="#2E7D32" FontSize="12" />
+                            </VerticalStackLayout>
+                        </HorizontalStackLayout>
+                    </Border>
+
+                    <Button Text="🔄 Actualizar" Command="{Binding RefrescarCommand}"
+                            Background="#4CAF50" TextColor="White"
+                            CornerRadius="8" FontAttributes="Bold" Margin="0,4,0,8" />
+                </VerticalStackLayout>
+            </ScrollView>
+
+        </Grid>
+
+        <!-- ════════════════════════════════════════════ BOTTOM NAVIGATION ═══ -->
+        <Border Grid.Row="1"
+                Background="White"
+                Padding="0"
+                StrokeThickness="0">
+            <Border.Shadow>
+                <Shadow Brush="#E0E0E0" Offset="0,-2" Radius="8" Opacity="0.25"/>
+            </Border.Shadow>
+            <Grid ColumnDefinitions="*,*,*,*" Padding="0,10,0,20">
+
+                <!-- Alimento -->
+                <VerticalStackLayout Grid.Column="0" Spacing="3">
+                    <Label Text="🍼" FontSize="24" HorizontalOptions="Center"/>
+                    <Label Text="Alimento"
+                           FontSize="11"
+                           TextColor="{Binding TextAlimento}"
+                           FontAttributes="{Binding FontAlimento}"
+                           HorizontalOptions="Center"/>
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CambiarTabCommand}"
+                                              CommandParameter="0"/>
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <!-- Medicamento -->
+                <VerticalStackLayout Grid.Column="1" Spacing="3">
+                    <Label Text="💊" FontSize="24" HorizontalOptions="Center"/>
+                    <Label Text="Medicamento"
+                           FontSize="11"
+                           TextColor="{Binding TextMedicamento}"
+                           FontAttributes="{Binding FontMedicamento}"
+                           HorizontalOptions="Center"/>
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CambiarTabCommand}"
+                                              CommandParameter="1"/>
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <!-- Crecimiento -->
+                <VerticalStackLayout Grid.Column="2" Spacing="3">
+                    <Label Text="📈" FontSize="24" HorizontalOptions="Center"/>
+                    <Label Text="Crecimiento"
+                           FontSize="11"
+                           TextColor="{Binding TextCrecimiento}"
+                           FontAttributes="{Binding FontCrecimiento}"
+                           HorizontalOptions="Center"/>
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CambiarTabCommand}"
+                                              CommandParameter="2"/>
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <!-- Citas -->
+                <VerticalStackLayout Grid.Column="3" Spacing="3">
+                    <Label Text="📅" FontSize="24" HorizontalOptions="Center"/>
+                    <Label Text="Citas"
+                           FontSize="11"
+                           TextColor="{Binding TextCitas}"
+                           FontAttributes="{Binding FontCitas}"
+                           HorizontalOptions="Center"/>
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CambiarTabCommand}"
+                                              CommandParameter="3"/>
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+            </Grid>
+        </Border>
+
+    </Grid>
+</ContentPage>

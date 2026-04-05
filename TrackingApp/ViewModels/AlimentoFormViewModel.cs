@@ -172,7 +172,23 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
         get => _unidadSolido;
         set { _unidadSolido = value ?? "g"; OnPropertyChanged(); }
     }
+    // ── Campos Personalizado ───────────────────────────────────────────────────────────
 
+    private string _cantidadPersonalizadoTexto = string.Empty;
+    public string CantidadPersonalizadoTexto
+    {
+        get => _cantidadPersonalizadoTexto;
+        set { _cantidadPersonalizadoTexto = value; OnPropertyChanged(); }
+    }
+
+    public List<string> UnidadesPersonalizado { get; } = new() { "ml", "g", "oz", "vasos", "tazas", "cucharadas", "unidades", "porción" };
+
+    private string _unidadPersonalizado = "ml";
+    public string UnidadPersonalizado
+    {
+        get => _unidadPersonalizado;
+        set { _unidadPersonalizado = value ?? "ml"; OnPropertyChanged(); }
+    }
     // ── Comandos ──────────────────────────────────────────────────────────────
 
     public ICommand GuardarCommand  { get; }
@@ -200,7 +216,12 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
         };
 
         if (e.TipoAlimentacion == TipoAlimentacion.Personalizado)
+        {
             NombrePersonalizado = e.FoodType ?? string.Empty;
+            CantidadPersonalizadoTexto = e.CantidadGramos?.ToString("F0") ?? (e.Amount > 0 ? e.Amount.ToString("F0") : string.Empty);
+            if (!string.IsNullOrWhiteSpace(e.Unit) && e.Unit != "min")
+                UnidadPersonalizado = e.Unit;
+        }
 
         PechoIndex = e.Pecho switch
         {
@@ -254,6 +275,14 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
                     out decimal ml) && ml > 0)
                 canMl = ml;
         }
+        else if (tipo == TipoAlimentacion.Personalizado)
+        {
+            if (decimal.TryParse(_cantidadPersonalizadoTexto,
+                    System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out decimal p) && p > 0)
+                canGrs = p;
+        }
         else
         {
             if (decimal.TryParse(_cantidadGramosTexto,
@@ -290,9 +319,10 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
                 _                              => "Alimento"
             };
             _entradaExistente.Amount = (double)(canMl ?? canGrs ?? (duracion.HasValue ? (decimal)duracion.Value : 0m));
-            _entradaExistente.Unit   = tipo == TipoAlimentacion.Lactancia ? "min" :
-                                       tipo == TipoAlimentacion.Formula   ? _unidadFormula :
-                                       tipo == TipoAlimentacion.Solido    ? _unidadSolido : string.Empty;
+            _entradaExistente.Unit   = tipo == TipoAlimentacion.Lactancia     ? "min" :
+                                       tipo == TipoAlimentacion.Formula        ? _unidadFormula :
+                                       tipo == TipoAlimentacion.Solido         ? _unidadSolido :
+                                       tipo == TipoAlimentacion.Personalizado  ? _unidadPersonalizado : string.Empty;
 
             await AppServices.DataService.UpdateFoodEntryAsync(_entradaExistente);
         }
@@ -319,9 +349,10 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
                     _                              => "Alimento"
                 },
                 Amount = (double)(canMl ?? canGrs ?? (duracion.HasValue ? (decimal)duracion.Value : 0m)),
-                Unit   = tipo == TipoAlimentacion.Lactancia ? "min" :
-                         tipo == TipoAlimentacion.Formula   ? _unidadFormula :
-                         tipo == TipoAlimentacion.Solido    ? _unidadSolido : string.Empty
+                Unit   = tipo == TipoAlimentacion.Lactancia     ? "min" :
+                         tipo == TipoAlimentacion.Formula        ? _unidadFormula :
+                         tipo == TipoAlimentacion.Solido         ? _unidadSolido :
+                         tipo == TipoAlimentacion.Personalizado  ? _unidadPersonalizado : string.Empty
             };
             await AppServices.DataService.AddFoodEntryAsync(nuevaEntrada);
         }
