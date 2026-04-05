@@ -61,77 +61,153 @@
                 Background="White"
                 StrokeThickness="0"
                 Padding="12,8">
-            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+            <VerticalStackLayout Spacing="0">
 
-                <!-- Botón día anterior -->
-                <Button Grid.Column="0"
-                        Text="‹"
-                        Command="{Binding DiaPrevioCommand}"
-                        Background="#f0f0f0"
-                        TextColor="#333"
-                        CornerRadius="8"
-                        FontSize="18"
-                        WidthRequest="40"
-                        HeightRequest="36"
-                        Padding="0" />
+                <!-- Fila de navegación -->
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
 
-                <!-- Calendario (DatePicker nativo con ícono) -->
-                <Border Grid.Column="1"
-                        Background="#f0f4ff"
-                        StrokeShape="RoundRectangle 8"
-                        Stroke="#c5cae9"
-                        Padding="0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <!-- Ícono calendario -->
-                        <Label Grid.Column="0"
-                               Text="📅"
-                               FontSize="18"
-                               VerticalOptions="Center"
-                               Margin="10,0,4,0"/>
-                        <!-- Texto fecha -->
-                        <Label Grid.Column="1"
-                               Text="{Binding FechaFiltroDisplay}"
-                               FontSize="14" FontAttributes="Bold"
-                               TextColor="#2a3d66"
-                               VerticalOptions="Center"
-                               Margin="0,10"/>
-                        <!-- DatePicker transparente encima (abre calendario nativo) -->
-                        <DatePicker Grid.ColumnSpan="2"
-                                    Date="{Binding FechaFiltro, Mode=TwoWay}"
-                                    Opacity="0"
-                                    HorizontalOptions="Fill"
-                                    VerticalOptions="Fill"
-                                    MinimumDate="01/01/2020"
-                                    MaximumDate="{Binding FechaMaxima}"/>
-                    </Grid>
+                    <!-- Botón día anterior -->
+                    <Button Grid.Column="0"
+                            Text="‹"
+                            Command="{Binding DiaPrevioCommand}"
+                            Background="#f0f0f0"
+                            TextColor="#333"
+                            CornerRadius="8"
+                            FontSize="18"
+                            WidthRequest="40"
+                            HeightRequest="36"
+                            Padding="0" />
+
+                    <!-- Botón abre/cierra calendario inline -->
+                    <Button Grid.Column="1"
+                            Text="{Binding FechaFiltroDisplay}"
+                            Command="{Binding ToggleCalendarCommand}"
+                            Background="#f0f4ff"
+                            TextColor="#2a3d66"
+                            CornerRadius="8"
+                            FontSize="14"
+                            FontAttributes="Bold"
+                            HeightRequest="36"
+                            HorizontalOptions="Fill"
+                            Padding="8,0" />
+
+                    <!-- Botón día siguiente -->
+                    <Button Grid.Column="2"
+                            Text="›"
+                            Command="{Binding DiaSiguienteCommand}"
+                            Background="#f0f0f0"
+                            TextColor="#333"
+                            CornerRadius="8"
+                            FontSize="18"
+                            WidthRequest="40"
+                            HeightRequest="36"
+                            Padding="0" />
+
+                    <!-- Botón Hoy (solo visible cuando no es hoy) -->
+                    <Button Grid.Column="3"
+                            Text="Hoy"
+                            Command="{Binding IrHoyCommand}"
+                            IsVisible="{Binding EsHoy, Converter={StaticResource InverseBoolConverter}}"
+                            Background="#2a3d66"
+                            TextColor="White"
+                            CornerRadius="8"
+                            FontSize="12"
+                            WidthRequest="52"
+                            HeightRequest="36"
+                            Padding="4,0" />
+
+                </Grid>
+
+                <!-- ── Calendario inline colapsable ─────────────────────── -->
+                <Border IsVisible="{Binding MostrarCalendario}"
+                        Background="#FAFAFA"
+                        StrokeShape="RoundRectangle 12"
+                        Stroke="#e0e0e0"
+                        Padding="8,10"
+                        Margin="0,8,0,2">
+                    <VerticalStackLayout Spacing="6">
+
+                        <!-- Navegación de mes -->
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Button Grid.Column="0"
+                                    Text="‹"
+                                    Command="{Binding MesAnteriorCommand}"
+                                    Background="Transparent"
+                                    TextColor="#2a3d66"
+                                    FontSize="20"
+                                    WidthRequest="36"
+                                    HeightRequest="36"
+                                    Padding="0" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding CalendarMonthDisplay}"
+                                   FontSize="15" FontAttributes="Bold"
+                                   TextColor="#2a3d66"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                            <Button Grid.Column="2"
+                                    Text="›"
+                                    Command="{Binding MesSiguienteCommand}"
+                                    IsEnabled="{Binding PuedeMesSiguiente}"
+                                    Background="Transparent"
+                                    TextColor="#2a3d66"
+                                    FontSize="20"
+                                    WidthRequest="36"
+                                    HeightRequest="36"
+                                    Padding="0" />
+                        </Grid>
+
+                        <!-- Encabezados días de la semana -->
+                        <Grid ColumnDefinitions="*,*,*,*,*,*,*">
+                            <Label Grid.Column="0" Text="L" FontSize="11" TextColor="#888"
+                                   HorizontalOptions="Center" FontAttributes="Bold"/>
+                            <Label Grid.Column="1" Text="M" FontSize="11" TextColor="#888"
+                                   HorizontalOptions="Center" FontAttributes="Bold"/>
+                            <Label Grid.Column="2" Text="X" FontSize="11" TextColor="#888"
+                                   HorizontalOptions="Center" FontAttributes="Bold"/>
+                            <Label Grid.Column="3" Text="J" FontSize="11" TextColor="#888"
+                                   HorizontalOptions="Center" FontAttributes="Bold"/>
+                            <Label Grid.Column="4" Text="V" FontSize="11" TextColor="#888"
+                                   HorizontalOptions="Center" FontAttributes="Bold"/>
+                            <Label Grid.Column="5" Text="S" FontSize="11" TextColor="#888"
+                                   HorizontalOptions="Center" FontAttributes="Bold"/>
+                            <Label Grid.Column="6" Text="D" FontSize="11" TextColor="#888"
+                                   HorizontalOptions="Center" FontAttributes="Bold"/>
+                        </Grid>
+
+                        <!-- Celdas de días usando BindableLayout en FlexLayout -->
+                        <FlexLayout Wrap="Wrap"
+                                    JustifyContent="Start"
+                                    BindableLayout.ItemsSource="{Binding CalendarDays}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="viewmodels:CalendarDayItem">
+                                    <Border WidthRequest="42"
+                                            HeightRequest="42"
+                                            StrokeShape="RoundRectangle 21"
+                                            StrokeThickness="1.5"
+                                            Stroke="{Binding DayStroke}"
+                                            Background="{Binding DayBackground}"
+                                            Opacity="{Binding DayOpacity}"
+                                            Margin="1">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:AlimentoListViewModel}}, Path=SelectDayCommand}"
+                                                CommandParameter="{Binding .}" />
+                                        </Border.GestureRecognizers>
+                                        <Label Text="{Binding Label}"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"
+                                               FontSize="13"
+                                               FontAttributes="{Binding DayFontAttributes}"
+                                               TextColor="{Binding DayTextColor}" />
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </FlexLayout>
+
+                    </VerticalStackLayout>
                 </Border>
 
-                <!-- Botón día siguiente -->
-                <Button Grid.Column="2"
-                        Text="›"
-                        Command="{Binding DiaSiguienteCommand}"
-                        Background="#f0f0f0"
-                        TextColor="#333"
-                        CornerRadius="8"
-                        FontSize="18"
-                        WidthRequest="40"
-                        HeightRequest="36"
-                        Padding="0" />
-
-                <!-- Botón Hoy -->
-                <Button Grid.Column="3"
-                        Text="Hoy"
-                        Command="{Binding IrHoyCommand}"
-                        IsVisible="{Binding EsHoy, Converter={StaticResource InverseBoolConverter}}"
-                        Background="#2a3d66"
-                        TextColor="White"
-                        CornerRadius="8"
-                        FontSize="12"
-                        WidthRequest="52"
-                        HeightRequest="36"
-                        Padding="4,0" />
-
-            </Grid>
+            </VerticalStackLayout>
         </Border>
 
         <!-- ── Empty state ─────────────────────────────────────────────────── -->

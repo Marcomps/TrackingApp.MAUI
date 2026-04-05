@@ -20,7 +20,13 @@ public class AlimentoListViewModel : INotifyPropertyChanged
         DiaPrevioCommand     = new Command(() => FechaFiltro = FechaFiltro.AddDays(-1));
         DiaSiguienteCommand  = new Command(() => FechaFiltro = FechaFiltro.AddDays(1));
         IrHoyCommand         = new Command(() => FechaFiltro = DateTime.Today);
+        ToggleCalendarCommand = new Command(() => MostrarCalendario = !MostrarCalendario);
+        MesAnteriorCommand   = new Command(IrMesAnterior);
+        MesSiguienteCommand  = new Command(IrMesSiguiente);
+        SelectDayCommand     = new Command<CalendarDayItem>(SeleccionarDia);
 
+        _calendarMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        BuildCalendarDays();
         Cargar();
     }
 
@@ -52,11 +58,18 @@ public class AlimentoListViewModel : INotifyPropertyChanged
         get => _fechaFiltro;
         set
         {
-            if (_fechaFiltro == value.Date) return;
-            _fechaFiltro = value.Date;
+            // Clamp: never allow future dates
+            var target = value.Date > DateTime.Today ? DateTime.Today : value.Date;
+            if (_fechaFiltro == target) return;
+            _fechaFiltro = target;
+            // Sync calendar month view to the selected date
+            _calendarMonth = new DateTime(_fechaFiltro.Year, _fechaFiltro.Month, 1);
             OnPropertyChanged();
             OnPropertyChanged(nameof(FechaFiltroDisplay));
             OnPropertyChanged(nameof(EsHoy));
+            OnPropertyChanged(nameof(CalendarMonthDisplay));
+            OnPropertyChanged(nameof(PuedeMesSiguiente));
+            BuildCalendarDays();
             Cargar();
         }
     }
@@ -65,8 +78,25 @@ public class AlimentoListViewModel : INotifyPropertyChanged
         : _fechaFiltro.ToString("ddd d MMM", System.Globalization.CultureInfo.CurrentCulture);
     public bool EsHoy => _fechaFiltro.Date == DateTime.Today;
 
-    // Bloquea selección de fechas futuras en el DatePicker
-    public DateTime FechaMaxima => DateTime.Today;
+    // ── Calendario inline ─────────────────────────────────────────────────────
+
+    private DateTime _calendarMonth;
+
+    private bool _mostrarCalendario;
+    public bool MostrarCalendario
+    {
+        get => _mostrarCalendario;
+        set { _mostrarCalendario = value; OnPropertyChanged(); }
+    }
+
+    public string CalendarMonthDisplay =>
+        _calendarMonth.ToString("MMMM yyyy", System.Globalization.CultureInfo.CurrentCulture);
+
+    /// <summary>False when the calendar is already showing the current month (can't go further into the future).</summary>
+    public bool PuedeMesSiguiente =>
+        _calendarMonth < new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+
+    public ObservableCollection<CalendarDayItem> CalendarDays { get; } = new();
 
     // Último registro (resumen en header)
     private FoodEntry? _ultimo;
@@ -91,13 +121,17 @@ public class AlimentoListViewModel : INotifyPropertyChanged
 
     // ── Comandos ──────────────────────────────────────────────────────────────
 
-    public ICommand AgregarCommand       { get; }
-    public ICommand EditarCommand        { get; }
-    public ICommand EliminarCommand      { get; }
-    public ICommand RefrescarCommand     { get; }
-    public ICommand DiaPrevioCommand     { get; }
-    public ICommand DiaSiguienteCommand  { get; }
-    public ICommand IrHoyCommand         { get; }
+    public ICommand AgregarCommand        { get; }
+    public ICommand EditarCommand         { get; }
+    public ICommand EliminarCommand       { get; }
+    public ICommand RefrescarCommand      { get; }
+    public ICommand DiaPrevioCommand      { get; }
+    public ICommand DiaSiguienteCommand   { get; }
+    public ICommand IrHoyCommand          { get; }
+    public ICommand ToggleCalendarCommand { get; }
+    public ICommand MesAnteriorCommand    { get; }
+    public ICommand MesSiguienteCommand   { get; }
+    public ICommand SelectDayCommand      { get; }
 
     // ── Lógica ────────────────────────────────────────────────────────────────
 
@@ -157,4 +191,57 @@ public class AlimentoListViewModel : INotifyPropertyChanged
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+    // ── Calendar helpers ──────────────────────────────────────────────────────
+
+    private void IrMesAnterior()
+    {
+        _calendarMonth = _calendarMonth.AddMonths(-1);
+        OnPropertyChanged(nameof(CalendarMonthDisplay));
+        OnPropertyChanged(nameof(PuedeMesSiguiente));
+        BuildCalendarDays();
+    }
+
+    private void IrMesSiguiente()
+    {
+        if (!PuedeMesSiguiente) return;
+        _calendarMonth = _calendarMonth.AddMonths(1);
+        OnPropertyChanged(nameof(CalendarMonthDisplay));
+        OnPropertyChanged(nameof(PuedeMesSiguiente));
+        BuildCalendarDays();
+    }
+
+    private void SeleccionarDia(CalendarDayItem item)
+    {
+        if (item.IsEmpty || item.IsFuture || !item.Date.HasValue) return;
+        FechaFiltro = item.Date.Value;
+        MostrarCalendario = false;
+    }
+
+    private void BuildCalendarDays()
+    {
+        CalendarDays.Clear();
+
+        var firstDay = _calendarMonth;
+        var lastDay  = _calendarMonth.AddMonths(1).AddDays(-1);
+
+        // Monday-first offset: Mon=0 … Sun=6
+        int startOffset = ((int)firstDay.DayOfWeek + 6) % 7;
+        for (int i = 0; i < startOffset; i++)
+            CalendarDays.Add(new CalendarDayItem { Label = "" });
+
+        for (var d = firstDay; d <= lastDay; d = d.AddDays(1))
+            CalendarDays.Add(new CalendarDayItem
+            {
+                Date           = d,
+                Label          = d.Day.ToString(),
+                IsCurrentMonth = true,
+                IsSelected     = d.Date == _fechaFiltro.Date,
+            });
+
+        // Pad to complete last row (multiple of 7)
+        int remaining = (7 - CalendarDays.Count % 7) % 7;
+        for (int i = 0; i < remaining; i++)
+            CalendarDays.Add(new CalendarDayItem { Label = "" });
+    }
 }

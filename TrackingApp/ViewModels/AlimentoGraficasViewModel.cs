@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using LiveChartsCore;
@@ -8,6 +9,13 @@ using TrackingApp.Models;
 using TrackingApp.Services;
 
 namespace TrackingApp.ViewModels;
+
+/// <summary>One row in the Personalizado summary section.</summary>
+public class PersonalizadoResumenItem
+{
+    public string Nombre  { get; init; } = "";
+    public string Resumen { get; init; } = "";
+}
 
 public class AlimentoGraficasViewModel : INotifyPropertyChanged
 {
@@ -142,7 +150,6 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
     private string _resumenFormula      = "Sin datos";
     private string _resumenLactancia   = "Sin datos";
     private string _resumenSolido      = "Sin datos";
-    private string _resumenPersonalizado = "Sin datos";
     private bool   _hayDatos;
 
     public string ResumenFormula
@@ -160,11 +167,12 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
         get => _resumenSolido;
         private set { _resumenSolido = value; OnPropertyChanged(); }
     }
-    public string ResumenPersonalizado
-    {
-        get => _resumenPersonalizado;
-        private set { _resumenPersonalizado = value; OnPropertyChanged(); }
-    }
+
+    /// <summary>One item per distinct Personalizado food name.</summary>
+    public ObservableCollection<PersonalizadoResumenItem> PersonalizadoResumenes { get; } = new();
+
+    public bool HayPersonalizado => PersonalizadoResumenes.Count > 0;
+
     public bool HayDatos
     {
         get => _hayDatos;
@@ -430,18 +438,25 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
             ? string.Join(" · ", solidoResumenParts)
             : "Sin registros de sólidos";
 
-        if (personalizadoGroups.Any(kv => kv.Value.Any(v => v > 0)))
+        // Build one resumen item per distinct Personalizado food name
+        PersonalizadoResumenes.Clear();
+        foreach (var kv in personalizadoGroups.OrderBy(k => k.Key))
         {
-            var personalizadoEntries = entries.Where(e => e.TipoAlimentacion == TipoAlimentacion.Personalizado
-                && e.Time.Date >= desde && e.Time.Date <= hasta).ToList();
-            int countP   = personalizadoEntries.Count;
-            var tiposP   = personalizadoGroups.Keys.Take(3).ToList();
-            ResumenPersonalizado = $"{countP} registro{(countP != 1 ? "s" : "")} · {string.Join(", ", tiposP)}";
+            if (!kv.Value.Any(v => v > 0)) continue;
+            double total = kv.Value.Sum();
+            // Find the unit used by this food type
+            var matchingEntries = entries.Where(e =>
+                e.TipoAlimentacion == TipoAlimentacion.Personalizado &&
+                (string.IsNullOrWhiteSpace(e.FoodType) ? "Personalizado" : e.FoodType) == kv.Key &&
+                e.Time.Date >= desde && e.Time.Date <= hasta).ToList();
+            int cnt = matchingEntries.Count;
+            var unit = matchingEntries.Select(e => e.Unit).FirstOrDefault(u => !string.IsNullOrWhiteSpace(u)) ?? "";
+            var resumen = total > 1.0 * cnt   // has real quantity data
+                ? $"{total:0.##}{(string.IsNullOrWhiteSpace(unit) ? "" : " " + unit)} total · {cnt} registro{(cnt != 1 ? "s" : "")}"
+                : $"{cnt} registro{(cnt != 1 ? "s" : "")}";
+            PersonalizadoResumenes.Add(new PersonalizadoResumenItem { Nombre = kv.Key, Resumen = resumen });
         }
-        else
-        {
-            ResumenPersonalizado = "Sin registros personalizados";
-        }
+        OnPropertyChanged(nameof(HayPersonalizado));
 
         bool anyFormula      = formulaGroups.Any(kv => kv.Value.Any(v => v > 0));
         bool anyLactancia    = lactanciaMin.Any(v => v > 0);

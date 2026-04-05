@@ -219,21 +219,29 @@
                 </HorizontalStackLayout>
             </Border>
 
-            <!-- Tarjeta Personalizado -->
-            <Border Background="#E8F5E9"
-                    StrokeShape="RoundRectangle 10"
-                    Stroke="#A5D6A7"
-                    Padding="16,12">
-                <HorizontalStackLayout Spacing="14">
-                    <Label Text="✏️" FontSize="30" VerticalOptions="Center" />
-                    <VerticalStackLayout Spacing="3" VerticalOptions="Center">
-                        <Label Text="Personalizado"
-                               FontAttributes="Bold" TextColor="#2E7D32" FontSize="14" />
-                        <Label Text="{Binding ResumenPersonalizado}"
-                               TextColor="#388E3C" FontSize="13" />
-                    </VerticalStackLayout>
-                </HorizontalStackLayout>
-            </Border>
+            <!-- Tarjetas Personalizado — una por tipo (Agua, Leche, etc.) -->
+            <VerticalStackLayout Spacing="8"
+                                 IsVisible="{Binding HayPersonalizado}"
+                                 BindableLayout.ItemsSource="{Binding PersonalizadoResumenes}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="viewmodels:PersonalizadoResumenItem">
+                        <Border Background="#E8F5E9"
+                                StrokeShape="RoundRectangle 10"
+                                Stroke="#A5D6A7"
+                                Padding="16,12">
+                            <HorizontalStackLayout Spacing="14">
+                                <Label Text="✏️" FontSize="30" VerticalOptions="Center" />
+                                <VerticalStackLayout Spacing="3" VerticalOptions="Center">
+                                    <Label Text="{Binding Nombre}"
+                                           FontAttributes="Bold" TextColor="#2E7D32" FontSize="14" />
+                                    <Label Text="{Binding Resumen}"
+                                           TextColor="#388E3C" FontSize="13" />
+                                </VerticalStackLayout>
+                            </HorizontalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
 
             <!-- Botón Actualizar -->
             <Button Text="🔄 Actualizar gráfica"
