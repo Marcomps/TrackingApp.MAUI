@@ -7,24 +7,38 @@
              Shell.NavBarIsVisible="False">
 
     <Grid RowDefinitions="Auto,*" Padding="0">
+        <Grid.Background>
+            <SolidColorBrush Color="#F0F4F8"/>
+        </Grid.Background>
 
-        <!-- Header -->
+        <!-- Header con gradiente pastel -->
         <Border Grid.Row="0"
-                Background="White"
-                Padding="20,40,20,20"
-                StrokeThickness="0">
+                StrokeThickness="0"
+                Padding="20,50,20,30">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#A8C8E8" Offset="0.0"/>
+                    <GradientStop Color="#C4B4F0" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Border.Background>
             <Grid ColumnDefinitions="*,Auto">
-                <Label Text="Seguimiento"
-                       FontSize="32"
-                       FontAttributes="Bold"
-                       TextColor="#333"
-                       VerticalOptions="Center"/>
+                <VerticalStackLayout VerticalOptions="Center" Spacing="4">
+                    <Label Text="Seguimiento"
+                           FontSize="32"
+                           FontAttributes="Bold"
+                           TextColor="#3A3060"/>
+                    <Label Text="Tu salud en un solo lugar"
+                           FontSize="13"
+                           TextColor="#7060B0"/>
+                </VerticalStackLayout>
                 <Border Grid.Column="1"
-                        Background="#E8F4F8"
                         StrokeShape="RoundRectangle 25"
                         WidthRequest="50"
                         HeightRequest="50"
                         StrokeThickness="0">
+                    <Border.Background>
+                        <SolidColorBrush Color="#FFFFFF60"/>
+                    </Border.Background>
                     <Label Text="&#x1F464;"
                            FontSize="24"
                            HorizontalOptions="Center"
@@ -35,39 +49,46 @@
 
         <!-- Grid de Opciones (3x2) -->
         <ScrollView Grid.Row="1" Padding="20,20">
-            <Grid RowDefinitions="*,*,*"
+            <Grid RowDefinitions="*,*,Auto"
                   ColumnDefinitions="*,*"
-                  RowSpacing="20"
-                  ColumnSpacing="20">
+                  RowSpacing="16"
+                  ColumnSpacing="16">
 
                 <!-- Crecimiento -->
                 <Border Grid.Row="0" Grid.Column="0"
-                        Background="White"
-                        StrokeShape="RoundRectangle 16"
+                        StrokeShape="RoundRectangle 18"
                         StrokeThickness="0"
                         Padding="0">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#B8EDD5" Offset="0.0"/>
+                            <GradientStop Color="#A8F0E4" Offset="1.0"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
                     <Border.Shadow>
-                        <Shadow Brush="#E0E0E0" Offset="0,2" Radius="8" Opacity="0.3"/>
+                        <Shadow Brush="#88D4B4" Offset="0,4" Radius="10" Opacity="0.30"/>
                     </Border.Shadow>
                     <Grid RowDefinitions="*,Auto" Padding="20">
                         <Border Grid.Row="0"
-                                Background="#E8F4F8"
                                 StrokeShape="RoundRectangle 50"
-                                WidthRequest="80"
-                                HeightRequest="80"
+                                WidthRequest="72"
+                                HeightRequest="72"
                                 HorizontalOptions="Center"
                                 StrokeThickness="0"
-                                Margin="0,10,0,20">
+                                Margin="0,10,0,16">
+                            <Border.Background>
+                                <SolidColorBrush Color="#FFFFFF60"/>
+                            </Border.Background>
                             <Label Text="&#x1F4CF;"
-                                   FontSize="36"
+                                   FontSize="32"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center"/>
                         </Border>
                         <Label Grid.Row="1"
                                Text="Crecimiento"
-                               FontSize="16"
+                               FontSize="15"
                                FontAttributes="Bold"
-                               TextColor="#666"
+                               TextColor="#2A6A50"
                                HorizontalOptions="Center"/>
                     </Grid>
                     <Border.GestureRecognizers>
@@ -77,32 +98,39 @@
 
                 <!-- Alimento -->
                 <Border Grid.Row="0" Grid.Column="1"
-                        Background="White"
-                        StrokeShape="RoundRectangle 16"
+                        StrokeShape="RoundRectangle 18"
                         StrokeThickness="0"
                         Padding="0">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#FFD9A8" Offset="0.0"/>
+                            <GradientStop Color="#FFEAA8" Offset="1.0"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
                     <Border.Shadow>
-                        <Shadow Brush="#E0E0E0" Offset="0,2" Radius="8" Opacity="0.3"/>
+                        <Shadow Brush="#F0B870" Offset="0,4" Radius="10" Opacity="0.30"/>
                     </Border.Shadow>
                     <Grid RowDefinitions="*,Auto" Padding="20">
                         <Border Grid.Row="0"
-                                Background="#E8F4F8"
                                 StrokeShape="RoundRectangle 50"
-                                WidthRequest="80"
-                                HeightRequest="80"
+                                WidthRequest="72"
+                                HeightRequest="72"
                                 HorizontalOptions="Center"
                                 StrokeThickness="0"
-                                Margin="0,10,0,20">
+                                Margin="0,10,0,16">
+                            <Border.Background>
+                                <SolidColorBrush Color="#FFFFFF60"/>
+                            </Border.Background>
                             <Label Text="&#x1F37C;"
-                                   FontSize="36"
+                                   FontSize="32"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center"/>
                         </Border>
                         <Label Grid.Row="1"
                                Text="Alimento"
-                               FontSize="16"
+                               FontSize="15"
                                FontAttributes="Bold"
-                               TextColor="#666"
+                               TextColor="#7A5000"
                                HorizontalOptions="Center"/>
                     </Grid>
                     <Border.GestureRecognizers>
@@ -112,32 +140,39 @@
 
                 <!-- Salud -->
                 <Border Grid.Row="1" Grid.Column="0"
-                        Background="White"
-                        StrokeShape="RoundRectangle 16"
+                        StrokeShape="RoundRectangle 18"
                         StrokeThickness="0"
                         Padding="0">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#FFC0CE" Offset="0.0"/>
+                            <GradientStop Color="#D4A8E8" Offset="1.0"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
                     <Border.Shadow>
-                        <Shadow Brush="#E0E0E0" Offset="0,2" Radius="8" Opacity="0.3"/>
+                        <Shadow Brush="#E090B0" Offset="0,4" Radius="10" Opacity="0.30"/>
                     </Border.Shadow>
                     <Grid RowDefinitions="*,Auto" Padding="20">
                         <Border Grid.Row="0"
-                                Background="#E8F4F8"
                                 StrokeShape="RoundRectangle 50"
-                                WidthRequest="80"
-                                HeightRequest="80"
+                                WidthRequest="72"
+                                HeightRequest="72"
                                 HorizontalOptions="Center"
                                 StrokeThickness="0"
-                                Margin="0,10,0,20">
+                                Margin="0,10,0,16">
+                            <Border.Background>
+                                <SolidColorBrush Color="#FFFFFF60"/>
+                            </Border.Background>
                             <Label Text="&#x1F48A;"
-                                   FontSize="36"
+                                   FontSize="32"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center"/>
                         </Border>
                         <Label Grid.Row="1"
                                Text="Salud"
-                               FontSize="16"
+                               FontSize="15"
                                FontAttributes="Bold"
-                               TextColor="#666"
+                               TextColor="#7A2050"
                                HorizontalOptions="Center"/>
                     </Grid>
                     <Border.GestureRecognizers>
@@ -147,32 +182,39 @@
 
                 <!-- Citas Medicas -->
                 <Border Grid.Row="1" Grid.Column="1"
-                        Background="White"
-                        StrokeShape="RoundRectangle 16"
+                        StrokeShape="RoundRectangle 18"
                         StrokeThickness="0"
                         Padding="0">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#B8D0F8" Offset="0.0"/>
+                            <GradientStop Color="#CEB8F8" Offset="1.0"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
                     <Border.Shadow>
-                        <Shadow Brush="#E0E0E0" Offset="0,2" Radius="8" Opacity="0.3"/>
+                        <Shadow Brush="#90A8E8" Offset="0,4" Radius="10" Opacity="0.30"/>
                     </Border.Shadow>
                     <Grid RowDefinitions="*,Auto" Padding="20">
                         <Border Grid.Row="0"
-                                Background="#E8F4F8"
                                 StrokeShape="RoundRectangle 50"
-                                WidthRequest="80"
-                                HeightRequest="80"
+                                WidthRequest="72"
+                                HeightRequest="72"
                                 HorizontalOptions="Center"
                                 StrokeThickness="0"
-                                Margin="0,10,0,20">
+                                Margin="0,10,0,16">
+                            <Border.Background>
+                                <SolidColorBrush Color="#FFFFFF60"/>
+                            </Border.Background>
                             <Label Text="&#x1F4C5;"
-                                   FontSize="36"
+                                   FontSize="32"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center"/>
                         </Border>
                         <Label Grid.Row="1"
-                               Text="Citas Medicas"
-                               FontSize="16"
+                               Text="Citas Médicas"
+                               FontSize="15"
                                FontAttributes="Bold"
-                               TextColor="#666"
+                               TextColor="#303888"
                                HorizontalOptions="Center"/>
                     </Grid>
                     <Border.GestureRecognizers>
@@ -182,22 +224,30 @@
 
                 <!-- Gráficas -->
                 <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
-                        Background="White"
-                        StrokeShape="RoundRectangle 16"
+                        StrokeShape="RoundRectangle 18"
                         StrokeThickness="0"
-                        Padding="0">
+                        Padding="0"
+                        Margin="0,0,0,20">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#C4CAF5" Offset="0.0"/>
+                            <GradientStop Color="#D8C0F0" Offset="1.0"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
                     <Border.Shadow>
-                        <Shadow Brush="#E0E0E0" Offset="0,2" Radius="8" Opacity="0.3"/>
+                        <Shadow Brush="#A8A8E0" Offset="0,4" Radius="10" Opacity="0.30"/>
                     </Border.Shadow>
                     <Grid ColumnDefinitions="Auto,*" Padding="20" ColumnSpacing="16">
                         <Border Grid.Column="0"
-                                Background="#E8F4F8"
                                 StrokeShape="RoundRectangle 50"
-                                WidthRequest="64"
-                                HeightRequest="64"
+                                WidthRequest="60"
+                                HeightRequest="60"
                                 StrokeThickness="0">
+                            <Border.Background>
+                                <SolidColorBrush Color="#FFFFFF60"/>
+                            </Border.Background>
                             <Label Text="&#x1F4CA;"
-                                   FontSize="30"
+                                   FontSize="28"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center"/>
                         </Border>
@@ -205,10 +255,10 @@
                             <Label Text="Gráficas"
                                    FontSize="18"
                                    FontAttributes="Bold"
-                                   TextColor="#333"/>
+                                   TextColor="#3A3070"/>
                             <Label Text="Alimento • Medicamento • Crecimiento • Citas"
                                    FontSize="12"
-                                   TextColor="#888"/>
+                                   TextColor="#7060A8"/>
                         </VerticalStackLayout>
                     </Grid>
                     <Border.GestureRecognizers>
