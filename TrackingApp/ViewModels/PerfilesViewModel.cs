@@ -59,11 +59,13 @@ public class PerfilesViewModel : INotifyPropertyChanged
             OnPropertyChanged();
             OnPropertyChanged(nameof(NombreActivoDisplay));
             OnPropertyChanged(nameof(TipoActivoDisplay));
+            OnPropertyChanged(nameof(EmojiActivoDisplay));
         }
     }
 
     public string NombreActivoDisplay => _perfilSeleccionado?.DisplayName ?? "Sin perfil activo";
     public string TipoActivoDisplay   => _perfilSeleccionado?.TipoPerfilDisplay ?? string.Empty;
+    public string EmojiActivoDisplay  => _perfilSeleccionado?.TipoPerfilEmoji ?? "👤";
 
     // ── Comandos ──────────────────────────────────────────────────────────────
 
@@ -95,6 +97,7 @@ public class PerfilesViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(PerfilSeleccionado));
             OnPropertyChanged(nameof(NombreActivoDisplay));
             OnPropertyChanged(nameof(TipoActivoDisplay));
+            OnPropertyChanged(nameof(EmojiActivoDisplay));
         }
         finally
         {

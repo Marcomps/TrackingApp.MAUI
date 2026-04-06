@@ -27,22 +27,42 @@
                            FontSize="32"
                            FontAttributes="Bold"
                            TextColor="#3A3060"/>
-                    <Label Text="Tu salud en un solo lugar"
+                    <Label x:Name="LblPerfilActivo"
+                           Text="Cargando perfil..."
                            FontSize="13"
                            TextColor="#7060B0"/>
                 </VerticalStackLayout>
-                <Border Grid.Column="1"
-                        StrokeShape="RoundRectangle 25"
-                        WidthRequest="50"
-                        HeightRequest="50"
-                        StrokeThickness="0">
+
+                <!-- Botón de perfil activo -->
+                <Border x:Name="BtnPerfil"
+                        Grid.Column="1"
+                        StrokeShape="RoundRectangle 16"
+                        WidthRequest="70"
+                        HeightRequest="56"
+                        StrokeThickness="0"
+                        VerticalOptions="Center">
                     <Border.Background>
                         <SolidColorBrush Color="#FFFFFF60"/>
                     </Border.Background>
-                    <Label Text="&#x1F464;"
-                           FontSize="24"
-                           HorizontalOptions="Center"
-                           VerticalOptions="Center"/>
+                    <VerticalStackLayout HorizontalOptions="Center"
+                                         VerticalOptions="Center"
+                                         Spacing="2">
+                        <Label x:Name="LblPerfilEmoji"
+                               Text="👶"
+                               FontSize="22"
+                               HorizontalOptions="Center"/>
+                        <Label x:Name="LblPerfilNombre"
+                               Text="Bebé"
+                               FontSize="10"
+                               FontAttributes="Bold"
+                               TextColor="#3A3060"
+                               HorizontalOptions="Center"
+                               LineBreakMode="TailTruncation"
+                               MaxLines="1"/>
+                    </VerticalStackLayout>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnPerfilTapped"/>
+                    </Border.GestureRecognizers>
                 </Border>
             </Grid>
         </Border>

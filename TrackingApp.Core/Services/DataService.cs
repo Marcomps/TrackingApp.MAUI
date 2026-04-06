@@ -732,21 +732,21 @@ namespace TrackingApp.Services
         }
 
         /// <summary>
-        /// Crea los tres perfiles por defecto (Bebé, Mascota, Persona).
-        /// Solo se llama cuando no existe ningún perfil en la base de datos.
+        /// Crea el perfil por defecto (Bebé) cuando no existe ningún perfil en la base de datos.
+        /// El usuario puede agregar perfiles adicionales desde la pantalla de Perfiles.
         /// </summary>
         private async Task SeedDefaultPerfilesAsync()
         {
-            var defaults = new[]
+            var bebe = new Perfil
             {
-                new Perfil { Nombre = "Bebé",    TipoPerfil = TipoPerfil.Bebe,         SistemaUnidades = SistemaUnidades.Metrico, FechaCreacion = DateTime.Now },
-                new Perfil { Nombre = "Mascota", TipoPerfil = TipoPerfil.Mascota,      SistemaUnidades = SistemaUnidades.Metrico, FechaCreacion = DateTime.Now },
-                new Perfil { Nombre = "Persona", TipoPerfil = TipoPerfil.AdultoGeneral, SistemaUnidades = SistemaUnidades.Metrico, FechaCreacion = DateTime.Now },
+                Nombre          = "Bebé",
+                TipoPerfil      = TipoPerfil.Bebe,
+                SistemaUnidades = SistemaUnidades.Metrico,
+                FechaCreacion   = DateTime.Now
             };
-            foreach (var p in defaults)
-                await _databaseService.SavePerfilAsync(p);
+            await _databaseService.SavePerfilAsync(bebe);
 
-            System.Diagnostics.Debug.WriteLine("✅ Perfiles por defecto creados: Bebé, Mascota, Persona");
+            System.Diagnostics.Debug.WriteLine("✅ Perfil por defecto creado: Bebé");
         }
 
         public async Task AddPerfilAsync(Perfil perfil)
