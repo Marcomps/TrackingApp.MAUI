@@ -32,7 +32,15 @@ public class AlimentoListViewModel : INotifyPropertyChanged
 
     // ── Colecciones ───────────────────────────────────────────────────────────
 
-    public ObservableCollection<FoodEntry> Registros { get; } = new();
+    public ObservableCollection<FoodEntry>         Registros     { get; } = new();
+    public ObservableCollection<ResumenAlimentoItem> ResumenDiario { get; } = new();
+
+    private bool _hayResumen;
+    public bool HayResumen
+    {
+        get => _hayResumen;
+        private set { _hayResumen = value; OnPropertyChanged(); }
+    }
 
     // ── Properties ───────────────────────────────────────────────────────────
 
@@ -151,7 +159,106 @@ public class AlimentoListViewModel : INotifyPropertyChanged
 
             UltimoRegistro = AppServices.DataService.FoodEntries
                 .OrderByDescending(e => e.Time).FirstOrDefault();
-            HayRegistros   = Registros.Count > 0;
+            HayRegistros = Registros.Count > 0;
+
+            // ── Resumen del día ───────────────────────────────────────────────
+            ResumenDiario.Clear();
+
+            // Tipos estándar: Lactancia, Fórmula, Sólido — un resumen por tipo
+            foreach (var grupo in Registros
+                .Where(e => e.TipoAlimentacion != TipoAlimentacion.Personalizado)
+                .GroupBy(e => e.TipoAlimentacion)
+                .OrderBy(g => (int)g.Key))
+            {
+                int tomas = grupo.Count();
+                string tomasLabel = tomas == 1 ? "1 toma" : $"{tomas} tomas";
+                string total;
+                string icono;
+
+                switch (grupo.Key)
+                {
+                    case TipoAlimentacion.Lactancia:
+                        int totalMin = grupo.Sum(e => e.DuracionMinutos ?? 0);
+                        total = totalMin > 0 ? $"{totalMin} min" : tomasLabel;
+                        icono = "🤱";
+                        break;
+                    case TipoAlimentacion.Formula:
+                        double totalMl = grupo.Sum(e =>
+                            e.CantidadMl.HasValue ? (double)e.CantidadMl.Value : e.Amount);
+                        total = totalMl > 0 ? $"{totalMl:F0} ml" : tomasLabel;
+                        icono = "🍼";
+                        break;
+                    case TipoAlimentacion.Solido:
+                        double totalG = grupo.Sum(e =>
+                            e.CantidadGramos.HasValue ? (double)e.CantidadGramos.Value : e.Amount);
+                        total = totalG > 0 ? $"{totalG:F0} g" : tomasLabel;
+                        icono = "🥣";
+                        break;
+                    default:
+                        total = tomasLabel;
+                        icono = "🍴";
+                        break;
+                }
+
+                ResumenDiario.Add(new ResumenAlimentoItem
+                {
+                    Icono       = icono,
+                    TipoDisplay = grupo.First().TipoAlimentacionDisplay,
+                    Total       = total,
+                    Tomas       = tomasLabel
+                });
+            }
+
+            // Tipos personalizados: un resumen por nombre de alimento (FoodType)
+            foreach (var grupo in Registros
+                .Where(e => e.TipoAlimentacion == TipoAlimentacion.Personalizado)
+                .GroupBy(e => string.IsNullOrWhiteSpace(e.FoodType) ? "Personalizado" : e.FoodType)
+                .OrderBy(g => g.Key))
+            {
+                var entries = grupo.ToList();
+                int tomas = entries.Count;
+                string tomasLabel = tomas == 1 ? "1 toma" : $"{tomas} tomas";
+
+                // Sum amounts when all entries share the same measurement
+                string total;
+                if (entries.All(e => e.CantidadMl.HasValue))
+                {
+                    double sum = entries.Sum(e => (double)e.CantidadMl!.Value);
+                    total = sum > 0 ? $"{sum:F0} ml" : tomasLabel;
+                }
+                else if (entries.All(e => e.CantidadGramos.HasValue))
+                {
+                    double sum = entries.Sum(e => (double)e.CantidadGramos!.Value);
+                    total = sum > 0 ? $"{sum:F0} g" : tomasLabel;
+                }
+                else
+                {
+                    var unidades = entries
+                        .Where(e => !string.IsNullOrWhiteSpace(e.Unit))
+                        .Select(e => e.Unit)
+                        .Distinct()
+                        .ToList();
+                    if (unidades.Count == 1)
+                    {
+                        double sum = entries.Sum(e => e.Amount);
+                        total = sum > 0 ? $"{sum:F0} {unidades[0]}" : tomasLabel;
+                    }
+                    else
+                    {
+                        total = tomasLabel;
+                    }
+                }
+
+                ResumenDiario.Add(new ResumenAlimentoItem
+                {
+                    Icono       = "🍴",
+                    TipoDisplay = grupo.Key,
+                    Total       = total,
+                    Tomas       = tomasLabel
+                });
+            }
+
+            HayResumen = ResumenDiario.Count > 0;
         }
         finally
         {
