@@ -460,7 +460,7 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
         var formulaResumenParts = formulaGroups
             .Where(kv => kv.Value.Sum() > 0)
             .OrderByDescending(kv => kv.Value.Sum())
-            .Select(kv => $"{kv.Value.Sum():F0} {kv.Key}");
+            .Select(kv => $"{kv.Value.Sum():0.##} {kv.Key}");
         string computedResumenFormula = formulaResumenParts.Any()
             ? string.Join(" · ", formulaResumenParts)
             : "Sin registros de fórmula";
@@ -473,7 +473,7 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
         var solidoResumenParts = solidoGroups
             .Where(kv => kv.Value.Sum() > 0)
             .OrderByDescending(kv => kv.Value.Sum())
-            .Select(kv => $"{kv.Value.Sum():F0} {kv.Key}");
+            .Select(kv => $"{kv.Value.Sum():0.##} {kv.Key}");
         string computedResumenSolido = solidoResumenParts.Any()
             ? string.Join(" · ", solidoResumenParts)
             : "Sin registros de sólidos";
