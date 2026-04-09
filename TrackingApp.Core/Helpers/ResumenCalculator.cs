@@ -40,19 +40,50 @@ public static class ResumenCalculator
                     break;
 
                 case TipoAlimentacion.Formula:
-                    // Sum as decimal to keep full precision, fallback to Amount (double→decimal)
-                    decimal sumMl = grupo.Sum(e =>
-                        e.CantidadMl.HasValue ? e.CantidadMl.Value : (decimal)e.Amount);
-                    total = sumMl > 0 ? $"{sumMl:0.##} ml" : tomasLabel;
+                {
+                    var units = grupo
+                        .Where(e => !string.IsNullOrWhiteSpace(e.Unit) && e.Unit != "min")
+                        .Select(e => e.Unit!)
+                        .Distinct()
+                        .ToList();
+                    if (units.Count > 1)
+                    {
+                        // Mixed units — cannot sum meaningfully
+                        total = tomasLabel;
+                    }
+                    else
+                    {
+                        string unit = units.Count == 1 ? units[0] : "ml";
+                        decimal sumMl = grupo.Sum(e =>
+                            e.CantidadMl.HasValue ? e.CantidadMl.Value : (decimal)e.Amount);
+                        total = sumMl > 0 ? $"{sumMl:0.##} {unit}" : tomasLabel;
+                    }
                     icono = "🍼";
                     break;
+                }
 
                 case TipoAlimentacion.Solido:
-                    decimal sumG = grupo.Sum(e =>
-                        e.CantidadGramos.HasValue ? e.CantidadGramos.Value : (decimal)e.Amount);
-                    total = sumG > 0 ? $"{sumG:0.##} g" : tomasLabel;
+                {
+                    var units = grupo
+                        .Where(e => !string.IsNullOrWhiteSpace(e.Unit) && e.Unit != "min")
+                        .Select(e => e.Unit!)
+                        .Distinct()
+                        .ToList();
+                    if (units.Count > 1)
+                    {
+                        // Mixed units — cannot sum meaningfully
+                        total = tomasLabel;
+                    }
+                    else
+                    {
+                        string unit = units.Count == 1 ? units[0] : "g";
+                        decimal sumG = grupo.Sum(e =>
+                            e.CantidadGramos.HasValue ? e.CantidadGramos.Value : (decimal)e.Amount);
+                        total = sumG > 0 ? $"{sumG:0.##} {unit}" : tomasLabel;
+                    }
                     icono = "🥣";
                     break;
+                }
 
                 default:
                     total = tomasLabel;

@@ -47,6 +47,22 @@ public class ResumenCalculatorTests
         Time             = DateTime.Today
     };
 
+    private static FoodEntry FormulaConUnidad(decimal amount, string unit) => new()
+    {
+        TipoAlimentacion = TipoAlimentacion.Formula,
+        CantidadMl       = amount,
+        Unit             = unit,
+        Time             = DateTime.Today
+    };
+
+    private static FoodEntry SolidoConUnidad(decimal amount, string unit) => new()
+    {
+        TipoAlimentacion = TipoAlimentacion.Solido,
+        CantidadGramos   = amount,
+        Unit             = unit,
+        Time             = DateTime.Today
+    };
+
     // ── Formula ───────────────────────────────────────────────────────────────
 
     [Fact]
@@ -104,6 +120,26 @@ public class ResumenCalculatorTests
         result[0].Total.Should().Be("45 min");
     }
 
+    [Fact]
+    public void Formula_OzUnit_ShowsOzNotMl()
+    {
+        var entries = new[] { FormulaConUnidad(4m, "oz"), FormulaConUnidad(4m, "oz") };
+
+        var result = ResumenCalculator.Compute(entries);
+
+        result[0].Total.Should().Be("8 oz");
+    }
+
+    [Fact]
+    public void Formula_MixedUnits_ShowsTomasInsteadOfSum()
+    {
+        var entries = new[] { FormulaConUnidad(120m, "ml"), FormulaConUnidad(4m, "oz") };
+
+        var result = ResumenCalculator.Compute(entries);
+
+        result[0].Total.Should().Be("2 tomas");
+    }
+
     // ── Sólido ────────────────────────────────────────────────────────────────
 
     [Fact]
@@ -125,6 +161,26 @@ public class ResumenCalculatorTests
         var result = ResumenCalculator.Compute(entries);
 
         result[0].Total.Should().Be("125.3 g");
+    }
+
+    [Fact]
+    public void Solido_CucharadasUnit_ShowsCucharadasNotG()
+    {
+        var entries = new[] { SolidoConUnidad(3m, "cucharadas"), SolidoConUnidad(2m, "cucharadas") };
+
+        var result = ResumenCalculator.Compute(entries);
+
+        result[0].Total.Should().Be("5 cucharadas");
+    }
+
+    [Fact]
+    public void Solido_MixedUnits_ShowsTomasInsteadOfSum()
+    {
+        var entries = new[] { SolidoConUnidad(50m, "g"), SolidoConUnidad(2m, "cucharadas") };
+
+        var result = ResumenCalculator.Compute(entries);
+
+        result[0].Total.Should().Be("2 tomas");
     }
 
     // ── Multiple types in same day ────────────────────────────────────────────
