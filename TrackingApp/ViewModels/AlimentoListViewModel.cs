@@ -204,9 +204,9 @@ public class AlimentoListViewModel : INotifyPropertyChanged
         if (e.TipoAlimentacion == TipoAlimentacion.Lactancia)
             return e.DuracionMinutos.HasValue ? $"{e.DuracionMinutos} min" : "—";
         if (e.CantidadMl.HasValue)
-            return $"{e.CantidadMl:F0} ml";
+            return $"{e.CantidadMl:0.##} ml";
         if (e.CantidadGramos.HasValue)
-            return $"{e.CantidadGramos:F0} g";
+            return $"{e.CantidadGramos:0.##} g";
         return e.Amount > 0 ? $"{e.Amount} {e.Unit}" : "—";
     }
 

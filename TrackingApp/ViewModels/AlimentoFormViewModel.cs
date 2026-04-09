@@ -218,7 +218,7 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
         if (e.TipoAlimentacion == TipoAlimentacion.Personalizado)
         {
             NombrePersonalizado = e.FoodType ?? string.Empty;
-            CantidadPersonalizadoTexto = e.CantidadGramos?.ToString("F0") ?? (e.Amount > 0 ? e.Amount.ToString("F0") : string.Empty);
+            CantidadPersonalizadoTexto = e.CantidadGramos?.ToString("0.##") ?? (e.Amount > 0 ? e.Amount.ToString("0.##") : string.Empty);
             if (!string.IsNullOrWhiteSpace(e.Unit) && e.Unit != "min")
                 UnidadPersonalizado = e.Unit;
         }
@@ -232,8 +232,8 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
         };
 
         DuracionTexto       = e.DuracionMinutos?.ToString() ?? string.Empty;
-        CantidadMlTexto     = e.CantidadMl?.ToString("F0") ?? string.Empty;
-        CantidadGramosTexto = e.CantidadGramos?.ToString("F0") ?? string.Empty;
+        CantidadMlTexto     = e.CantidadMl?.ToString("0.##") ?? string.Empty;
+        CantidadGramosTexto = e.CantidadGramos?.ToString("0.##") ?? string.Empty;
 
         // Cargar unidad guardada
         if (e.TipoAlimentacion == TipoAlimentacion.Formula && !string.IsNullOrWhiteSpace(e.Unit) && e.Unit != "min")
