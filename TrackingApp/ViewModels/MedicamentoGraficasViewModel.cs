@@ -61,6 +61,7 @@ public class MedicamentoGraficasViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(Texto3Meses));
         OnPropertyChanged(nameof(TextoTodo));
         OnPropertyChanged(nameof(TextoPersonalizado));
+        OnPropertyChanged(nameof(TextoBotonRango));
     }
 
     public Color Boton7DiasBg         => !_rangoPersonalizado && _dias == 7  ? Color.FromArgb("#2a3d66") : Color.FromArgb("#e0e0e0");
@@ -74,6 +75,8 @@ public class MedicamentoGraficasViewModel : INotifyPropertyChanged
     public Color Texto3Meses         => !_rangoPersonalizado && _dias == 90 ? Colors.White : Color.FromArgb("#555555");
     public Color TextoTodo           => !_rangoPersonalizado && _dias == 0  ? Colors.White : Color.FromArgb("#555555");
     public Color TextoPersonalizado  => _rangoPersonalizado                 ? Colors.White : Color.FromArgb("#555555");
+
+    public string TextoBotonRango => _rangoPersonalizado ? $"📅 {_fechaDesde:dd/MM} - {_fechaHasta:dd/MM}" : "📅 Rango";
 
     public DateTime FechaDesde
     {

@@ -72,15 +72,12 @@
                                         Background="{Binding BotonTodoBg}"
                                         TextColor="{Binding TextoTodo}"
                                         CornerRadius="20" FontSize="12" />
-                                <Border Grid.Row="1" Grid.Column="2"
+                                <Button Grid.Row="1" Grid.Column="2"
+                                        Text="{Binding TextoBotonRango}"
+                                        Command="{Binding ActivarRangoPersonalizadoCommand}"
                                         Background="{Binding BotonPersonalizadoBg}"
-                                        StrokeShape="RoundRectangle 20"
-                                        StrokeThickness="0"
-                                        Padding="0,6" VerticalOptions="Center">
-                                    <Label Text="📅 Rango" FontSize="12"
-                                           HorizontalOptions="Center"
-                                           TextColor="{Binding TextoPersonalizado}" />
-                                </Border>
+                                        TextColor="{Binding TextoPersonalizado}"
+                                        CornerRadius="20" FontSize="12" />
                             </Grid>
                             <Grid ColumnDefinitions="Auto,*,Auto,*" ColumnSpacing="6">
                                 <Label Grid.Column="0" Text="Desde:" FontSize="12"
@@ -197,32 +194,38 @@
                     <Border Background="White" StrokeShape="RoundRectangle 10"
                             Stroke="#e0e0e0" Padding="12,10">
                         <VerticalStackLayout Spacing="8">
-                            <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
-                                <Button Text="7 días"
+                            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto"
+                                  ColumnSpacing="6" RowSpacing="6">
+                                <Button Grid.Row="0" Grid.Column="0" Text="7 días"
                                         Command="{Binding SeleccionarPeriodoCommand}"
                                         CommandParameter="7"
                                         Background="{Binding Boton7DiasBg}"
                                         TextColor="{Binding Texto7Dias}"
-                                        CornerRadius="20" Padding="12,8" FontSize="12" />
-                                <Button Text="30 días"
+                                        CornerRadius="20" FontSize="12" />
+                                <Button Grid.Row="0" Grid.Column="1" Text="30 días"
                                         Command="{Binding SeleccionarPeriodoCommand}"
                                         CommandParameter="30"
                                         Background="{Binding Boton30DiasBg}"
                                         TextColor="{Binding Texto30Dias}"
-                                        CornerRadius="20" Padding="12,8" FontSize="12" />
-                                <Button Text="3 meses"
+                                        CornerRadius="20" FontSize="12" />
+                                <Button Grid.Row="0" Grid.Column="2" Text="3 meses"
                                         Command="{Binding SeleccionarPeriodoCommand}"
                                         CommandParameter="90"
                                         Background="{Binding Boton3MesesBg}"
                                         TextColor="{Binding Texto3Meses}"
-                                        CornerRadius="20" Padding="12,8" FontSize="12" />
-                                <Button Text="Todo"
+                                        CornerRadius="20" FontSize="12" />
+                                <Button Grid.Row="1" Grid.Column="0" Text="Todo"
                                         Command="{Binding SeleccionarPeriodoCommand}"
                                         CommandParameter="0"
                                         Background="{Binding BotonTodoBg}"
                                         TextColor="{Binding TextoTodo}"
-                                        CornerRadius="20" Padding="12,8" FontSize="12" />
-                            </HorizontalStackLayout>
+                                        CornerRadius="20" FontSize="12" />
+                                <Button Grid.Row="1" Grid.Column="1" Text="📅 Rango"
+                                        Command="{Binding ActivarRangoPersonalizadoCommand}"
+                                        Background="{Binding BotonPersonalizadoBg}"
+                                        TextColor="{Binding TextoPersonalizado}"
+                                        CornerRadius="20" FontSize="12" />
+                            </Grid>
                             <Grid ColumnDefinitions="Auto,*,Auto,*" ColumnSpacing="6">
                                 <Label Grid.Column="0" Text="Desde:" FontSize="12"
                                        TextColor="#555" VerticalOptions="Center"/>
@@ -322,32 +325,38 @@
                     <Border Background="White" StrokeShape="RoundRectangle 10"
                             Stroke="#e0e0e0" Padding="12,10">
                         <VerticalStackLayout Spacing="8">
-                            <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
-                                <Button Text="7 días"
+                            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto"
+                                  ColumnSpacing="6" RowSpacing="6">
+                                <Button Grid.Row="0" Grid.Column="0" Text="7 días"
                                         Command="{Binding SeleccionarPeriodoCommand}"
                                         CommandParameter="7"
                                         Background="{Binding Boton7DiasBg}"
                                         TextColor="{Binding Texto7Dias}"
-                                        CornerRadius="20" Padding="12,8" FontSize="12" />
-                                <Button Text="30 días"
+                                        CornerRadius="20" FontSize="12" />
+                                <Button Grid.Row="0" Grid.Column="1" Text="30 días"
                                         Command="{Binding SeleccionarPeriodoCommand}"
                                         CommandParameter="30"
                                         Background="{Binding Boton30DiasBg}"
                                         TextColor="{Binding Texto30Dias}"
-                                        CornerRadius="20" Padding="12,8" FontSize="12" />
-                                <Button Text="3 meses"
+                                        CornerRadius="20" FontSize="12" />
+                                <Button Grid.Row="0" Grid.Column="2" Text="3 meses"
                                         Command="{Binding SeleccionarPeriodoCommand}"
                                         CommandParameter="90"
                                         Background="{Binding Boton3MesesBg}"
                                         TextColor="{Binding Texto3Meses}"
-                                        CornerRadius="20" Padding="12,8" FontSize="12" />
-                                <Button Text="Todo"
+                                        CornerRadius="20" FontSize="12" />
+                                <Button Grid.Row="1" Grid.Column="0" Text="Todo"
                                         Command="{Binding SeleccionarPeriodoCommand}"
                                         CommandParameter="0"
                                         Background="{Binding BotonTodoBg}"
                                         TextColor="{Binding TextoTodo}"
-                                        CornerRadius="20" Padding="12,8" FontSize="12" />
-                            </HorizontalStackLayout>
+                                        CornerRadius="20" FontSize="12" />
+                                <Button Grid.Row="1" Grid.Column="1" Text="📅 Rango"
+                                        Command="{Binding ActivarRangoPersonalizadoCommand}"
+                                        Background="{Binding BotonPersonalizadoBg}"
+                                        TextColor="{Binding TextoPersonalizado}"
+                                        CornerRadius="20" FontSize="12" />
+                            </Grid>
                             <Grid ColumnDefinitions="Auto,*,Auto,*" ColumnSpacing="6">
                                 <Label Grid.Column="0" Text="Desde:" FontSize="12"
                                        TextColor="#555" VerticalOptions="Center"/>
@@ -456,32 +465,38 @@
                     <Border Background="White" StrokeShape="RoundRectangle 10"
                             Stroke="#e0e0e0" Padding="12,10">
                         <VerticalStackLayout Spacing="8">
-                            <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
-                                <Button Text="3 meses"
+                            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto"
+                                  ColumnSpacing="6" RowSpacing="6">
+                                <Button Grid.Row="0" Grid.Column="0" Text="3 meses"
                                         Command="{Binding SeleccionarPeriodoCommand}"
                                         CommandParameter="90"
                                         Background="{Binding Boton3MesesBg}"
                                         TextColor="{Binding Texto3Meses}"
-                                        CornerRadius="20" Padding="12,8" FontSize="12" />
-                                <Button Text="6 meses"
+                                        CornerRadius="20" FontSize="12" />
+                                <Button Grid.Row="0" Grid.Column="1" Text="6 meses"
                                         Command="{Binding SeleccionarPeriodoCommand}"
                                         CommandParameter="180"
                                         Background="{Binding Boton6MesesBg}"
                                         TextColor="{Binding Texto6Meses}"
-                                        CornerRadius="20" Padding="12,8" FontSize="12" />
-                                <Button Text="1 año"
+                                        CornerRadius="20" FontSize="12" />
+                                <Button Grid.Row="0" Grid.Column="2" Text="1 año"
                                         Command="{Binding SeleccionarPeriodoCommand}"
                                         CommandParameter="365"
                                         Background="{Binding Boton1AnoBg}"
                                         TextColor="{Binding Texto1Ano}"
-                                        CornerRadius="20" Padding="12,8" FontSize="12" />
-                                <Button Text="Todo"
+                                        CornerRadius="20" FontSize="12" />
+                                <Button Grid.Row="1" Grid.Column="0" Text="Todo"
                                         Command="{Binding SeleccionarPeriodoCommand}"
                                         CommandParameter="0"
                                         Background="{Binding BotonTodoBg}"
                                         TextColor="{Binding TextoTodo}"
-                                        CornerRadius="20" Padding="12,8" FontSize="12" />
-                            </HorizontalStackLayout>
+                                        CornerRadius="20" FontSize="12" />
+                                <Button Grid.Row="1" Grid.Column="1" Text="📅 Rango"
+                                        Command="{Binding ActivarRangoPersonalizadoCommand}"
+                                        Background="{Binding BotonPersonalizadoBg}"
+                                        TextColor="{Binding TextoPersonalizado}"
+                                        CornerRadius="20" FontSize="12" />
+                            </Grid>
                             <Grid ColumnDefinitions="Auto,*,Auto,*" ColumnSpacing="6">
                                 <Label Grid.Column="0" Text="Desde:" FontSize="12"
                                        TextColor="#555" VerticalOptions="Center"/>

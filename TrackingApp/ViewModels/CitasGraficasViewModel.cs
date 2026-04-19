@@ -62,6 +62,7 @@ public class CitasGraficasViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(Texto1Ano));
         OnPropertyChanged(nameof(TextoTodo));
         OnPropertyChanged(nameof(TextoPersonalizado));
+        OnPropertyChanged(nameof(TextoBotonRango));
     }
 
     public Color Boton3MesesBg        => !_rangoPersonalizado && _dias == 90  ? Color.FromArgb("#2a3d66") : Color.FromArgb("#e0e0e0");
@@ -75,6 +76,8 @@ public class CitasGraficasViewModel : INotifyPropertyChanged
     public Color Texto1Ano           => !_rangoPersonalizado && _dias == 365 ? Colors.White : Color.FromArgb("#555555");
     public Color TextoTodo           => !_rangoPersonalizado && _dias == 0   ? Colors.White : Color.FromArgb("#555555");
     public Color TextoPersonalizado  => _rangoPersonalizado                  ? Colors.White : Color.FromArgb("#555555");
+
+    public string TextoBotonRango => _rangoPersonalizado ? $"📅 {_fechaDesde:dd/MM} - {_fechaHasta:dd/MM}" : "📅 Rango";
 
     public DateTime FechaDesde
     {

@@ -73,6 +73,7 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(Texto90Dias));
         OnPropertyChanged(nameof(TextoTodo));
         OnPropertyChanged(nameof(TextoPersonalizado));
+        OnPropertyChanged(nameof(TextoBotonRango));
     }
 
     public Color BotonHoyBg          => !_rangoPersonalizado && _dias == 1  ? Color.FromArgb("#2a3d66") : Color.FromArgb("#e0e0e0");
@@ -88,6 +89,8 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
     public Color Texto90Dias        => !_rangoPersonalizado && _dias == 90 ? Colors.White : Color.FromArgb("#555555");
     public Color TextoTodo          => !_rangoPersonalizado && _dias == 0  ? Colors.White : Color.FromArgb("#555555");
     public Color TextoPersonalizado => _rangoPersonalizado                 ? Colors.White : Color.FromArgb("#555555");
+
+    public string TextoBotonRango => _rangoPersonalizado ? $"📅 {_fechaDesde:dd/MM} - {_fechaHasta:dd/MM}" : "📅 Rango";
 
     // ── Rango personalizado ───────────────────────────────────────────────────
 

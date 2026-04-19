@@ -39,6 +39,12 @@ public class CrecimientoGraficasViewModel : INotifyPropertyChanged
             }
         });
         RefrescarCommand = new Command(() => _ = CargarGraficasAsync());
+        ActivarRangoPersonalizadoCommand = new Command(() =>
+        {
+            _rangoPersonalizado = true;
+            RefreshPeriodButtonColors();
+            _ = CargarGraficasAsync();
+        });
     }
 
     // ── Propiedades de período ────────────────────────────────────────────────
@@ -58,6 +64,7 @@ public class CrecimientoGraficasViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(Texto3Meses));
         OnPropertyChanged(nameof(TextoTodo));
         OnPropertyChanged(nameof(TextoPersonalizado));
+        OnPropertyChanged(nameof(TextoBotonRango));
     }
 
     public Color Boton7DiasBg        => !_rangoPersonalizado && _dias == 7  ? Color.FromArgb("#2a3d66") : Color.FromArgb("#e0e0e0");
@@ -71,6 +78,8 @@ public class CrecimientoGraficasViewModel : INotifyPropertyChanged
     public Color Texto3Meses         => !_rangoPersonalizado && _dias == 90 ? Colors.White : Color.FromArgb("#555555");
     public Color TextoTodo           => !_rangoPersonalizado && _dias == 0  ? Colors.White : Color.FromArgb("#555555");
     public Color TextoPersonalizado  => _rangoPersonalizado                 ? Colors.White : Color.FromArgb("#555555");
+
+    public string TextoBotonRango => _rangoPersonalizado ? $"📅 {_fechaDesde:dd/MM} - {_fechaHasta:dd/MM}" : "📅 Rango";
 
     // ── Rango personalizado ───────────────────────────────────────────────────
 
@@ -198,6 +207,7 @@ public class CrecimientoGraficasViewModel : INotifyPropertyChanged
 
     public Command<string> SeleccionarPeriodoCommand { get; }
     public Command RefrescarCommand { get; }
+    public Command ActivarRangoPersonalizadoCommand { get; }
 
     // ── Lógica de datos ───────────────────────────────────────────────────────
 
