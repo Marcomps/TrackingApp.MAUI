@@ -37,6 +37,12 @@ public class CitasGraficasViewModel : INotifyPropertyChanged
             }
         });
         RefrescarCommand = new Command(() => _ = CargarGraficasAsync());
+        ActivarRangoPersonalizadoCommand = new Command(() =>
+        {
+            _rangoPersonalizado = true;
+            RefreshPeriodButtonColors();
+            _ = CargarGraficasAsync();
+        });
     }
 
     // ── Período ───────────────────────────────────────────────────────────────
@@ -161,6 +167,7 @@ public class CitasGraficasViewModel : INotifyPropertyChanged
 
     public Command<string> SeleccionarPeriodoCommand { get; }
     public Command RefrescarCommand { get; }
+    public Command ActivarRangoPersonalizadoCommand { get; }
 
     // ── Carga de datos ────────────────────────────────────────────────────────
 
@@ -183,7 +190,8 @@ public class CitasGraficasViewModel : INotifyPropertyChanged
         _loading = true;
         try
         {
-            var snapshot = AppServices.DataService.Appointments.ToList();
+            var perfilActivoId = AppServices.DataService.PerfilActivo?.Id ?? 0;
+            var snapshot = AppServices.DataService.Appointments.Where(a => a.PerfilId == perfilActivoId).ToList();
             var r = await Task.Run(() => ComputeGraficas(snapshot));
             // Back on UI thread: apply all results
             SeriesPorMes       = r.SeriesPorMes;

@@ -46,6 +46,12 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
             }
         });
         RefrescarCommand = new Command(() => _ = CargarGraficaAsync());
+        ActivarRangoPersonalizadoCommand = new Command(() =>
+        {
+            _rangoPersonalizado = true;
+            RefreshPeriodButtonColors();
+            _ = CargarGraficaAsync();
+        });
     }
 
     // ── Propiedades de período ────────────────────────────────────────────────
@@ -183,6 +189,7 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
 
     public Command<string> SeleccionarPeriodoCommand { get; }
     public Command RefrescarCommand { get; }
+    public Command ActivarRangoPersonalizadoCommand { get; }
 
     // ── Lógica de datos ───────────────────────────────────────────────────────
 
@@ -207,7 +214,8 @@ public class AlimentoGraficasViewModel : INotifyPropertyChanged
         _loading = true;
         try
         {
-            var snapshot = AppServices.DataService.FoodEntries.ToList();
+            var perfilActivoId = AppServices.DataService.PerfilActivo?.Id ?? 0;
+            var snapshot = AppServices.DataService.FoodEntries.Where(e => e.PerfilId == perfilActivoId).ToList();
             var r = await Task.Run(() => ComputeGrafica(snapshot));
             // Back on UI thread: apply all results
             Series           = r.Series;

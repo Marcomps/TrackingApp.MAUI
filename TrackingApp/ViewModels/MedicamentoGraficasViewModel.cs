@@ -36,6 +36,12 @@ public class MedicamentoGraficasViewModel : INotifyPropertyChanged
             }
         });
         RefrescarCommand = new Command(() => _ = CargarGraficasAsync());
+        ActivarRangoPersonalizadoCommand = new Command(() =>
+        {
+            _rangoPersonalizado = true;
+            RefreshPeriodButtonColors();
+            _ = CargarGraficasAsync();
+        });
     }
 
     // ── Período ───────────────────────────────────────────────────────────────
@@ -160,6 +166,7 @@ public class MedicamentoGraficasViewModel : INotifyPropertyChanged
 
     public Command<string> SeleccionarPeriodoCommand { get; }
     public Command RefrescarCommand { get; }
+    public Command ActivarRangoPersonalizadoCommand { get; }
 
     // ── Carga de datos ────────────────────────────────────────────────────────
 
@@ -178,7 +185,9 @@ public class MedicamentoGraficasViewModel : INotifyPropertyChanged
         _loading = true;
         try
         {
-            var snapshot = AppServices.DataService.MedicationHistory.ToList();
+            var perfilActivoId = AppServices.DataService.PerfilActivo?.Id ?? 0;
+            var medicationsIds = AppServices.DataService.Medications.Where(m => m.PerfilId == perfilActivoId).Select(m => m.Id);
+            var snapshot = AppServices.DataService.MedicationHistory.Where(h => medicationsIds.Contains(h.MedicationId)).ToList();
             var r = await Task.Run(() => ComputeGraficas(snapshot));
             SeriesDosis  = r.SeriesDosis;
             SeriesPorMed = r.SeriesPorMed;
