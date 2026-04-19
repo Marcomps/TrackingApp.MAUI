@@ -28,5 +28,7 @@
 	</array>
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
+	<key>NSUserNotificationUsageDescription</key>
+	<string>Necesitamos acceso a notificaciones para recordarte cuándo tomar tus medicamentos.</string>
 </dict>
 </plist>

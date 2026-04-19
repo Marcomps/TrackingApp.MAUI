@@ -7,6 +7,7 @@ namespace TrackingApp.Services
     public class DataService
     {
         private readonly IDatabaseService _databaseService;
+        private readonly INotificationService? _notificationService;
         private bool _suppressRebuild = false;
 
         public ObservableCollection<FoodEntry> FoodEntries { get; } = new();
@@ -27,9 +28,10 @@ namespace TrackingApp.Services
 
         public string CurrentUserType { get; set; } = "Bebé";
 
-        public DataService(IDatabaseService databaseService)
+        public DataService(IDatabaseService databaseService, INotificationService? notificationService = null)
         {
             _databaseService = databaseService;
+            _notificationService = notificationService;
             // Suscribir a cambios UNA SOLA VEZ en el constructor
             MedicationDoses.CollectionChanged += (s, e) => { if (!_suppressRebuild) RebuildCombinedEvents(); };
             MedicationHistory.CollectionChanged += (s, e) => { if (!_suppressRebuild) RebuildCombinedEvents(); };
@@ -240,6 +242,13 @@ namespace TrackingApp.Services
                 var remaining = MedicationDoses.Where(d => d.MedicationId != medication.Id).ToList();
                 MedicationDoses.ReplaceAll(remaining.Concat(newDoses));
 
+                // Schedule notifications for future doses if reminder is enabled
+                if (medication.ReminderEnabled && _notificationService != null)
+                {
+                    foreach (var d in newDoses)
+                        _ = _notificationService.ScheduleDoseNotificationAsync(d, medication);
+                }
+
                 System.Diagnostics.Debug.WriteLine($"🔵 Total doses created: {newDoses.Count} for {days} days");
             }
             finally
@@ -294,6 +303,9 @@ namespace TrackingApp.Services
 
                 // 3. Eliminar la dosis confirmada de la colección de dosis activas
                 //    para que desaparezca inmediatamente de "Próximas Dosis"
+                if (dose.Medication?.ReminderEnabled == true)
+                    _notificationService?.CancelDoseNotification(dose.Id);
+
                 await _databaseService.DeleteDoseAsync(dose);
                 MedicationDoses.Remove(dose);
 
@@ -334,6 +346,10 @@ namespace TrackingApp.Services
                 
                 System.Diagnostics.Debug.WriteLine($"  🗑️ Eliminando {pendingDoses.Count} dosis pendientes...");
                 
+                // Cancel existing notifications before deleting the pending doses
+                if (medication.ReminderEnabled)
+                    _notificationService?.CancelDoseNotifications(pendingDoses.Select(d => d.Id));
+
                 foreach (var dose in pendingDoses)
                 {
                     await _databaseService.DeleteDoseAsync(dose);
@@ -360,6 +376,10 @@ namespace TrackingApp.Services
 
                     await _databaseService.SaveDoseAsync(newDose);
                     MedicationDoses.Add(newDose);
+
+                    if (medication.ReminderEnabled && _notificationService != null)
+                        _ = _notificationService.ScheduleDoseNotificationAsync(newDose, medication);
+
                     count++;
                     
                     currentDose = currentDose.AddMinutes(medication.TotalFrequencyInMinutes);
@@ -499,6 +519,13 @@ namespace TrackingApp.Services
 
         public async Task DeleteMedicationAsync(Medication medication)
         {
+            // Cancel notifications before removing the doses
+            if (medication.ReminderEnabled)
+            {
+                var doseIds = MedicationDoses.Where(d => d.MedicationId == medication.Id).Select(d => d.Id).ToList();
+                _notificationService?.CancelDoseNotifications(doseIds);
+            }
+
             // Eliminar todas las dosis asociadas
             await _databaseService.DeleteDosesByMedicationAsync(medication.Id);
             

@@ -11,7 +11,9 @@ namespace TrackingApp.Services
         private static MainViewModel? _mainViewModel;
 
         /// <summary>Singleton DataService backed by the SQLite DatabaseService.</summary>
-        public static DataService DataService => _dataService ??= new DataService(DatabaseService.Instance);
+        public static DataService DataService => _dataService ??= new DataService(
+            DatabaseService.Instance,
+            NotificationService.Instance);
 
         /// <summary>
         /// Singleton MainViewModel — created once and reused across pages

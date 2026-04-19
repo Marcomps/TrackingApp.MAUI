@@ -19,6 +19,9 @@ namespace TrackingApp.Models
         /// <summary>FK a Perfil.Id. 0 = sin perfil asignado (registros legacy).</summary>
         public int PerfilId { get; set; }
 
+        /// <summary>Si true, se programará una notificación local para cada dosis de este medicamento.</summary>
+        public bool ReminderEnabled { get; set; }
+
         [Ignore]
         public string DisplayText 
         { 

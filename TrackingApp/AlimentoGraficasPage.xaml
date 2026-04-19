@@ -81,18 +81,13 @@
                                 CornerRadius="20"
                                 FontSize="12" />
 
-                        <Border Grid.Row="1" Grid.Column="2"
+                        <Button Grid.Row="1" Grid.Column="2"
+                                Text="📅 Rango"
+                                Command="{Binding ActivarRangoPersonalizadoCommand}"
                                 Background="{Binding BotonPersonalizadoBg}"
-                                StrokeShape="RoundRectangle 20"
-                                StrokeThickness="0"
-                                Padding="0,6"
-                                VerticalOptions="Center"
-                                HorizontalOptions="Fill">
-                            <Label Text="📅 Rango"
-                                   FontSize="12"
-                                   HorizontalOptions="Center"
-                                   TextColor="{Binding TextoPersonalizado}" />
-                        </Border>
+                                TextColor="{Binding TextoPersonalizado}"
+                                CornerRadius="20"
+                                FontSize="12" />
 
                     </Grid>
 

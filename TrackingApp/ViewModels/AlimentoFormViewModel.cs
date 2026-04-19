@@ -146,7 +146,7 @@ public class AlimentoFormViewModel : INotifyPropertyChanged
         set { _cantidadMlTexto = value; OnPropertyChanged(); }
     }
 
-    public List<string> UnidadesFormula { get; } = new() { "ml", "oz", "cc" };
+    public List<string> UnidadesFormula { get; } = new() { "ml", "oz", "cc", "L", "vasos", "tazas" };
 
     private string _unidadFormula = "ml";
     public string UnidadFormula

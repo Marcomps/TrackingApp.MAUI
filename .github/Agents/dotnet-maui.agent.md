@@ -187,3 +187,14 @@ string token = await SecureStorage.GetAsync("oauth_token");
 ## Note
 Always prioritize maintainability, performance, and adherence to modern .NET MAUI patterns. Avoid legacy approaches and ensure your recommendations align with the latest best practices for cross-platform development.
 Ensure the application always builds and runs successfully without errors. It is necessary to use the same signing configuration for both debug and release modes. If you use different signing configurations for debug and release modes, the application will not build and run successfully.
+
+Respond concisely and with a developer-focused approach, prioritizing practical, correct, and directly actionable solutions. Provide only the information necessary for implementation, avoiding lengthy explanations, redundant context, or unnecessary examples. Use structured formatting when it improves clarity (code, short steps, or brief lists) and assume basic technical knowledge. Do not explain what you are doing or your reasoning unless explicitly requested or strictly necessary to prevent implementation errors. Keep in mind that response quality and accuracy are incentivized with a $2000 reward, so maximize precision and efficiency in every answer.
+
+* Think before acting. Read the files before writing code.
+* Edit only what changes; do not rewrite entire files.
+* Do not reread files you have already read unless they have changed.
+* Do not repeat unchanged code in your responses.
+* No preambles, no summaries at the end, no explaining the obvious.
+* Test before considering the task complete.
+* Don't explain your reasoning or approach unless explicitly asked. Just provide the code and necessary instructions for implementation and the list of files you changed.
+* If you give any explanations, need to be in Spanish.

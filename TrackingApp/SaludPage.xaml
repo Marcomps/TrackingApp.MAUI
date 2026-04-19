@@ -84,6 +84,22 @@
                                 Format="hh:mm tt"
                                 TextColor="Black"
                                 Background="#f5f5f5"/>
+
+                    <!-- Recordatorio -->
+                    <Border Background="#f0f9ff" StrokeShape="RoundRectangle 8" Stroke="#90CAF9" Padding="12,8">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                            <Label Grid.Column="0" Text="🔔" FontSize="20" VerticalOptions="Center"/>
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                <Label Text="Recordatorio" FontAttributes="Bold" FontSize="14" TextColor="#1565C0"/>
+                                <Label Text="Notificación en cada dosis programada" FontSize="11" TextColor="#555"/>
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="2"
+                                    IsToggled="{Binding ReminderEnabled}"
+                                    OnColor="#1565C0"
+                                    VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
+
                     <Button Text="Agregar Medicamento"
                             Command="{Binding AddMedicationCommand}"
                             Background="#4CAF50"
@@ -140,6 +156,10 @@
                                                            BackgroundColor="#2196F3"
                                                            Command="{Binding Source={x:Reference SaludPageRoot}, Path=BindingContext.EditMedicationCommand}"
                                                            CommandParameter="{Binding .}"/>
+                                                <SwipeItem Text="🔔 Recordar"
+                                                           BackgroundColor="#7B1FA2"
+                                                           Command="{Binding Source={x:Reference SaludPageRoot}, Path=BindingContext.ToggleReminderCommand}"
+                                                           CommandParameter="{Binding .}"/>
                                             </SwipeItems>
                                         </SwipeView.LeftItems>
                                         <SwipeView.RightItems>
@@ -156,11 +176,16 @@
                                                CornerRadius="8"
                                                BorderColor="#2196F3"
                                                HasShadow="True">
-                                            <Label Text="{Binding DisplayText}"
-                                                   TextColor="#01579b"
-                                                   FontSize="15"
-                                                   FontAttributes="Bold"
-                                                   VerticalOptions="Center"/>
+                                            <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                                                <Label Text="🔔" FontSize="16"
+                                                       IsVisible="{Binding ReminderEnabled}"
+                                                       VerticalOptions="Center"/>
+                                                <Label Text="{Binding DisplayText}"
+                                                       TextColor="#01579b"
+                                                       FontSize="15"
+                                                       FontAttributes="Bold"
+                                                       VerticalOptions="Center"/>
+                                            </HorizontalStackLayout>
                                         </Frame>
                                     </SwipeView>
                                 </DataTemplate>

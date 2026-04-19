@@ -32,46 +32,39 @@
                     Padding="12,10">
                 <VerticalStackLayout Spacing="8">
 
-                    <!-- Presets rápidos -->
-                    <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
-
-                        <Button Text="7 días"
+                    <!-- Presets rápidos + Rango -->
+                    <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto"
+                          ColumnSpacing="6" RowSpacing="6">
+                        <Button Grid.Row="0" Grid.Column="0" Text="7 días"
                                 Command="{Binding SeleccionarPeriodoCommand}"
                                 CommandParameter="7"
                                 Background="{Binding Boton7DiasBg}"
                                 TextColor="{Binding Texto7Dias}"
-                                CornerRadius="20"
-                                Padding="12,8"
-                                FontSize="12" />
-
-                        <Button Text="30 días"
+                                CornerRadius="20" FontSize="12" />
+                        <Button Grid.Row="0" Grid.Column="1" Text="30 días"
                                 Command="{Binding SeleccionarPeriodoCommand}"
                                 CommandParameter="30"
                                 Background="{Binding Boton30DiasBg}"
                                 TextColor="{Binding Texto30Dias}"
-                                CornerRadius="20"
-                                Padding="12,8"
-                                FontSize="12" />
-
-                        <Button Text="3 meses"
+                                CornerRadius="20" FontSize="12" />
+                        <Button Grid.Row="0" Grid.Column="2" Text="3 meses"
                                 Command="{Binding SeleccionarPeriodoCommand}"
                                 CommandParameter="90"
                                 Background="{Binding Boton3MesesBg}"
                                 TextColor="{Binding Texto3Meses}"
-                                CornerRadius="20"
-                                Padding="12,8"
-                                FontSize="12" />
-
-                        <Button Text="Todo"
+                                CornerRadius="20" FontSize="12" />
+                        <Button Grid.Row="1" Grid.Column="0" Text="Todo"
                                 Command="{Binding SeleccionarPeriodoCommand}"
                                 CommandParameter="0"
                                 Background="{Binding BotonTodoBg}"
                                 TextColor="{Binding TextoTodo}"
-                                CornerRadius="20"
-                                Padding="12,8"
-                                FontSize="12" />
-
-                    </HorizontalStackLayout>
+                                CornerRadius="20" FontSize="12" />
+                        <Button Grid.Row="1" Grid.Column="1" Text="📅 Rango"
+                                Command="{Binding ActivarRangoPersonalizadoCommand}"
+                                Background="{Binding BotonPersonalizadoBg}"
+                                TextColor="{Binding TextoPersonalizado}"
+                                CornerRadius="20" FontSize="12" />
+                    </Grid>
 
                     <!-- DatePickers para rango personalizado -->
                     <Grid ColumnDefinitions="Auto,*,Auto,*" ColumnSpacing="6">
@@ -92,17 +85,6 @@
                                     MinimumDate="{Binding FechaDesde}"
                                     MaximumDate="2099-12-31" />
                     </Grid>
-
-                    <!-- Indicador rango personalizado activo -->
-                    <Border Background="{Binding BotonPersonalizadoBg}"
-                            StrokeShape="RoundRectangle 6"
-                            StrokeThickness="0"
-                            Padding="8,4"
-                            HorizontalOptions="Center">
-                        <Label Text="📅 Rango personalizado activo"
-                               FontSize="11"
-                               TextColor="{Binding TextoPersonalizado}" />
-                    </Border>
 
                 </VerticalStackLayout>
             </Border>

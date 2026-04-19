@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using LiveChartsCore.SkiaSharpView.Maui;
 using SkiaSharp.Views.Maui.Controls.Hosting;
+using Plugin.LocalNotification;
 
 namespace TrackingApp;
 
@@ -13,6 +14,7 @@ public static class MauiProgram
 			.UseMauiApp<App>()
 			.UseSkiaSharp()
 			.UseLiveCharts()
+			.UseLocalNotification()
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

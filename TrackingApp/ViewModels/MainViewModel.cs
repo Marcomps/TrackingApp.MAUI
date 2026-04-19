@@ -16,6 +16,7 @@ namespace TrackingApp.ViewModels
         private int? _selectedMedicationId;
         private Medication? _selectedMedication;
         private string _selectedHistoryRange = "Esta semana";
+        private bool _reminderEnabled;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -42,6 +43,7 @@ namespace TrackingApp.ViewModels
             EditAppointmentCommand = new Command<MedicalAppointment>(EditAppointment);
             DeleteAppointmentCommand = new Command<MedicalAppointment>(DeleteAppointment);
             ConfirmAppointmentCommand = new Command<MedicalAppointment>(ConfirmAppointment);
+            ToggleReminderCommand = new Command<Medication>(async m => await ToggleReminderAsync(m));
 
             // Subscribe to collection changes
             _dataService.Medications.CollectionChanged += (s, e) => 
@@ -366,6 +368,13 @@ namespace TrackingApp.ViewModels
         public ICommand EditAppointmentCommand { get; }
         public ICommand DeleteAppointmentCommand { get; }
         public ICommand ConfirmAppointmentCommand { get; }
+        public ICommand ToggleReminderCommand { get; }
+
+        public bool ReminderEnabled
+        {
+            get => _reminderEnabled;
+            set { _reminderEnabled = value; OnPropertyChanged(); }
+        }
 
         private async void AddFood()
         {
@@ -445,7 +454,8 @@ namespace TrackingApp.ViewModels
                 Dose = MedicationDose,
                 FrequencyHours = hours,
                 FrequencyMinutes = minutes,
-                FirstDoseTime = DateTime.Today.Add(MedicationTime)
+                FirstDoseTime = DateTime.Today.Add(MedicationTime),
+                ReminderEnabled = ReminderEnabled
             };
 
             await _dataService.AddMedicationAsync(medication, SelectedDays);
@@ -456,11 +466,48 @@ namespace TrackingApp.ViewModels
             MedicationFrequencyHours = string.Empty;
             MedicationFrequencyMinutes = string.Empty;
             MedicationTime = DateTime.Now.TimeOfDay;
+            ReminderEnabled = false;
 
             OnPropertyChanged(nameof(GroupedDoses));
             OnPropertyChanged(nameof(FilteredMedications));
             UpdateSelectedMedication();
             await Application.Current?.MainPage?.DisplayAlert("Éxito", $"Medicamento agregado con dosis para {SelectedDays} días", "OK")!;
+        }
+
+        private async Task ToggleReminderAsync(Medication medication)
+        {
+            medication.ReminderEnabled = !medication.ReminderEnabled;
+
+            if (medication.ReminderEnabled)
+            {
+                var granted = await NotificationService.Instance.RequestPermissionAsync();
+                if (!granted)
+                {
+                    medication.ReminderEnabled = false;
+                    await Application.Current?.MainPage?.DisplayAlert(
+                        "Permiso denegado",
+                        "Habilita las notificaciones en Ajustes para recibir recordatorios.",
+                        "OK")!;
+                    return;
+                }
+
+                // Schedule notifications for all pending doses of this medication
+                var pendingDoses = _dataService.MedicationDoses
+                    .Where(d => d.MedicationId == medication.Id && !d.IsConfirmed)
+                    .ToList();
+                foreach (var dose in pendingDoses)
+                    _ = NotificationService.Instance.ScheduleDoseNotificationAsync(dose, medication);
+            }
+            else
+            {
+                var doseIds = _dataService.MedicationDoses
+                    .Where(d => d.MedicationId == medication.Id)
+                    .Select(d => d.Id);
+                NotificationService.Instance.CancelDoseNotifications(doseIds);
+            }
+
+            await _dataService.UpdateMedicationAsync(medication);
+            OnPropertyChanged(nameof(FilteredMedications));
         }
 
         private async void DeleteFood(FoodEntry food)
