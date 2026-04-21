@@ -94,5 +94,56 @@ namespace TrackingApp.Services
                 System.Diagnostics.Debug.WriteLine($"[Notifications] Bulk cancel failed: {ex.Message}");
             }
         }
+
+        /// <inheritdoc/>
+        public async Task ScheduleAppointmentNotificationAsync(MedicalAppointment appointment)
+        {
+            if (!appointment.RecordatorioMinutos.HasValue || appointment.AppointmentDate <= DateTime.Now.AddSeconds(5))
+                return;
+
+            try
+            {
+                var notifyTime = appointment.AppointmentDate - TimeSpan.FromMinutes(appointment.RecordatorioMinutos.Value);
+
+                var request = new NotificationRequest
+                {
+                    NotificationId = appointment.Id,
+                    Title = $"📅 {appointment.Title}",
+                    Description = $"Cita médica - {appointment.AppointmentDate:dd/MM/yyyy HH:mm}{(string.IsNullOrWhiteSpace(appointment.Doctor) ? "" : $" con {appointment.Doctor}")}",
+                    BadgeNumber = 1,
+                    CategoryType = NotificationCategoryType.Reminder,
+                    Schedule = new NotificationRequestSchedule
+                    {
+                        NotifyTime = notifyTime,
+                        RepeatType = NotificationRepeat.No,
+                    },
+                    Android = new AndroidOptions
+                    {
+                        ChannelId = ChannelId,
+                    },
+                };
+
+                await LocalNotificationCenter.Current.Show(request);
+                System.Diagnostics.Debug.WriteLine($"[Notifications] Scheduled appointment {appointment.Id} for {notifyTime:dd/MM/yyyy HH:mm} ({appointment.Title})");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Notifications] Schedule failed for appointment {appointment.Id}: {ex.Message}");
+            }
+        }
+
+        /// <inheritdoc/>
+        public void CancelAppointmentNotification(int appointmentId)
+        {
+            try
+            {
+                LocalNotificationCenter.Current.Cancel(appointmentId);
+                System.Diagnostics.Debug.WriteLine($"[Notifications] Cancelled appointment notification {appointmentId}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Notifications] Cancel failed for appointment {appointmentId}: {ex.Message}");
+            }
+        }
     }
 }

@@ -31,10 +31,10 @@ public class CitaFormViewModel : INotifyPropertyChanged
         new[] { "Pendiente", "Completada", "Cancelada" };
 
     public IReadOnlyList<string> OpcionesRecordatorio { get; } =
-        new[] { "Sin recordatorio", "15 min antes", "30 min antes", "1 hora antes", "2 horas antes", "1 día antes" };
+        new[] { "Sin recordatorio", "15 min antes", "30 min antes", "1 hora antes", "2 horas antes", "1 día antes", "2 días antes", "3 días antes", "1 semana antes" };
 
     private static readonly int?[] _recordatorioValores =
-        { null, 15, 30, 60, 120, 1440 };
+        { null, 15, 30, 60, 120, 1440, 2880, 4320, 10080, 2880, 4320, 10080 };
 
     public CitaFormViewModel()
     {
@@ -205,6 +205,7 @@ public class CitaFormViewModel : INotifyPropertyChanged
 
         var perfilId  = AppServices.DataService.PerfilActivo?.Id ?? 0;
         var fechaHora = _fecha.Date.Add(_hora);
+        MedicalAppointment? nuevaCita = null;
 
         if (_citaExistente != null)
         {
@@ -226,7 +227,7 @@ public class CitaFormViewModel : INotifyPropertyChanged
         }
         else
         {
-            var nuevaCita = new MedicalAppointment
+            nuevaCita = new MedicalAppointment
             {
                 Title              = _title.Trim(),
                 Description        = _descripcion.Trim(),
@@ -243,6 +244,14 @@ public class CitaFormViewModel : INotifyPropertyChanged
                 Location = _lugarYDoctor.Trim()
             };
             await AppServices.DataService.AddAppointmentAsync(nuevaCita);
+        }
+
+        // Programar notificación si aplica
+        var citaGuardada = _citaExistente ?? nuevaCita;
+        NotificationService.Instance.CancelAppointmentNotification(citaGuardada.Id);
+        if (recordatorio.HasValue)
+        {
+            await NotificationService.Instance.ScheduleAppointmentNotificationAsync(citaGuardada);
         }
 
         await Shell.Current.GoToAsync("..");

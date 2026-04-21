@@ -478,6 +478,16 @@ namespace TrackingApp.ViewModels
         {
             medication.ReminderEnabled = !medication.ReminderEnabled;
 
+            var reminderApplied = await SyncMedicationReminderNotificationsAsync(medication);
+            if (!reminderApplied)
+                return;
+
+            await _dataService.UpdateMedicationAsync(medication);
+            OnPropertyChanged(nameof(FilteredMedications));
+        }
+
+        private async Task<bool> SyncMedicationReminderNotificationsAsync(Medication medication)
+        {
             if (medication.ReminderEnabled)
             {
                 var granted = await NotificationService.Instance.RequestPermissionAsync();
@@ -488,10 +498,10 @@ namespace TrackingApp.ViewModels
                         "Permiso denegado",
                         "Habilita las notificaciones en Ajustes para recibir recordatorios.",
                         "OK")!;
-                    return;
+                    return false;
                 }
 
-                // Schedule notifications for all pending doses of this medication
+                // Programar notificaciones para dosis pendientes del medicamento
                 var pendingDoses = _dataService.MedicationDoses
                     .Where(d => d.MedicationId == medication.Id && !d.IsConfirmed)
                     .ToList();
@@ -506,8 +516,7 @@ namespace TrackingApp.ViewModels
                 NotificationService.Instance.CancelDoseNotifications(doseIds);
             }
 
-            await _dataService.UpdateMedicationAsync(medication);
-            OnPropertyChanged(nameof(FilteredMedications));
+            return true;
         }
 
         private async void DeleteFood(FoodEntry food)
@@ -630,6 +639,18 @@ namespace TrackingApp.ViewModels
                 "Hora de primera dosis (formato 12h, ej: 09:00 AM):",
                 initialValue: medication.FirstDoseTime.ToString("hh:mm tt"))!;
 
+            var currentReminderLabel = medication.ReminderEnabled ? "Activado" : "Desactivado";
+            var reminderSelection = await Application.Current?.MainPage?.DisplayActionSheet(
+                "Editar recordatorio",
+                "Cancelar",
+                null,
+                $"Mantener ({currentReminderLabel})",
+                "Activar",
+                "Desactivar");
+
+            if (reminderSelection == "Cancelar")
+                return;
+
             int frequencyHours = 0;
             int frequencyMinutes = 0;
 
@@ -671,6 +692,15 @@ namespace TrackingApp.ViewModels
             medication.FrequencyHours = frequencyHours;
             medication.FrequencyMinutes = frequencyMinutes;
             medication.FirstDoseTime = newFirstDoseTime;
+
+            if (reminderSelection == "Activar")
+                medication.ReminderEnabled = true;
+            else if (reminderSelection == "Desactivar")
+                medication.ReminderEnabled = false;
+
+            var reminderApplied = await SyncMedicationReminderNotificationsAsync(medication);
+            if (!reminderApplied)
+                return;
 
             await _dataService.UpdateMedicationAsync(medication);
             

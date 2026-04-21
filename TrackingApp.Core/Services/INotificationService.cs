@@ -22,5 +22,14 @@ namespace TrackingApp.Services
 
         /// <summary>Cancels notifications for all provided dose IDs (e.g. when deleting a medication).</summary>
         void CancelDoseNotifications(IEnumerable<int> doseIds);
+
+        /// <summary>
+        /// Schedules a local notification for a future appointment.
+        /// Only called when appointment.RecordatorioMinutos.HasValue and appointment is in the future.
+        /// </summary>
+        Task ScheduleAppointmentNotificationAsync(MedicalAppointment appointment);
+
+        /// <summary>Cancels the notification for a single appointment (by appointment.Id).</summary>
+        void CancelAppointmentNotification(int appointmentId);
     }
 }
